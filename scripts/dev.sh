@@ -143,12 +143,8 @@ lsof -ti :3000 2>/dev/null | xargs kill -9 2>/dev/null || true
 
 # 9. Launch Backend Service
 log_info "Starting Agentix Core Backend on port 8000..."
-cd "$ROOT_DIR/backend"
-nohup python3 -m uvicorn core.main:app --host 127.0.0.1 --port 8000 < /dev/null > "$ROOT_DIR/logs/backend.log" 2>&1 &
-BACKEND_PID=$!
-disown "$BACKEND_PID" 2>/dev/null || true
+BACKEND_PID=$(python3 -c "import subprocess; p = subprocess.Popen(['python3', '-m', 'uvicorn', 'core.main:app', '--host', '127.0.0.1', '--port', '8000'], cwd='$ROOT_DIR/backend', stdin=subprocess.DEVNULL, stdout=open('$ROOT_DIR/logs/backend.log', 'w'), stderr=subprocess.STDOUT, start_new_session=True); print(p.pid)")
 echo "$BACKEND_PID" > "$ROOT_DIR/.run/backend.pid"
-cd "$ROOT_DIR"
 
 # Wait for backend health check
 BACKEND_ONLINE=false
@@ -168,12 +164,8 @@ log_success "Backend active (PID: $BACKEND_PID) • Health Check: OK"
 
 # 10. Launch Frontend Service
 log_info "Starting Agentix Executive Console on port 3000..."
-cd "$ROOT_DIR/frontend"
-nohup ./node_modules/.bin/next dev -p 3000 < /dev/null > "$ROOT_DIR/logs/frontend.log" 2>&1 &
-FRONTEND_PID=$!
-disown "$FRONTEND_PID" 2>/dev/null || true
+FRONTEND_PID=$(python3 -c "import subprocess; p = subprocess.Popen(['node', './node_modules/next/dist/bin/next', 'dev', '-p', '3000'], cwd='$ROOT_DIR/frontend', stdin=subprocess.DEVNULL, stdout=open('$ROOT_DIR/logs/frontend.log', 'w'), stderr=subprocess.STDOUT, start_new_session=True); print(p.pid)")
 echo "$FRONTEND_PID" > "$ROOT_DIR/.run/frontend.pid"
-cd "$ROOT_DIR"
 
 # Wait for frontend readiness
 FRONTEND_ONLINE=false
