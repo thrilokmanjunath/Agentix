@@ -1,8 +1,9 @@
 import React from 'react';
 import { signIn } from '@/auth';
 import { googleConfigured } from '@/auth.config';
-import { Hexagon, ArrowRight, AlertCircle, Shield, Lock, CheckCircle2 } from 'lucide-react';
+import { Compass, ArrowRight, AlertCircle, Shield, Lock, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams;
@@ -39,72 +40,76 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 w-full flex flex-col md:flex-row relative font-sans">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] w-full flex flex-col md:flex-row relative font-sans transition-colors duration-200">
       
+      {/* Theme Toggle Top Right */}
+      <div className="absolute top-5 right-5 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Left Branding Panel */}
-      <div className="hidden md:flex flex-col w-1/2 bg-slate-950 border-r border-slate-800/80 p-12 lg:p-20 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="hidden md:flex flex-col w-1/2 bg-[var(--surface-secondary)]/50 border-r border-[var(--border-subtle)] p-12 lg:p-20 relative overflow-hidden">
         <div className="relative z-10 flex flex-col h-full justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <Hexagon size={20} className="text-slate-950 fill-slate-950" />
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)] flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-105">
+              <Compass size={20} className="text-white" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-100">AGENTIX</span>
+            <span className="text-2xl font-black tracking-tight text-[var(--text-primary)]">AGENTIX</span>
           </Link>
           
           <div className="flex-1 flex flex-col justify-center gap-6 max-w-lg my-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-mono font-semibold w-fit">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--accent-primary)]/20 bg-[var(--accent-soft-alpha)] text-[var(--accent-primary)] text-xs font-mono font-semibold w-fit">
               <Shield size={12} />
-              ENTERPRISE AI PLATFORM
+              ENTERPRISE AI OPERATING SYSTEM
             </div>
-            <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight text-slate-100">
-              Autonomous Intelligence with <span className="gold-gradient-text">Zero Data Leakage</span>.
+            <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight text-[var(--text-primary)]">
+              Autonomous Intelligence with <span className="text-[var(--accent-primary)]">Zero Data Leakage</span>.
             </h1>
-            <p className="text-base text-slate-400 leading-relaxed font-light">
+            <p className="text-base text-[var(--text-secondary)] leading-relaxed font-normal">
               Ingest structured institutional datasets. Run multi-agent automated data engineering, AutoML, and explainable AI powered by local hardware execution.
             </p>
-            <div className="space-y-2 pt-2">
-              <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                <CheckCircle2 size={15} className="text-emerald-400" />
+            <div className="space-y-2.5 pt-2">
+              <div className="flex items-center gap-2.5 text-xs text-[var(--text-secondary)]">
+                <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400" />
                 <span>Strict multi-tenant cryptographic isolation</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                <CheckCircle2 size={15} className="text-emerald-400" />
-                <span>Air-gapped local LLM inference via Ollama / LM Studio</span>
+              <div className="flex items-center gap-2.5 text-xs text-[var(--text-secondary)]">
+                <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400" />
+                <span>Air-gapped local LLM inference via Ollama (Apple Silicon / CUDA)</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                <CheckCircle2 size={15} className="text-emerald-400" />
-                <span>OWASP ASVS 5.0 audited security baseline</span>
+              <div className="flex items-center gap-2.5 text-xs text-[var(--text-secondary)]">
+                <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400" />
+                <span>Enterprise 8-Layer AI Security Architecture certified</span>
               </div>
             </div>
           </div>
           
-          <div className="text-xs text-slate-500 font-mono">
+          <div className="text-xs text-[var(--text-muted)] font-mono">
             &copy; {new Date().getFullYear()} Agentix Institutional Platform. All rights reserved.
           </div>
         </div>
       </div>
 
       {/* Right Login Panel */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 relative z-10 bg-slate-950/60">
-        <div className="w-full max-w-[420px] flex flex-col p-8 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-2xl backdrop-blur-xl">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 relative z-10">
+        <div className="w-full max-w-[420px] flex flex-col p-8 rounded-2xl teal-glass-card shadow-xl border border-[var(--border-subtle)]">
           
           <div className="flex md:hidden items-center gap-2 mb-8 justify-center">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-              <Hexagon size={18} className="text-slate-950 fill-slate-950" />
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-white">
+              <Compass size={18} className="text-white" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-slate-100">Agentix</span>
+            <span className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Agentix</span>
           </div>
           
           <div className="flex flex-col text-left gap-1 mb-6">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-100">Institutional Access</h2>
-            <p className="text-xs text-slate-400 font-medium">Authenticate to access your isolated workspace</p>
+            <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Institutional Access</h2>
+            <p className="text-xs text-[var(--text-secondary)] font-medium">Authenticate to access your isolated workspace</p>
           </div>
 
           <div className="flex flex-col gap-5">
             <form action={handleGoogleLogin}>
               <button 
-                className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-slate-800/80 border border-slate-700/80 rounded-xl hover:bg-slate-800 hover:border-slate-600 transition-all font-medium text-slate-200 text-xs cursor-pointer shadow-sm" 
+                className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl hover:border-[var(--accent-primary)] transition-all font-medium text-[var(--text-primary)] text-xs cursor-pointer shadow-sm" 
                 type="submit"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -118,20 +123,20 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             </form>
 
             {error === "GoogleNotConfigured" && (
-              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
+              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
                 <AlertCircle size={15} />
                 OAuth is unconfigured in development. Use credential login below.
               </div>
             )}
 
             <div className="flex items-center w-full gap-3">
-              <div className="h-px bg-slate-800 flex-1"></div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">Or Credentials</span>
-              <div className="h-px bg-slate-800 flex-1"></div>
+              <div className="h-px bg-[var(--border-subtle)] flex-1"></div>
+              <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-mono">Or Credentials</span>
+              <div className="h-px bg-[var(--border-subtle)] flex-1"></div>
             </div>
 
             {error === "InvalidCredentials" && (
-              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
+              <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
                 <AlertCircle size={15} />
                 Invalid credentials. Check email and password.
               </div>
@@ -139,10 +144,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
             <form action={handleLogin} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-300" htmlFor="email">Institutional Email</label>
+                <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="email">Institutional Email</label>
                 <input 
                   name="email" 
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" 
+                  className="w-full px-3.5 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all font-mono" 
                   id="email" 
                   placeholder="admin@agentix.com" 
                   required 
@@ -151,11 +156,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               </div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-300" htmlFor="password">Password</label>
+                  <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="password">Password</label>
                 </div>
                 <input 
                   name="password" 
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono" 
+                  className="w-full px-3.5 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all font-mono" 
                   id="password" 
                   placeholder="••••••••" 
                   required 
@@ -163,13 +168,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
                 />
               </div>
               
-              <div className="text-[11px] text-slate-400 bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex items-center gap-2">
-                <Lock size={13} className="text-amber-400 shrink-0" />
-                <span>Default development account: <strong className="text-slate-200">admin@agentix.com</strong> / <strong className="text-slate-200">admin123</strong></span>
+              <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl p-3 flex items-center gap-2">
+                <Lock size={13} className="text-[var(--accent-primary)] shrink-0" />
+                <span>Default development account: <strong className="text-[var(--text-primary)]">admin@agentix.com</strong> / <strong className="text-[var(--text-primary)]">admin123</strong></span>
               </div>
               
               <button 
-                className="w-full mt-1 py-2.5 px-4 luxury-button-gold rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg" 
+                className="w-full mt-1 py-3 px-4 teal-button-primary rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer" 
                 type="submit"
               >
                 Sign In to Console

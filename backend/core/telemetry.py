@@ -52,3 +52,52 @@ def setup_telemetry(app):
     trace_provider.add_span_processor(processor)
     trace.set_tracer_provider(trace_provider)
     FastAPIInstrumentor.instrument_app(app)
+
+
+# ---------------------------------------------------------------------------
+# GenAI OpenTelemetry Semantic Conventions (Layer 8)
+# ---------------------------------------------------------------------------
+
+def get_genai_tracer():
+    return trace.get_tracer("agentix.genai")
+
+
+class GenAISpanContext:
+    """Context manager recording OpenTelemetry spans conforming to GenAI Semantic Conventions."""
+
+    def __init__(
+        self,
+        model: str,
+        prompt_template_id: str = "default",
+        tenant_id: str = "default",
+        user_id: str = "anonymous",
+    ):
+        self.model = model
+        self.prompt_template_id = prompt_template_id
+        self.tenant_id = tenant_id
+        self.user_id = user_id
+        self.tracer = get_genai_tracer()
+        self.span = None
+
+    def __enter__(self):
+        self.span = self.tracer.start_span("gen_ai.inference")
+        self.span.set_attribute("gen_ai.system", "ollama")
+        self.span.set_attribute("gen_ai.request.model", self.model)
+        self.span.set_attribute("gen_ai.prompt.template_id", self.prompt_template_id)
+        self.span.set_attribute("tenant.id", self.tenant_id)
+        self.span.set_attribute("user.id", self.user_id)
+        return self
+
+    def record_usage(self, prompt_tokens: int, completion_tokens: int, finish_reason: str = "stop"):
+        if self.span:
+            self.span.set_attribute("gen_ai.usage.prompt_tokens", prompt_tokens)
+            self.span.set_attribute("gen_ai.usage.completion_tokens", completion_tokens)
+            self.span.set_attribute("gen_ai.response.finish_reasons", [finish_reason])
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.span:
+            if exc_type:
+                self.span.set_attribute("error", True)
+                self.span.set_attribute("error.message", str(exc_val))
+            self.span.end()
+

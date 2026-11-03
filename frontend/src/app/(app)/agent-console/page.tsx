@@ -1,19 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Trash2,
-  Download,
   Send,
   Loader2,
   Bot,
   Copy,
   Check,
-  Shield,
   Cpu,
-  Database,
-  Sparkles,
   ChevronDown,
   Lock
 } from 'lucide-react';
@@ -36,8 +32,8 @@ export default function AgentConsolePage() {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [availableModels, setAvailableModels] = useState<string[]>(['qwen2.5:3b', 'researcher-m4:latest']);
-  const [activeModel, setActiveModel] = useState<string>('qwen2.5:3b');
+  const [availableModels, setAvailableModels] = useState<string[]>(['researcher-m4:latest', 'qwen2.5:3b']);
+  const [activeModel, setActiveModel] = useState<string>('researcher-m4:latest');
   const [isModelSelectorOpen, setModelSelectorOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -60,8 +56,8 @@ export default function AgentConsolePage() {
       setMessages([{
         id: 'no-dataset',
         role: 'agent',
-        content: "Welcome to the Agentix AI Intelligence Console. Please select or ingest a dataset in Data Dock to ground my responses in verified pipeline statistics.",
-        model: 'Ollama: qwen2.5:3b',
+        content: "Welcome to the Agentix AI Intelligence Console. Select or ingest a dataset in Data Dock to ground my analysis in verified pipeline statistics.",
+        model: 'Ollama: researcher-m4',
         timestamp: new Date().toLocaleTimeString()
       }]);
     } else {
@@ -69,7 +65,7 @@ export default function AgentConsolePage() {
         id: 'ready',
         role: 'agent',
         content: `Ready to analyze dataset '${selectedDataset}'. You may query Exploratory Data Analysis distributions, feature drivers, or model evaluation metrics.`,
-        model: 'Ollama: qwen2.5:3b',
+        model: 'Ollama: researcher-m4',
         timestamp: new Date().toLocaleTimeString()
       }]);
     }
@@ -145,26 +141,26 @@ export default function AgentConsolePage() {
   ];
 
   return (
-    <div className="flex flex-col w-full h-[calc(100vh-64px)] relative bg-slate-950 text-slate-100 font-sans">
+    <div className="flex flex-col w-full h-[calc(100vh-64px)] relative bg-[var(--background)] text-[var(--text-primary)] font-sans transition-colors duration-200">
       
       {/* Top Console Action Bar */}
-      <div className="shrink-0 px-6 py-3.5 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl z-20 flex items-center justify-between shadow-md">
+      <div className="shrink-0 px-6 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--surface-primary)] z-20 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 text-[var(--accent-primary)] flex items-center justify-center shadow-sm">
             <Bot size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-bold text-sm text-slate-100 tracking-tight">AI Analyst Workspace</h2>
-              <Badge variant="local" size="sm">
+              <h2 className="font-bold text-sm text-[var(--text-primary)] tracking-tight">AI Analyst Workspace</h2>
+              <Badge variant="teal" size="sm">
                 <Lock size={9} />
                 Private Hardware
               </Badge>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-[11px] font-mono text-slate-400">
-                Grounding: {selectedDataset ? <strong className="text-amber-300 font-semibold">{selectedDataset}</strong> : 'No dataset loaded'}
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[11px] font-mono text-[var(--text-secondary)]">
+                Grounding: {selectedDataset ? <strong className="text-[var(--accent-primary)] font-semibold">{selectedDataset}</strong> : 'No dataset loaded'}
               </span>
             </div>
           </div>
@@ -172,20 +168,19 @@ export default function AgentConsolePage() {
 
         {/* Model Selection & Action Controls */}
         <div className="flex items-center gap-2.5">
-          {/* Model Selector Dropdown */}
           <div className="relative">
             <button
               onClick={() => setModelSelectorOpen(!isModelSelectorOpen)}
-              className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-slate-700 text-xs font-mono text-amber-300 flex items-center gap-2 transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-secondary)] hover:border-[var(--accent-primary)] text-xs font-mono text-[var(--accent-primary)] flex items-center gap-2 transition-colors cursor-pointer"
             >
-              <Cpu size={13} className="text-amber-400" />
+              <Cpu size={13} className="text-[var(--accent-primary)]" />
               <span>{activeModel}</span>
-              <ChevronDown size={12} className="text-slate-500" />
+              <ChevronDown size={12} className="text-[var(--text-secondary)]" />
             </button>
 
             {isModelSelectorOpen && (
-              <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-slate-900 border border-slate-800 shadow-xl py-1.5 z-50">
-                <div className="px-3 py-1 border-b border-slate-800 text-[10px] font-mono uppercase text-slate-500">
+              <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-[var(--surface-primary)] border border-[var(--border-subtle)] shadow-xl py-1.5 z-50">
+                <div className="px-3 py-1 border-b border-[var(--border-subtle)] text-[10px] font-mono uppercase text-[var(--text-secondary)]">
                   Detected Local Models
                 </div>
                 {availableModels.map((m) => (
@@ -195,10 +190,10 @@ export default function AgentConsolePage() {
                       setActiveModel(m);
                       setModelSelectorOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 text-xs font-mono flex items-center justify-between hover:bg-slate-800 transition-colors ${activeModel === m ? 'text-amber-300 font-bold bg-amber-500/10' : 'text-slate-300'}`}
+                    className={`w-full text-left px-3 py-2 text-xs font-mono flex items-center justify-between hover:bg-[var(--surface-hover)] transition-colors cursor-pointer ${activeModel === m ? 'text-[var(--accent-primary)] font-bold bg-[var(--accent-soft-alpha)]' : 'text-[var(--text-primary)]'}`}
                   >
                     <span>{m}</span>
-                    {activeModel === m && <Check size={12} className="text-amber-400" />}
+                    {activeModel === m && <Check size={12} className="text-[var(--accent-primary)]" />}
                   </button>
                 ))}
               </div>
@@ -221,41 +216,41 @@ export default function AgentConsolePage() {
         {messages.map((msg) => (
           msg.role === 'user' ? (
             <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-end w-full">
-              <div className="bg-amber-500/15 border border-amber-500/30 text-amber-100 px-5 py-3.5 rounded-2xl rounded-tr-sm max-w-[85%] text-sm shadow-md leading-relaxed">
+              <div className="bg-[var(--accent-primary)] text-white px-5 py-3 rounded-2xl rounded-tr-sm max-w-[85%] text-sm shadow-sm leading-relaxed font-normal">
                 {msg.content}
               </div>
               {msg.timestamp && (
-                <span className="text-[10px] text-slate-500 font-mono mt-1 mr-1">{msg.timestamp}</span>
+                <span className="text-[10px] text-[var(--text-secondary)] font-mono mt-1 mr-1">{msg.timestamp}</span>
               )}
             </motion.div>
           ) : (
             <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3.5 w-full items-start group">
-              <div className="w-8 h-8 rounded-xl bg-slate-900 border border-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                <Bot className="text-amber-400" size={17} />
+              <div className="w-8 h-8 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm text-[var(--accent-primary)]">
+                <Bot size={17} />
               </div>
               
               <div className="flex-1 max-w-[90%] space-y-2">
                 <div className={`p-5 rounded-2xl rounded-tl-sm border text-sm leading-relaxed ${
                   msg.isError 
-                    ? 'bg-rose-950/20 border-rose-500/30 text-rose-300' 
-                    : 'bg-slate-900/70 border-slate-800 text-slate-200 shadow-sm'
+                    ? 'bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-300' 
+                    : 'bg-[var(--surface-primary)] border-[var(--border-subtle)] text-[var(--text-primary)] shadow-sm'
                 }`}>
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 </div>
 
-                <div className="flex items-center justify-between px-1 text-[11px] text-slate-500 font-mono">
+                <div className="flex items-center justify-between px-1 text-[11px] text-[var(--text-secondary)] font-mono">
                   <div className="flex items-center gap-3">
                     <span>{msg.model || `Ollama: ${activeModel}`}</span>
                     {msg.timestamp && <span>{msg.timestamp}</span>}
                   </div>
                   <button
                     onClick={() => handleCopy(msg.id, msg.content)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1 cursor-pointer"
                   >
                     {copiedId === msg.id ? (
                       <>
-                        <Check size={11} className="text-emerald-400" />
-                        <span className="text-[10px] text-emerald-400">Copied</span>
+                        <Check size={11} className="text-emerald-500" />
+                        <span className="text-[10px] text-emerald-500">Copied</span>
                       </>
                     ) : (
                       <>
@@ -272,21 +267,21 @@ export default function AgentConsolePage() {
 
         {isTyping && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3.5 w-full items-start">
-            <div className="w-8 h-8 rounded-xl bg-slate-900 border border-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Loader2 className="text-amber-400 animate-spin" size={17} />
+            <div className="w-8 h-8 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Loader2 className="text-[var(--accent-primary)] animate-spin" size={17} />
             </div>
-            <div className="bg-slate-900/70 border border-slate-800 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1.5 items-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+            <div className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1.5 items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-bounce"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-bounce" style={{ animationDelay: '0.3s' }}></span>
             </div>
           </motion.div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Floating Luxury Input Bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent pt-10 pb-6 px-4 z-20 backdrop-blur-md">
+      {/* Floating Teal Glass Input Bar */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/90 to-transparent pt-10 pb-6 px-4 z-20 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           
           {/* Quick Grounded Question Chips */}
@@ -295,7 +290,7 @@ export default function AgentConsolePage() {
               <button 
                 key={i} 
                 onClick={() => handleSend(prompt)}
-                className="whitespace-nowrap px-3.5 py-1.5 rounded-lg border border-slate-800/80 bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium transition-all shadow-sm shrink-0"
+                className="whitespace-nowrap px-3.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-primary)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] text-[var(--text-secondary)] text-xs font-medium transition-all shadow-sm shrink-0 cursor-pointer"
               >
                 {prompt}
               </button>
@@ -303,7 +298,7 @@ export default function AgentConsolePage() {
           </div>
 
           {/* Prompt Textarea */}
-          <div className="relative bg-slate-900/90 rounded-2xl border border-slate-800 shadow-xl focus-within:border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/30 transition-all flex items-end overflow-hidden">
+          <div className="relative bg-[var(--surface-primary)] rounded-2xl border border-[var(--border-subtle)] shadow-lg focus-within:border-[var(--accent-primary)] focus-within:ring-1 focus-within:ring-[var(--accent-primary)]/30 transition-all flex items-end overflow-hidden">
             <textarea 
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -313,8 +308,8 @@ export default function AgentConsolePage() {
                   handleSend();
                 }
               }}
-              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 resize-none py-3.5 pl-4 pr-16 text-sm text-slate-100 placeholder:text-slate-500 min-h-[52px] max-h-36" 
-              placeholder="Ask Agentix about pipeline metrics, features, or data distributions..." 
+              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 resize-none py-3.5 pl-4 pr-16 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] min-h-[52px] max-h-36" 
+              placeholder="Ask Agentix about pipeline metrics, features, or distributions..." 
               rows={1}
             />
 
@@ -323,8 +318,8 @@ export default function AgentConsolePage() {
                 disabled={!inputValue.trim() || isTyping}
                 className={`p-2 rounded-xl flex items-center justify-center transition-all ${
                   inputValue.trim() && !isTyping 
-                    ? 'luxury-button-gold shadow-md' 
-                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    ? 'teal-button-primary shadow-sm cursor-pointer' 
+                    : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] opacity-50 cursor-not-allowed'
                 }`} 
                 onClick={() => handleSend()}
               >
@@ -334,8 +329,8 @@ export default function AgentConsolePage() {
           </div>
           
           <div className="text-center">
-            <span className="text-[10px] text-slate-500 font-mono">
-              Inference: Local Hardware • Input sanitized for prompt injection protection
+            <span className="text-[10px] text-[var(--text-secondary)] font-mono">
+              Inference: Local Hardware &bull; Bidirectional Guardrail & PII Filter Active
             </span>
           </div>
         </div>

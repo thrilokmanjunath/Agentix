@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import shutil
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, List, Tuple
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
@@ -19,6 +19,15 @@ from core.hardware.detector import HardwareDetector
 from core.hardware.models import ModelRegistry
 from core.engines.execution import ExecutionEngine
 from core.services.llm_service import generate as llm_generate, LLMUnavailableError
+from core.guardrails.engine import guardrail_engine
+from core.prompts.registry import prompt_registry
+from core.rag.retriever import rag_retriever
+from core.cache.llm_cache import llm_cache
+from core.services.model_router import model_router
+from core.evaluations.evaluator import ai_evaluator
+from core.telemetry import GenAISpanContext
+from core.mcp.registry import mcp_registry, ToolRiskTier
+from core.auth.rbac import Permission, get_user_permissions
 
 logger = logging.getLogger("agentix_v2")
 router = APIRouter()
@@ -320,8 +329,15 @@ async def reports_endpoint(dataset_name: str):
 async def chat_endpoint(req: ChatRequest):
     query = getattr(req, "query", "")
     dataset_name = getattr(req, "dataset_name", None)
+    tenant_id = getattr(req, "tenant_id", None) or "default"
 
+    # Layer 6: Adversarial Jailbreak Detection & PII Redaction Guardrail
+    guard_res = guardrail_engine.sanitize_input(query)
+    sanitized_query = guard_res.sanitized_text
+
+    # Layer 3: Context Retrieval & RAG Indexing
     context_blob = ""
+    eda, evaluation, training = {}, {}, {}
     if dataset_name:
         db = SessionLocal()
         try:
@@ -334,6 +350,14 @@ async def chat_endpoint(req: ChatRequest):
                     {"eda_statistics": eda.get("statistics", {}), "training": training, "evaluation": evaluation},
                     default=str,
                 )
+                # Ingest into tenant-isolated vector index
+                rag_retriever.index_pipeline_run(
+                    tenant_id=tenant_id,
+                    dataset_name=dataset_name,
+                    eda_stats=eda.get("statistics") if eda else None,
+                    evaluation_data=evaluation,
+                    training_data=training,
+                )
         finally:
             db.close()
 
@@ -345,29 +369,150 @@ async def chat_endpoint(req: ChatRequest):
             data={"response": "No local AI model is currently available. Start Ollama with a pulled model to enable chat."},
         )
 
-    # Input sanitization and prompt injection protection (OWASP LLM01)
-    sanitized_query = (query or "").strip()[:1000]
-    sanitized_query = re.sub(
-        r'(?i)(ignore\s+all\s+previous\s+instructions|disregard\s+all\s+previous|system\s+prompt\s+extraction)',
-        '[filtered]',
-        sanitized_query
+    # Layer 7: Dynamic Complexity Classification
+    complexity = model_router.classify_complexity(sanitized_query, has_dataset=bool(dataset_name))
+
+    # Layer 2: Centralized Versioned Prompt Registry & System Prompt Rendering
+    context_str = context_blob or "No pipeline results available for this dataset yet."
+    rendered_prompt, prompt_hash = prompt_registry.render(
+        prompt_id="analyst_core",
+        variables={"dataset_context": context_str, "sanitized_query": sanitized_query},
+        tenant_id=tenant_id,
     )
 
-    prompt = (
-        "You are Agentix's data analyst assistant. Answer the user's question using ONLY the real pipeline "
-        "data given below in <dataset_context>; if the data doesn't cover the question, say so honestly instead of guessing.\n"
-        f"<dataset_context>\n{context_blob or 'No pipeline results available for this dataset yet.'}\n</dataset_context>\n"
-        f"User question: {sanitized_query}"
+    # Layer 7: Tenant-Aware SHA-256 Exact-Match Response Cache
+    cached_response = llm_cache.get(
+        tenant_id=tenant_id,
+        model=model,
+        template_id="analyst_core",
+        prompt=rendered_prompt,
     )
+    if cached_response is not None:
+        return BaseResponse(
+            status="success",
+            message="OK",
+            data={
+                "response": cached_response,
+                "model": model,
+                "cached": True,
+                "prompt_hash": prompt_hash,
+                "complexity": complexity.value,
+            },
+        )
+
+    # Layer 8: GenAI Semantic OpenTelemetry Instrumentation
     try:
-        text = llm_generate(prompt, model)
-        return BaseResponse(status="success", message="OK", data={"response": text, "model": model})
+        with GenAISpanContext(model=model, prompt_template_id="analyst_core", tenant_id=tenant_id) as span_ctx:
+            text = llm_generate(rendered_prompt, model)
+            prompt_tokens = int(len(rendered_prompt.split()) * 1.3)
+            comp_tokens = int(len(text.split()) * 1.3)
+            span_ctx.record_usage(prompt_tokens=prompt_tokens, completion_tokens=comp_tokens)
     except LLMUnavailableError as e:
         return BaseResponse(
             status="success",
             message="AI chat unavailable",
             data={"response": f"The local AI model is unavailable right now ({e})."},
         )
+
+    # Layer 6: Output Safety & Credential Leakage Scanner
+    out_safe, out_checked = guardrail_engine.scan_output(text)
+    if not out_safe:
+        return BaseResponse(
+            status="success",
+            message="Output Safety Alert",
+            data={"response": "Model output withheld due to detected internal policy violation.", "model": model},
+        )
+
+    # Layer 8: Automated Factual Grounding & Faithfulness Evaluation
+    eval_report = ai_evaluator.evaluate(
+        question=sanitized_query,
+        answer=out_checked,
+        context=context_str,
+    )
+
+    # Populate Cache (Layer 7)
+    llm_cache.set(
+        tenant_id=tenant_id,
+        model=model,
+        template_id="analyst_core",
+        prompt=rendered_prompt,
+        response=out_checked,
+    )
+
+    return BaseResponse(
+        status="success",
+        message="OK",
+        data={
+            "response": out_checked,
+            "model": model,
+            "cached": False,
+            "prompt_hash": prompt_hash,
+            "complexity": complexity.value,
+            "evaluations": eval_report.evaluation_metadata,
+            "pii_redacted": guard_res.pii_counts,
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# MCP Tool Governance Endpoints (Layer 4)
+# ---------------------------------------------------------------------------
+
+class MCPExecuteRequest(BaseModel):
+    tool_name: str
+    arguments: Dict[str, Any]
+    user_permissions: Optional[List[str]] = None
+    tenant_id: Optional[str] = "default"
+    user_id: Optional[str] = "anonymous"
+
+
+@router.get("/mcp/tools", response_model=BaseResponse)
+async def list_mcp_tools():
+    """Lists all tools exposed through the Model Context Protocol (MCP) interface."""
+    tools = mcp_registry.list_tools()
+    return BaseResponse(status="success", message="OK", data={"tools": tools, "count": len(tools)})
+
+
+@router.post("/mcp/execute", response_model=BaseResponse)
+async def execute_mcp_tool(req: MCPExecuteRequest):
+    """Executes a governed MCP tool with schema validation and role authorization."""
+    perms = req.user_permissions or ["DATASET_READ", "MODEL_EVALUATE"]
+    try:
+        result = mcp_registry.execute_tool(
+            tool_name=req.tool_name,
+            arguments=req.arguments,
+            user_permissions=perms,
+            tenant_id=req.tenant_id or "default",
+            user_id=req.user_id or "anonymous",
+        )
+        return BaseResponse(status="success", message="Tool execution succeeded", data=result)
+    except (PermissionError, ValueError, KeyError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# AI Caching & Evaluation Metrics (Layers 7 & 8)
+# ---------------------------------------------------------------------------
+
+@router.get("/ai/cache/metrics", response_model=BaseResponse)
+async def cache_metrics():
+    """Retrieves real-time exact-match inference cache statistics and saved latency."""
+    return BaseResponse(status="success", message="OK", data=llm_cache.get_metrics())
+
+
+class EvalRunRequest(BaseModel):
+    question: str
+    answer: str
+    context: str
+
+
+@router.post("/ai/evaluations/run", response_model=BaseResponse)
+async def run_ai_evaluation(req: EvalRunRequest):
+    """Runs automated factual grounding, answer relevancy, and context recall evaluation."""
+    report = ai_evaluator.evaluate(question=req.question, answer=req.answer, context=req.context)
+    return BaseResponse(status="success", message="OK", data=report.evaluation_metadata)
 
 
 class ConnectionTestRequest(BaseModel):

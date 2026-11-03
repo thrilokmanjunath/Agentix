@@ -52,7 +52,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": user.id, "role": user.role})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me")
@@ -66,6 +66,7 @@ def google_login():
         detail="Google OAuth is not configured on this server.",
     )
 
+
 @router.get("/google/callback")
 def google_callback(code: str, db: Session = Depends(get_db)):
     # Real Google token exchange (verifying `code` against Google's token endpoint)
@@ -76,3 +77,15 @@ def google_callback(code: str, db: Session = Depends(get_db)):
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail="Google OAuth is not configured on this server.",
     )
+
+
+class IntrospectRequest(BaseModel):
+    token: str
+
+
+@router.post("/oauth/introspect")
+def introspect_endpoint(req: IntrospectRequest):
+    """RFC 7662 OAuth 2.0 / OIDC Token Introspection endpoint."""
+    from core.auth import introspect_token
+    return introspect_token(req.token)
+

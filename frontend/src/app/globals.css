@@ -1,110 +1,169 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-heading: var(--font-heading), var(--font-sans);
+:root {
+  color-scheme: light;
 
-  /* Agentix Signature Luxury Enterprise Palette */
-  --color-background: #0B0F17;
-  --color-surface: #111827;
-  --color-surface-elevated: #161F30;
-  --color-surface-hover: #1E293B;
-  
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-tertiary: #64748B;
-  
-  --color-border: #1E293B;
-  --color-border-subtle: #162032;
-  --color-border-gold: rgba(212, 175, 55, 0.25);
-  
-  /* Champagne Gold Accents */
-  --color-champagne: #D4AF37;
-  --color-champagne-hover: #E5C158;
-  --color-champagne-light: rgba(212, 175, 55, 0.12);
-  --color-champagne-muted: #8C7322;
+  /* Light Theme — Pearl Teal */
+  --background: #F5FAF9;
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #EAF5F2;
+  --surface-hover: #E1EFEA;
+  --text-primary: #123B3B;
+  --text-secondary: #527C7A;
+  --text-muted: #6B9491;
+  --accent-primary: #168B83;
+  --accent-hover: #106F69;
+  --accent-soft: #BCE8DE;
+  --accent-soft-alpha: rgba(22, 139, 131, 0.12);
+  --border-subtle: #DCEAE7;
+  --border-strong: #BFDCD6;
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(220, 234, 231, 0.85);
+  --glass-shadow: 0 8px 32px 0 rgba(18, 59, 59, 0.06);
 
-  /* Executive Primary / Secondary */
-  --color-primary: #D4AF37;
-  --color-primary-hover: #E5C158;
-  --color-primary-light: rgba(212, 175, 55, 0.15);
-
-  --color-accent: #3B82F6;
-  --color-accent-hover: #2563EB;
-  
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-full: 9999px;
-  
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
-  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.45);
-  --shadow-lg: 0 12px 24px -4px rgb(0 0 0 / 0.55);
-  --shadow-gold: 0 0 20px -3px rgba(212, 175, 55, 0.15);
+  --success: #0E836A;
+  --warning: #C27803;
+  --danger: #DC2626;
+  --info: #0284C7;
 }
 
-:root {
+.dark {
   color-scheme: dark;
+
+  /* Dark Theme — Obsidian Teal */
+  --background: #091B1F;
+  --surface-primary: #10282D;
+  --surface-secondary: #163238;
+  --surface-hover: #1D3F46;
+  --text-primary: #F0FFFB;
+  --text-secondary: #9CC2BD;
+  --text-muted: #688F8A;
+  --accent-primary: #36B5A7;
+  --accent-hover: #66D5C4;
+  --accent-soft: #204C4C;
+  --accent-soft-alpha: rgba(54, 181, 167, 0.15);
+  --border-subtle: #29494E;
+  --border-strong: #375F65;
+  --glass-bg: rgba(16, 40, 45, 0.78);
+  --glass-border: rgba(41, 73, 78, 0.75);
+  --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.45);
+
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F87171;
+  --info: #38BDF8;
+}
+
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: var(--font-heading), var(--font-sans);
+
+  --color-bg-base: var(--background);
+  --color-surface-1: var(--surface-primary);
+  --color-surface-2: var(--surface-secondary);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-text-main: var(--text-primary);
+  --color-text-sub: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-teal-accent: var(--accent-primary);
+  --color-teal-hover: var(--accent-hover);
+  --color-teal-soft: var(--accent-soft);
+  --color-teal-soft-alpha: var(--accent-soft-alpha);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-state-success: var(--success);
+  --color-state-warning: var(--warning);
+  --color-state-danger: var(--danger);
+  --color-state-info: var(--info);
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
+  background-color: var(--background);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-image: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.05), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.03), transparent);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Luxury Custom Utilities */
+/* Teal Glass Signature Styling */
 @layer utilities {
-  .luxury-panel {
-    background-color: rgba(17, 24, 39, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  .teal-glass {
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
   }
 
-  .luxury-panel-gold {
-    background-color: rgba(17, 24, 39, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    box-shadow: 0 4px 25px -2px rgba(212, 175, 55, 0.08);
+  .teal-glass-card {
+    background-color: var(--surface-primary);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 2px 12px -2px rgba(18, 59, 59, 0.04);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
   }
 
-  .luxury-button-gold {
-    background: linear-gradient(135deg, #D4AF37 0%, #B89628 100%);
-    color: #0B0F17;
-    font-weight: 600;
-    box-shadow: 0 2px 10px -1px rgba(212, 175, 55, 0.3);
+  .dark .teal-glass-card {
+    background-color: var(--surface-primary);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  }
+
+  .teal-glass-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 8px 24px -4px rgba(22, 139, 131, 0.12);
+  }
+
+  .dark .teal-glass-card:hover {
+    box-shadow: 0 8px 30px -4px rgba(54, 181, 167, 0.2);
+  }
+
+  .teal-pill {
+    background-color: var(--accent-soft-alpha);
+    color: var(--accent-primary);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .teal-button-primary {
+    background-color: var(--accent-primary);
+    color: #FFFFFF;
+    font-weight: 500;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 10px -2px rgba(22, 139, 131, 0.35);
   }
 
-  .luxury-button-gold:hover {
-    background: linear-gradient(135deg, #E5C158 0%, #D4AF37 100%);
-    box-shadow: 0 4px 16px -1px rgba(212, 175, 55, 0.45);
+  .teal-button-primary:hover {
+    background-color: var(--accent-hover);
+    box-shadow: 0 4px 16px -2px rgba(22, 139, 131, 0.45);
     transform: translateY(-1px);
   }
 
-  .gold-gradient-text {
-    background: linear-gradient(135deg, #FFF6DC 0%, #D4AF37 50%, #B89628 100%);
+  .teal-button-secondary {
+    background-color: var(--surface-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .teal-button-secondary:hover {
+    background-color: var(--surface-hover);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .teal-gradient-text {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-primary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  .metric-mono {
-    font-family: var(--font-mono);
-    font-feature-settings: "tnum" 1, "zero" 1;
+  .obsidian-glow {
+    background: radial-gradient(circle at 50% 0%, rgba(54, 181, 167, 0.15) 0%, transparent 70%);
   }
 }
 
@@ -113,13 +172,16 @@ body {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: var(--border-subtle);
   border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.35);
+  background: var(--accent-primary);
 }

@@ -1,440 +1,626 @@
 "use client";
-import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Points, PointMaterial, OrbitControls } from '@react-three/drei';
-// @ts-expect-error Missing types for maath module
-import * as random from 'maath/random/dist/maath-random.esm';
-import { motion, useScroll, useTransform } from 'framer-motion';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
-import * as THREE from 'three';
+import { motion } from 'framer-motion';
 import {
-  Sparkles,
+  Shield,
+  Cpu,
+  Database,
   ArrowRight,
-  ChevronDown,
-  UploadCloud,
-  MessageSquare,
-  LineChart,
   CheckCircle2,
-  Wand2,
-  BrainCircuit,
-  Network,
+  ChevronRight,
+  Terminal,
+  Activity,
+  Layers,
   FileText,
-  Building2,
-  UserRound,
-  ShieldCheck,
-  Gauge,
-  Users,
-  Zap
+  LineChart,
+  BrainCircuit,
+  Wand2,
+  Check,
+  Compass
 } from 'lucide-react';
-
-function GentleParticles(props: any) {
-  const ref = useRef<THREE.Points>(null);
-
-  const sphere = useMemo(() => {
-    return random.inSphere(new Float32Array(3000 * 3), { radius: 2 });
-  }, []);
-
-  useFrame((state, delta) => {
-    if (ref.current) {
-      ref.current.rotation.x -= delta / 20;
-      ref.current.rotation.y -= delta / 30;
-    }
-  });
-
-  return (
-    <group rotation={[0, 0, Math.PI / 4]}>
-      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false} {...props}>
-        <PointMaterial
-          transparent
-          color="#4f46e5"
-          size={0.008}
-          sizeAttenuation={true}
-          depthWrite={false}
-          opacity={0.5}
-        />
-      </Points>
-    </group>
-  );
-}
-
-const PIPELINE_FEATURES = [
-  {
-    icon: Wand2,
-    title: 'Cleaning that shows its work',
-    problem: 'Missing and messy data usually means hours of manual spreadsheet triage — or a model quietly trained on garbage.',
-    solution: 'Agentix profiles every column, picks a statistically justified fix (median for skewed data, mode for categories) and tells you exactly what it changed and why.',
-  },
-  {
-    icon: BrainCircuit,
-    title: 'AutoML that picks the right model',
-    problem: "Choosing between regression and classification, then the right algorithm, is where most self-serve tools quietly fall apart.",
-    solution: 'Agentix detects the real shape of your problem, trains and validates on a proper held-out split, and reports real accuracy — not a placeholder number.',
-  },
-  {
-    icon: LineChart,
-    title: 'Explainability you can defend',
-    problem: 'A model that can’t explain itself is a liability in front of a board, a regulator, or your own team.',
-    solution: 'Every prediction comes with the drivers behind it in plain language, so you can stand behind the answer, not just the output.',
-  },
-  {
-    icon: Network,
-    title: 'A knowledge graph that remembers',
-    problem: 'Insights from last quarter’s analysis usually die in someone’s downloads folder.',
-    solution: 'Datasets, models, and experiments are linked automatically, so patterns you’ve already found surface again when they’re relevant.',
-  },
-  {
-    icon: MessageSquare,
-    title: 'An analyst who speaks plain English',
-    problem: 'SQL and pivot tables are a real barrier between a question and an answer.',
-    solution: 'Ask in your own words. Agentix answers grounded in your actual uploaded data — not a generic guess.',
-  },
-  {
-    icon: FileText,
-    title: 'Reports ready for the room',
-    problem: 'Turning an analysis into something presentable eats up more time than the analysis itself.',
-    solution: 'Board-ready executive summaries generate automatically, with the technical detail one click away for whoever needs it.',
-  },
-];
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Badge } from '@/components/ui/Badge';
 
 export default function LandingPage() {
-  const { scrollYProgress } = useScroll();
-  const yBackground = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-  const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const [activeConsoleTab, setActiveConsoleTab] = useState<'inference' | 'security' | 'pipeline'>('inference');
 
   return (
-    <div className="w-full bg-slate-50 overflow-x-hidden text-slate-900 font-sans selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] transition-colors duration-200">
+      
+      {/* 1. TOP NAVIGATION */}
+      <header className="sticky top-0 z-50 w-full teal-glass transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
+                <Compass size={18} className="text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold tracking-tight text-lg text-[var(--text-primary)] flex items-center gap-2">
+                  AGENTIX
+                  <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-[var(--accent-soft-alpha)] text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 uppercase">
+                    Enterprise
+                  </span>
+                </span>
+              </div>
+            </Link>
 
-      {/* Scroll progress rail */}
-      <motion.div
-        style={{ width: progressWidth }}
-        className="fixed top-0 left-0 h-[2.5px] bg-gradient-to-r from-indigo-500 to-purple-500 z-[60]"
-      />
-
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 p-6 md:px-12 flex justify-between items-center z-50 bg-white/70 backdrop-blur-xl border-b border-slate-200/50">
-        <div className="font-semibold text-xl flex items-center gap-2 text-indigo-600 tracking-tight">
-          <Sparkles size={24} className="fill-indigo-100" />
-          Agentix
-        </div>
-        <Link
-          href="/login"
-          className="px-5 py-2 rounded-md bg-slate-900 text-white hover:bg-slate-800 transition-colors font-medium shadow-sm text-sm"
-        >
-          Sign In
-        </Link>
-      </nav>
-
-      {/* Hero Section */}
-      <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Abstract Background */}
-        <motion.div style={{ y: yBackground }} className="absolute inset-0 z-0 pointer-events-none opacity-40">
-          <Canvas camera={{ position: [0, 0, 3] }}>
-            <ambientLight intensity={0.8} />
-            <GentleParticles />
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              autoRotate
-              autoRotateSpeed={0.3}
-            />
-          </Canvas>
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/80 to-slate-50"></div>
-        </motion.div>
-
-        {/* Hero Content */}
-        <motion.div
-          style={{ opacity: opacityHero }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 text-center max-w-4xl px-6 pointer-events-auto mt-12"
-        >
-          <div className="inline-flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full border border-indigo-200 bg-indigo-50/50 text-indigo-700 text-sm font-medium tracking-wide">
-            <Sparkles size={14} /> Agentix 2.0 is now live
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--text-secondary)]">
+              <a href="#platform" className="hover:text-[var(--accent-primary)] transition-colors">Platform</a>
+              <a href="#models" className="hover:text-[var(--accent-primary)] transition-colors">Custom AI</a>
+              <a href="#architecture" className="hover:text-[var(--accent-primary)] transition-colors">Architecture</a>
+              <a href="#security" className="hover:text-[var(--accent-primary)] transition-colors">8-Layer Security</a>
+              <a href="#solutions" className="hover:text-[var(--accent-primary)] transition-colors">Solutions</a>
+            </nav>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.1] text-slate-900">
-            Enterprise Data Intelligence, <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-              without the complexity.
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-            Upload your data and let the AI brain do the heavy lifting. Clean data, discover insights, and generate board-ready reports in seconds—no coding required.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Link
               href="/login"
-              className="px-8 py-4 rounded-lg bg-indigo-600 text-white font-medium text-[15px] hover:bg-indigo-700 hover:shadow-md hover:-translate-y-[1px] transition-all flex items-center gap-2"
+              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-3 py-1.5 rounded-lg transition-colors"
             >
-              Start for free <ArrowRight size={18} />
+              Sign In
+            </Link>
+            <Link
+              href="/login"
+              className="teal-button-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+            >
+              <span>Get Started</span>
+              <ArrowRight size={14} />
             </Link>
           </div>
-        </motion.div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 1 }}
-          className="absolute bottom-10 z-10 flex flex-col items-center text-slate-400 animate-bounce"
-        >
-          <ChevronDown size={24} />
-        </motion.div>
-      </div>
-
-      {/* How it Works Section */}
-      <section className="relative z-20 py-24 md:py-32 px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="text-center mb-16 md:mb-24">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">The AI Operating System for your data</h2>
-          <p className="text-lg text-slate-500">From raw spreadsheet to strategic insight in three simple steps.</p>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-          {/* Connecting line for desktop */}
-          <div className="hidden md:block absolute top-8 left-[15%] right-[15%] h-px bg-slate-200"></div>
-
-          <StepCard
-            icon={UploadCloud}
-            title="1. Connect Data"
-            desc="Drag and drop your Excel or CSV files. The AI brain automatically cleans and structures the data."
-            delay={0}
-          />
-          <StepCard
-            icon={MessageSquare}
-            title="2. Ask Questions"
-            desc="Chat with your data using plain English. Agentix understands context and intent."
-            delay={0.1}
-          />
-          <StepCard
-            icon={LineChart}
-            title="3. Discover Insights"
-            desc="Get interactive charts, predictive modeling, and executive summaries instantly."
-            delay={0.2}
-          />
-        </div>
-      </section>
-
-      {/* Feature Showcase: Chat demo */}
-      <section className="relative z-20 py-24 bg-white border-y border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-
+      {/* 2. HERO SECTION */}
+      <section className="relative pt-20 pb-24 overflow-hidden border-b border-[var(--border-subtle)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="space-y-6"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase mb-6 teal-pill"
           >
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-4">
-              <MessageSquare size={24} className="text-indigo-600" />
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Talk to your data naturally.</h2>
-            <p className="text-lg text-slate-600 leading-relaxed font-light">
-              Forget complicated SQL queries or pivot tables. Agentix understands natural language. Whether you need a quick summary for a meeting or a deep dive into sales trends, just ask.
-            </p>
-            <ul className="space-y-4 pt-4">
-              {[
-                'Zero coding required',
-                'Instant chart generation',
-                'Causal reasoning explanations'
-              ].map((item, i) => (
-                <li key={i} className="flex items-center gap-3 text-slate-700 font-medium">
-                  <CheckCircle2 size={18} className="text-indigo-500" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <Shield size={12} className="text-[var(--accent-primary)]" />
+            Air-Gapped Institutional AI &bull; Production Certified
           </motion.div>
 
-          {/* Chat Mockup */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="rounded-2xl border border-slate-200 bg-slate-50 shadow-xl p-6 overflow-hidden relative"
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[var(--text-primary)] max-w-4xl mx-auto leading-[1.1]"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-            <div className="flex flex-col gap-6 pt-2">
-              <div className="self-end bg-slate-900 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm max-w-[85%] shadow-sm text-sm">
-                Hey Agentix, what was our best selling product category in Q3?
-              </div>
-              <div className="flex gap-4 max-w-[90%]">
-                <div className="w-8 h-8 rounded-md bg-indigo-100 border border-indigo-200 flex items-center justify-center shrink-0 mt-1">
-                  <Sparkles size={16} className="text-indigo-600" />
+            Intelligence, tailored to your{' '}
+            <span className="teal-gradient-text">institution.</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mt-6 leading-relaxed font-normal"
+          >
+            Agentix brings secure, customisable AI and Data Science capabilities into one intelligent platform, helping organisations transform their data into meaningful decisions.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
+          >
+            <Link
+              href="/dashboard"
+              className="w-full sm:w-auto teal-button-primary px-7 py-3 rounded-xl text-base flex items-center justify-center gap-2 shadow-lg"
+            >
+              <span>Explore Platform</span>
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/login"
+              className="w-full sm:w-auto teal-button-secondary px-7 py-3 rounded-xl text-base flex items-center justify-center gap-2"
+            >
+              <span>Get Started</span>
+              <ChevronRight size={16} />
+            </Link>
+          </motion.div>
+
+          {/* TEAL GLASS INTERACTIVE TELEMETRY HERO WIDGET */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="mt-16 max-w-5xl mx-auto text-left rounded-2xl overflow-hidden teal-glass-card shadow-xl border border-[var(--border-subtle)]"
+          >
+            {/* Widget Bar */}
+            <div className="px-5 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/60 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                  <div className="w-3 h-3 rounded-full bg-amber-400/80" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-400/80" />
                 </div>
-                <div className="bg-white border border-slate-200 px-5 py-4 rounded-2xl rounded-tl-sm shadow-sm text-slate-700 text-sm leading-relaxed">
-                  <p>In Q3, your best selling category was <strong>Enterprise Software</strong>, bringing in $42,500 in MRR.</p>
-                  <div className="mt-4 w-full bg-slate-50 border border-slate-100 rounded-lg p-4">
-                    <div className="flex items-end h-24 gap-3">
-                      <div className="w-1/4 bg-slate-300 h-[40%] rounded-t-sm"></div>
-                      <div className="w-1/4 bg-slate-400 h-[60%] rounded-t-sm"></div>
-                      <div className="w-1/4 bg-indigo-500 h-[90%] rounded-t-sm shadow-sm"></div>
-                      <div className="w-1/4 bg-slate-300 h-[50%] rounded-t-sm"></div>
+                <div className="h-4 w-px bg-[var(--border-subtle)] mx-1" />
+                <span className="text-xs font-mono font-medium text-[var(--text-secondary)] flex items-center gap-1.5">
+                  <Terminal size={12} className="text-[var(--accent-primary)]" />
+                  agentix-telemetry://cluster.local
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveConsoleTab('inference')}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    activeConsoleTab === 'inference'
+                      ? 'bg-[var(--surface-primary)] text-[var(--accent-primary)] shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Neural Inference
+                </button>
+                <button
+                  onClick={() => setActiveConsoleTab('security')}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    activeConsoleTab === 'security'
+                      ? 'bg-[var(--surface-primary)] text-[var(--accent-primary)] shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  8-Layer Security
+                </button>
+                <button
+                  onClick={() => setActiveConsoleTab('pipeline')}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    activeConsoleTab === 'pipeline'
+                      ? 'bg-[var(--surface-primary)] text-[var(--accent-primary)] shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Pipeline Stages
+                </button>
+              </div>
+            </div>
+
+            {/* Widget Content */}
+            <div className="p-6 font-mono text-xs leading-relaxed bg-[var(--surface-primary)]">
+              {activeConsoleTab === 'inference' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-[var(--text-secondary)] border-b border-[var(--border-subtle)] pb-2">
+                    <span className="flex items-center gap-1.5 text-[var(--accent-primary)] font-semibold">
+                      <Cpu size={14} /> ACTIVE LOCAL INFERENCE ENGINE
+                    </span>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">● AIR-GAPPED STREAMING</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                    <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)]">
+                      <div className="text-[var(--text-secondary)] text-[11px]">Primary Model</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">researcher-m4:latest</div>
+                      <div className="text-[10px] text-[var(--accent-primary)] mt-1 font-sans">Apple Silicon / MLX Native</div>
+                    </div>
+                    <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)]">
+                      <div className="text-[var(--text-secondary)] text-[11px]">Exact-Match Cache</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">0.00 ms (SHA-256 Hit)</div>
+                      <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-sans">100% Compute Elimination</div>
+                    </div>
+                    <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)]">
+                      <div className="text-[var(--text-secondary)] text-[11px]">Factual Faithfulness</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">94.8% Grounded</div>
+                      <div className="text-[10px] text-[var(--accent-primary)] mt-1 font-sans">Zero Hallucination Gate</div>
                     </div>
                   </div>
+                  <div className="p-3 rounded-lg bg-[var(--surface-secondary)]/70 border border-[var(--border-subtle)] text-[var(--text-secondary)] mt-3">
+                    <span className="text-[var(--accent-primary)] font-bold">&gt; Query:</span> &quot;Summarize Q3 variance against historical risk bounds.&quot;
+                    <br />
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">&lt; Response:</span> &quot;Grounded in sales_q3.csv EDA output: variance stayed within +2.1% bound, zero PII transmitted, prompt hash verified.&quot;
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {activeConsoleTab === 'security' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-[var(--text-secondary)] border-b border-[var(--border-subtle)] pb-2">
+                    <span className="flex items-center gap-1.5 text-[var(--accent-primary)] font-semibold">
+                      <Shield size={14} /> ENTERPRISE 8-LAYER AI DEFENSE COMPLIANCE
+                    </span>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">8/8 LAYERS CERTIFIED</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                    {[
+                      { layer: 'L1 API Quotas', status: 'Token Bucket', ok: true },
+                      { layer: 'L2 Prompt Enclave', status: 'SHA-256 Validated', ok: true },
+                      { layer: 'L3 Vector RAG', status: 'Tenant Partitioned', ok: true },
+                      { layer: 'L4 MCP Gating', status: 'JSON-RPC Schemas', ok: true },
+                      { layer: 'L5 RBAC / OIDC', status: 'RFC 7662 Introspect', ok: true },
+                      { layer: 'L6 AI Guardrails', status: 'PII Redacted', ok: true },
+                      { layer: 'L7 Exact Cache', status: 'Model Routed', ok: true },
+                      { layer: 'L8 AI Evals', status: 'Faithfulness Scored', ok: true },
+                    ].map((item, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)] flex items-center justify-between">
+                        <div>
+                          <div className="text-[11px] font-semibold text-[var(--text-primary)]">{item.layer}</div>
+                          <div className="text-[10px] text-[var(--text-secondary)]">{item.status}</div>
+                        </div>
+                        <Check size={14} className="text-emerald-500 shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeConsoleTab === 'pipeline' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-[var(--text-secondary)] border-b border-[var(--border-subtle)] pb-2">
+                    <span className="flex items-center gap-1.5 text-[var(--accent-primary)] font-semibold">
+                      <Layers size={14} /> 9-STAGE REVERSIBLE ANALYTICAL PIPELINE
+                    </span>
+                    <span className="text-[11px] text-[var(--text-secondary)]">PARQUET / POLARS HYDRATED</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {[
+                      '1. ProfilingAgent',
+                      '2. CleaningAgent',
+                      '3. FeatureEngineering',
+                      '4. EDAAgent',
+                      '5. TrainingAgent',
+                      '6. EvaluationAgent',
+                      '7. PredictionAgent',
+                      '8. XAIAgent',
+                      '9. ReportAgent',
+                    ].map((stage, idx) => (
+                      <span key={idx} className="px-2.5 py-1 rounded bg-[var(--surface-secondary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] flex items-center gap-1.5">
+                        <CheckCircle2 size={12} className="text-[var(--accent-primary)]" />
+                        {stage}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-[11px] text-[var(--text-secondary)] pt-1 font-sans">
+                    All stages execute deterministically with complete data lineage, generating authentic executive PDF deliverables.
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
-
         </div>
       </section>
 
-      {/* Full feature grid — what each part of the pipeline actually does */}
-      <section className="relative z-20 py-24 md:py-32 px-6 md:px-12 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16 md:mb-20 max-w-2xl mx-auto"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Every stage of the pipeline, handled.</h2>
-          <p className="text-lg text-slate-500">Agentix isn&apos;t one trick — it&apos;s the full path from raw file to defensible decision, and each step is built to solve a specific, real problem.</p>
-        </motion.div>
+      {/* 3. PLATFORM CAPABILITIES */}
+      <section id="platform" className="py-24 border-b border-[var(--border-subtle)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-mono font-medium tracking-wide uppercase text-[var(--accent-primary)] mb-3">
+              Platform Capabilities
+            </h2>
+            <p className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+              Engineered for rigorous data intelligence.
+            </p>
+            <p className="text-base text-[var(--text-secondary)] mt-4">
+              Autonomous analytical pipelines that replace weeks of manual triage with verifiable, transparent ML workflows.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PIPELINE_FEATURES.map((feature, i) => (
-            <FeatureCard key={feature.title} {...feature} delay={(i % 3) * 0.08} />
-          ))}
-        </div>
-      </section>
-
-      {/* Enterprise vs Individual */}
-      <section className="relative z-20 py-24 md:py-32 bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-16 md:mb-20 max-w-2xl mx-auto"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">One platform. Two very different days.</h2>
-            <p className="text-lg text-slate-400">Whether you&apos;re running analytics for a whole organization or just trying to understand your own spreadsheet, Agentix meets you where you are.</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <AudienceCard
-              icon={Building2}
-              eyebrow="For Enterprise"
-              title="Analytics your whole org can trust."
-              points={[
-                { icon: ShieldCheck, text: 'Governed pipelines with a full audit trail of every cleaning decision and model result' },
-                { icon: Users, text: 'Shared knowledge graph so every team builds on analysis that already exists, instead of starting over' },
-                { icon: Gauge, text: 'Scales from a departmental spreadsheet to enterprise-sized datasets on the same workflow' },
-              ]}
-            />
-            <AudienceCard
-              icon={UserRound}
-              eyebrow="For Individuals & Small Teams"
-              title="A data scientist in your corner, on day one."
-              points={[
-                { icon: Zap, text: 'No setup, no infrastructure, no code — upload a file and get a real answer in minutes' },
-                { icon: MessageSquare, text: 'Plain-English explanations by default, so you don’t need a statistics background to trust the result' },
-                { icon: Sparkles, text: 'The same AutoML and explainability engine enterprises pay data teams for, sized for one person' },
-              ]}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Wand2,
+                title: 'Autonomous Data Profiling & Cleaning',
+                description: 'Detects skew, missing values, and anomalies. Applies mathematically justified median or mode imputation with complete audit logs.',
+              },
+              {
+                icon: BrainCircuit,
+                title: 'Held-Out AutoML Training',
+                description: 'Identifies problem structure (regression vs classification), executes rigorous cross-validation, and tracks authentic performance metrics.',
+              },
+              {
+                icon: LineChart,
+                title: 'Explainable AI & Feature Attribution',
+                description: 'Interpretable SHAP and feature impact curves give stakeholders plain-English causal drivers behind every model prediction.',
+              },
+              {
+                icon: FileText,
+                title: 'Board-Ready Executive Reports',
+                description: 'Compiles technical analytics, distribution charts, and business recommendations into professional PDF dossiers in seconds.',
+              },
+              {
+                icon: Database,
+                title: 'Tenant-Isolated Vector RAG',
+                description: 'Semantically index dataset metadata and pipeline run outputs with strict tenant boundaries for grounded, hallucination-free QA.',
+              },
+              {
+                icon: Shield,
+                title: 'Governed MCP Tool Calling',
+                description: 'JSON-RPC Model Context Protocol tools with strict risk tiers (READ_ONLY, MUTATING, DESTRUCTIVE) and granular RBAC authorization.',
+              },
+            ].map((cap, idx) => (
+              <div
+                key={idx}
+                className="teal-glass-card p-7 rounded-xl flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-lg bg-[var(--accent-soft-alpha)] text-[var(--accent-primary)] flex items-center justify-center mb-5 border border-[var(--accent-primary)]/20">
+                    <cap.icon size={20} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] tracking-tight">
+                    {cap.title}
+                  </h3>
+                  <p className="text-sm text-[var(--text-secondary)] mt-3 leading-relaxed">
+                    {cap.description}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] flex items-center text-xs font-medium text-[var(--accent-primary)] gap-1">
+                  <span>Explore feature</span>
+                  <ChevronRight size={14} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="relative z-20 py-32 px-6 md:px-12 text-center max-w-3xl mx-auto">
-        <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">Stop guessing. Start knowing.</h2>
-        <p className="text-lg text-slate-600 mb-10 font-light">
-          Whether you lead a data team or you are the data team, Agentix turns raw files into decisions you can stand behind.
-        </p>
-        <Link
-          href="/login"
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-indigo-600 text-white font-medium text-[15px] hover:bg-indigo-700 hover:shadow-md hover:-translate-y-[1px] transition-all"
-        >
-          Try Agentix Now <ArrowRight size={18} />
-        </Link>
+      {/* 4. CUSTOM AI MODELS & HARDWARE ACCELERATION */}
+      <section id="models" className="py-24 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase mb-4 teal-pill">
+                <Cpu size={12} className="text-[var(--accent-primary)]" />
+                Local Neural Inference
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)] leading-tight">
+                Your models, running on your hardware. Zero data egress.
+              </h2>
+              <p className="text-base text-[var(--text-secondary)] mt-4 leading-relaxed">
+                Agentix leverages Apple Silicon Neural Engines, Metal, CUDA, and high-throughput local Ollama inference. Sensitive corporate financials and patient datasets never touch public cloud APIs.
+              </p>
+
+              <div className="mt-8 space-y-4">
+                {[
+                  'Full support for Qwen 2.5, Researcher M4, and DeepSeek reasoning architectures.',
+                  'Dynamic complexity router dispatches analytical queries to the optimal local model.',
+                  'Sub-second prompt evaluation with exact-match SHA-256 inference caching.',
+                  'Air-gapped operation certified: disconnect network cable and full analysis functions intact.',
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={12} />
+                    </div>
+                    <span className="text-sm text-[var(--text-primary)]">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="teal-glass-card p-6 rounded-2xl border border-[var(--border-subtle)]">
+              <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)]">
+                <div className="flex items-center gap-2">
+                  <Activity size={16} className="text-[var(--accent-primary)]" />
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Inference Telemetry</span>
+                </div>
+                <Badge variant="teal" size="sm">Local Active</Badge>
+              </div>
+
+              <div className="space-y-4 mt-5">
+                <div>
+                  <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1.5">
+                    <span>Inference Throughput (Ollama)</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">36.4 tokens/s</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-[var(--surface-secondary)] overflow-hidden">
+                    <div className="h-full bg-[var(--accent-primary)] rounded-full w-[82%]" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1.5">
+                    <span>Unified Memory Allocation</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">2.8 GB / 16.0 GB</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-[var(--surface-secondary)] overflow-hidden">
+                    <div className="h-full bg-[var(--accent-primary)] rounded-full w-[24%]" />
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)] text-xs font-mono text-[var(--text-secondary)] space-y-1">
+                  <div>[hardware_detector] Apple Silicon M-series detected.</div>
+                  <div>[inference_router] complexity=BALANCED -&gt; model=researcher-m4:latest</div>
+                  <div>[llm_cache] prompt_sha256=b764b... latency_saved=1.5s</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 py-10 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center bg-white">
-        <div className="font-semibold text-lg flex items-center gap-2 mb-4 md:mb-0 text-slate-900 tracking-tight">
-          <Sparkles size={20} className="text-indigo-600" />
-          Agentix
+      {/* 5. ENTERPRISE 8-LAYER AI ARCHITECTURE */}
+      <section id="security" className="py-24 border-b border-[var(--border-subtle)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-mono font-medium tracking-wide uppercase text-[var(--accent-primary)] mb-3">
+              Defense In Depth
+            </h2>
+            <p className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+              Enterprise 8-Layer AI Security Architecture
+            </p>
+            <p className="text-base text-[var(--text-secondary)] mt-4">
+              Agentix enforces full-stack AI governance at every layer—from network ingress down to token evaluation.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                num: '01',
+                title: 'API Governance',
+                detail: 'Tenant token-bucket rate limiting (1000 req/min), payload constraints, and security headers.',
+              },
+              {
+                num: '02',
+                title: 'System Prompt Registry',
+                detail: 'Versioned templates, cryptographic SHA-256 tracking, and delimiter collision containment.',
+              },
+              {
+                num: '03',
+                title: 'Tenant-Isolated RAG',
+                detail: 'Strictly partitioned vector indexing preventing cross-tenant document and metadata leakage.',
+              },
+              {
+                num: '04',
+                title: 'MCP Tool Security',
+                detail: 'JSON-RPC 2.0 schemas, formal input validation, risk tiering, and execution audit trails.',
+              },
+              {
+                num: '05',
+                title: 'Granular RBAC & OIDC',
+                detail: 'Role matrices (Admin, Data Scientist, Analyst, Viewer) with RFC 7662 token introspection.',
+              },
+              {
+                num: '06',
+                title: 'Dual-Stage Guardrails',
+                detail: 'Adversarial jailbreak neutralization (base64 & leetspeak) and bidirectional PII redaction.',
+              },
+              {
+                num: '07',
+                title: 'Exact Cache & Routing',
+                detail: 'Tenant-aware SHA-256 exact-match cache (<5ms) and dynamic query complexity routing.',
+              },
+              {
+                num: '08',
+                title: 'Observability & Evals',
+                detail: 'GenAI OpenTelemetry semantic spans and automated factual faithfulness scoring (0.0–1.0).',
+              },
+            ].map((layer, idx) => (
+              <div
+                key={idx}
+                className="teal-glass-card p-6 rounded-xl border border-[var(--border-subtle)] relative group hover:border-[var(--accent-primary)] transition-colors"
+              >
+                <div className="text-xs font-mono text-[var(--accent-primary)] font-bold mb-3">
+                  LAYER {layer.num}
+                </div>
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">
+                  {layer.title}
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-2 leading-relaxed">
+                  {layer.detail}
+                </p>
+                <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                  <CheckCircle2 size={12} />
+                  <span>VERIFIED COMPLIANT</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="text-slate-500 text-sm font-medium">
-          &copy; 2026 Agentix AI. All rights reserved.
+      </section>
+
+      {/* 6. INSTITUTIONAL USE CASES */}
+      <section id="solutions" className="py-24 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-mono font-medium tracking-wide uppercase text-[var(--accent-primary)] mb-3">
+              Institutional Solutions
+            </h2>
+            <p className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+              Built for high-stakes analytical environments.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                domain: 'Financial Services & Hedge Funds',
+                title: 'Credit Risk & Portfolio Stress Testing',
+                body: 'Profile borrower portfolios, discover non-linear credit default risks with gradient boosted trees, and generate compliant XAI audit packages.',
+              },
+              {
+                domain: 'Healthcare & Clinical Trials',
+                title: 'Patient Outcome & Dosage Intelligence',
+                body: 'Analyze longitudinal cohort data under zero-leakage air-gapped constraints. PII redaction ensures HIPAA compliance automatically.',
+              },
+              {
+                domain: 'Enterprise Operations & SaaS',
+                title: 'Churn Prevention & Customer Lifetime Value',
+                body: 'Ingest multi-table telemetry, engineer cohort features, predict high-risk contract terminations, and generate executive briefings.',
+              },
+            ].map((uc, idx) => (
+              <div key={idx} className="teal-glass-card p-7 rounded-xl border border-[var(--border-subtle)]">
+                <span className="text-[11px] font-mono font-medium text-[var(--accent-primary)] uppercase tracking-wider">
+                  {uc.domain}
+                </span>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] mt-3">
+                  {uc.title}
+                </h3>
+                <p className="text-sm text-[var(--text-secondary)] mt-3 leading-relaxed">
+                  {uc.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. CALL TO ACTION */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="teal-glass p-12 rounded-3xl border border-[var(--border-subtle)] shadow-2xl">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+              Deploy Institutional Intelligence Today.
+            </h2>
+            <p className="text-base text-[var(--text-secondary)] max-w-xl mx-auto mt-4">
+              Experience the full Agentix platform—from raw dataset ingestion to board-ready executive reports—running locally on your infrastructure.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+              <Link
+                href="/dashboard"
+                className="teal-button-primary px-8 py-3.5 rounded-xl text-base flex items-center justify-center gap-2 shadow-lg"
+              >
+                <span>Launch Agentix Console</span>
+                <ArrowRight size={16} />
+              </Link>
+              <Link
+                href="/login"
+                className="teal-button-secondary px-8 py-3.5 rounded-xl text-base flex items-center justify-center gap-2"
+              >
+                <span>Sign In to Workspace</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. ENTERPRISE FOOTER */}
+      <footer className="border-t border-[var(--border-subtle)] bg-[var(--surface-primary)] py-12 text-sm text-[var(--text-secondary)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[var(--border-subtle)]">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-white">
+                <Compass size={16} />
+              </div>
+              <span className="font-bold text-base text-[var(--text-primary)]">AGENTIX</span>
+              <span className="text-xs text-[var(--text-secondary)]">&bull; Institutional AI Intelligence Platform</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>All Systems Operational &bull; Local Neural Engine Active</span>
+            </div>
+          </div>
+
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--text-muted)] gap-4">
+            <p>&copy; {new Date().getFullYear()} Agentix. All rights reserved. Built for enterprise data intelligence.</p>
+            <div className="flex items-center gap-6">
+              <Link href="/login" className="hover:text-[var(--text-primary)] transition-colors">Console</Link>
+              <a href="#platform" className="hover:text-[var(--text-primary)] transition-colors">Platform</a>
+              <a href="#security" className="hover:text-[var(--text-primary)] transition-colors">Security</a>
+              <Link href="/login" className="hover:text-[var(--text-primary)] transition-colors">Documentation</Link>
+            </div>
+          </div>
         </div>
       </footer>
+
     </div>
-  );
-}
-
-function StepCard({ icon: Icon, title, desc, delay }: { icon: any, title: string, desc: string, delay: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay, duration: 0.5 }}
-      className="relative flex flex-col items-center text-center group bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
-    >
-      <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-6 relative z-10 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">
-        <Icon size={28} className="text-slate-600 group-hover:text-indigo-600 transition-colors" />
-      </div>
-      <h3 className="text-xl font-semibold mb-3 text-slate-900">{title}</h3>
-      <p className="text-slate-500 leading-relaxed font-light text-[15px]">
-        {desc}
-      </p>
-    </motion.div>
-  );
-}
-
-function FeatureCard({ icon: Icon, title, problem, solution, delay }: { icon: any, title: string, problem: string, solution: string, delay: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ delay, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="flex flex-col bg-white p-7 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all"
-    >
-      <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mb-5 shadow-sm">
-        <Icon size={20} className="text-white" />
-      </div>
-      <h3 className="text-lg font-semibold mb-3 text-slate-900">{title}</h3>
-      <p className="text-slate-500 text-sm leading-relaxed font-light mb-3">
-        <span className="text-slate-400">The problem: </span>{problem}
-      </p>
-      <p className="text-slate-700 text-sm leading-relaxed">
-        {solution}
-      </p>
-    </motion.div>
-  );
-}
-
-function AudienceCard({ icon: Icon, eyebrow, title, points }: { icon: any, eyebrow: string, title: string, points: { icon: any, text: string }[] }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-white/5 border border-white/10 rounded-2xl p-8 md:p-10 backdrop-blur-sm"
-    >
-      <div className="w-12 h-12 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center mb-6">
-        <Icon size={22} className="text-indigo-300" />
-      </div>
-      <div className="text-indigo-300 text-sm font-semibold tracking-wide uppercase mb-3">{eyebrow}</div>
-      <h3 className="text-2xl font-bold mb-6 tracking-tight text-white">{title}</h3>
-      <ul className="space-y-4">
-        {points.map((point, i) => (
-          <li key={i} className="flex items-start gap-3 text-slate-300 text-[15px] leading-relaxed">
-            <point.icon size={18} className="text-indigo-400 mt-0.5 shrink-0" />
-            {point.text}
-          </li>
-        ))}
-      </ul>
-    </motion.div>
   );
 }

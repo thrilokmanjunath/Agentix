@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'gold' | 'local' | 'cloud' | 'success' | 'warning' | 'danger' | 'neutral' | 'outline' | 'emerald';
+  variant?: 'teal' | 'gold' | 'local' | 'cloud' | 'success' | 'warning' | 'danger' | 'neutral' | 'outline' | 'emerald';
   size?: 'sm' | 'md';
   children: React.ReactNode;
   className?: string;
@@ -16,21 +16,19 @@ export function Badge({
 }: BadgeProps) {
   const sizeStyles = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs';
 
-  let variantStyles = 'bg-slate-800 text-slate-300 border-slate-700/60';
-  if (variant === 'gold') {
-    variantStyles = 'bg-amber-500/10 text-amber-300 border-amber-500/30';
-  } else if (variant === 'local') {
-    variantStyles = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-medium';
+  let variantStyles = 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-subtle)]';
+  if (variant === 'teal' || variant === 'gold') {
+    variantStyles = 'bg-[var(--accent-soft-alpha)] text-[var(--accent-primary)] border-[var(--accent-primary)]/30 font-medium';
+  } else if (variant === 'local' || variant === 'success' || variant === 'emerald') {
+    variantStyles = 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 font-medium';
   } else if (variant === 'cloud') {
-    variantStyles = 'bg-blue-500/10 text-blue-400 border-blue-500/30';
-  } else if (variant === 'success' || variant === 'emerald') {
-    variantStyles = 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+    variantStyles = 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/25';
   } else if (variant === 'warning') {
-    variantStyles = 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+    variantStyles = 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25';
   } else if (variant === 'danger') {
-    variantStyles = 'bg-rose-500/15 text-rose-300 border-rose-500/30';
+    variantStyles = 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/25';
   } else if (variant === 'outline') {
-    variantStyles = 'bg-transparent text-slate-300 border-slate-700/80';
+    variantStyles = 'bg-transparent text-[var(--text-secondary)] border-[var(--border-subtle)]';
   }
 
   return (

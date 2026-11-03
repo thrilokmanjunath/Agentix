@@ -45,6 +45,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
+    
+    # Enrich with role permissions and tenant metadata if role is provided
+    role = to_encode.get("role")
+    if role:
+        from core.auth.rbac import get_user_permissions
+        to_encode["permissions"] = get_user_permissions(role)
+        if "tenant_id" not in to_encode:
+            to_encode["tenant_id"] = "default"
+
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -102,3 +111,43 @@ def get_current_admin(current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return current_user
+
+
+# ---------------------------------------------------------------------------
+# Granular RBAC & OAuth 2.0 / OIDC Compatibility Layer (Layer 5)
+# ---------------------------------------------------------------------------
+from core.auth.rbac import Role, Permission, has_permission, get_user_permissions  # noqa: E402
+
+
+def require_permission(permission: "Permission | str"):
+    """FastAPI dependency enforcing granular RBAC permissions."""
+    def dependency(current_user: User = Depends(get_current_user)) -> User:
+        if not has_permission(current_user.role, permission):
+            perm_str = permission.value if hasattr(permission, "value") else str(permission)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: user role '{current_user.role}' lacks '{perm_str}'.",
+            )
+        return current_user
+    return dependency
+
+
+def introspect_token(token: str) -> dict:
+    """RFC 7662 OAuth 2.0 / OIDC Token Introspection endpoint helper."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        role = payload.get("role", "viewer")
+        perms = payload.get("permissions") or get_user_permissions(role)
+        return {
+            "active": True,
+            "sub": user_id,
+            "role": role,
+            "tenant_id": payload.get("tenant_id", "default"),
+            "scope": " ".join(perms),
+            "permissions": perms,
+            "exp": payload.get("exp"),
+        }
+    except Exception:
+        return {"active": False}
+

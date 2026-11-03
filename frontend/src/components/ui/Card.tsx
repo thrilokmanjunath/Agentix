@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'elevated' | 'gold' | 'glass';
+  variant?: 'default' | 'elevated' | 'teal' | 'gold' | 'glass';
   className?: string;
   children: React.ReactNode;
 }
@@ -12,13 +12,13 @@ export function Card({
   children,
   ...props
 }: CardProps) {
-  let variantStyles = 'bg-slate-900/70 border border-slate-800/80 shadow-md backdrop-blur-md';
+  let variantStyles = 'bg-[var(--surface-primary)] border border-[var(--border-subtle)] shadow-sm';
   if (variant === 'elevated') {
-    variantStyles = 'bg-slate-900/90 border border-slate-700/60 shadow-lg';
-  } else if (variant === 'gold') {
-    variantStyles = 'luxury-panel-gold';
+    variantStyles = 'bg-[var(--surface-primary)] border border-[var(--border-strong)] shadow-md';
+  } else if (variant === 'teal' || variant === 'gold') {
+    variantStyles = 'bg-[var(--surface-primary)] border border-[var(--accent-primary)]/40 shadow-sm shadow-[var(--accent-soft-alpha)]';
   } else if (variant === 'glass') {
-    variantStyles = 'luxury-panel';
+    variantStyles = 'teal-glass';
   }
 
   return (
@@ -38,7 +38,7 @@ export function CardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`px-6 py-5 border-b border-slate-800/60 flex items-center justify-between ${className}`}
+      className={`px-6 py-5 border-b border-[var(--border-subtle)] flex items-center justify-between ${className}`}
       {...props}
     >
       {children}
@@ -53,7 +53,7 @@ export function CardTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={`text-base font-semibold text-slate-100 tracking-tight flex items-center gap-2 ${className}`}
+      className={`text-base font-semibold text-[var(--text-primary)] tracking-tight ${className}`}
       {...props}
     >
       {children}
@@ -67,7 +67,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={`text-xs text-slate-400 mt-1 ${className}`} {...props}>
+    <p className={`text-xs text-[var(--text-secondary)] mt-1 ${className}`} {...props}>
       {children}
     </p>
   );
@@ -92,7 +92,7 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`px-6 py-4 border-t border-slate-800/60 bg-slate-950/30 rounded-b-xl flex items-center justify-between ${className}`}
+      className={`px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--surface-secondary)]/50 rounded-b-xl flex items-center justify-between ${className}`}
       {...props}
     >
       {children}

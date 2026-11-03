@@ -2,7 +2,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'gold' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'teal' | 'gold' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -26,17 +26,15 @@ export function Button({
   if (size === 'sm') sizeStyles = 'px-3 py-1.5 text-xs';
   if (size === 'lg') sizeStyles = 'px-6 py-2.5 text-base';
 
-  let variantStyles = 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700/60';
-  if (variant === 'gold') {
-    variantStyles = 'luxury-button-gold text-slate-950 font-semibold border border-amber-400/40';
-  } else if (variant === 'primary') {
-    variantStyles = 'bg-blue-600 hover:bg-blue-500 text-white font-medium border border-blue-500/50 shadow-sm';
+  let variantStyles = 'bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)]';
+  if (variant === 'teal' || variant === 'gold' || variant === 'primary') {
+    variantStyles = 'bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white font-medium border border-[var(--accent-primary)] shadow-sm hover:shadow-md transition-all';
   } else if (variant === 'outline') {
-    variantStyles = 'bg-transparent hover:bg-slate-800/60 text-slate-300 hover:text-white border border-slate-700';
+    variantStyles = 'bg-transparent hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]';
   } else if (variant === 'ghost') {
-    variantStyles = 'bg-transparent hover:bg-slate-800/50 text-slate-400 hover:text-slate-200 border border-transparent';
+    variantStyles = 'bg-transparent hover:bg-[var(--surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent';
   } else if (variant === 'danger') {
-    variantStyles = 'bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50';
+    variantStyles = 'bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30';
   }
 
   return (
@@ -50,7 +48,7 @@ export function Button({
       ) : (
         leftIcon
       )}
-      {children}
+      <span>{children}</span>
       {!isLoading && rightIcon}
     </button>
   );

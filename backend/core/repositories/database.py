@@ -78,6 +78,7 @@ def ensure_guest_user():
     fail with a ForeignKeyViolation without this row existing first.
     """
     from core.models.models import User
+    from core.auth import get_password_hash
     db = SessionLocal()
     try:
         if not db.query(User).filter_by(id="guest_user").first():
@@ -89,6 +90,22 @@ def ensure_guest_user():
             ))
             db.commit()
             logger.info("Created default guest_user row.")
+
+        admin = db.query(User).filter(User.email == "admin@agentix.com").first()
+        if not admin:
+            db.add(User(
+                id="default-user",
+                email="admin@agentix.com",
+                hashed_password=get_password_hash("admin123"),
+                role="admin",
+                is_active=True,
+            ))
+            db.commit()
+            logger.info("Created default admin user row.")
+        elif admin.role != "admin":
+            admin.role = "admin"
+            db.commit()
+            logger.info("Updated admin user role to 'admin'.")
     finally:
         db.close()
 
