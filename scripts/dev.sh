@@ -88,7 +88,7 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=agentix-institutional-development-secret-2026
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
 NEXT_PUBLIC_APP_NAME="Agentix Signature"
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/agentix?schema=public"
 ENVFILE
     log_info "Generated frontend/.env.local."
 fi

@@ -17,8 +17,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         redirectTo: "/dashboard"
       });
     } catch (error: any) {
-      const errorString = String(error.type) + String(error.name) + String(error.message);
-      if (errorString.includes("CredentialsSignin")) {
+      if (error?.digest?.startsWith("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
+        throw error;
+      }
+      const errorString = String(error?.type || "") + String(error?.name || "") + String(error?.message || "");
+      if (errorString.includes("CredentialsSignin") || errorString.includes("CallbackRouteError")) {
         const { redirect } = await import("next/navigation");
         redirect("/login?error=InvalidCredentials");
       }
