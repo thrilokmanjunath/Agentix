@@ -27,7 +27,7 @@ export default function LandingPage() {
   const [activeConsoleTab, setActiveConsoleTab] = useState<'inference' | 'security' | 'pipeline'>('inference');
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] transition-colors duration-200">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">
       
       {/* 1. TOP NAVIGATION */}
       <header className="sticky top-0 z-50 w-full teal-glass transition-colors">
@@ -47,7 +47,7 @@ export default function LandingPage() {
               </div>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--text-secondary)]">
+            <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-[var(--text-secondary)]">
               <a href="#platform" className="hover:text-[var(--accent-primary)] transition-colors">Platform</a>
               <a href="#models" className="hover:text-[var(--accent-primary)] transition-colors">Custom AI</a>
               <a href="#architecture" className="hover:text-[var(--accent-primary)] transition-colors">Architecture</a>
@@ -56,17 +56,17 @@ export default function LandingPage() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <Link
               href="/login"
-              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-3 py-1.5 rounded-lg transition-colors"
+              className="hidden sm:inline-block text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-3 py-1.5 rounded-lg transition-colors"
             >
               Sign In
             </Link>
             <Link
               href="/login"
-              className="teal-button-primary px-4 py-2 rounded-lg text-sm flex items-center gap-1.5"
+              className="teal-button-primary px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm flex items-center gap-1.5"
             >
               <span>Get Started</span>
               <ArrowRight size={14} />
@@ -138,7 +138,7 @@ export default function LandingPage() {
             className="mt-16 max-w-5xl mx-auto text-left rounded-2xl overflow-hidden teal-glass-card shadow-xl border border-[var(--border-subtle)]"
           >
             {/* Widget Bar */}
-            <div className="px-5 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/60 flex items-center justify-between">
+            <div className="px-4 sm:px-5 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-red-400/80" />
@@ -146,16 +146,16 @@ export default function LandingPage() {
                   <div className="w-3 h-3 rounded-full bg-emerald-400/80" />
                 </div>
                 <div className="h-4 w-px bg-[var(--border-subtle)] mx-1" />
-                <span className="text-xs font-mono font-medium text-[var(--text-secondary)] flex items-center gap-1.5">
-                  <Terminal size={12} className="text-[var(--accent-primary)]" />
+                <span className="text-xs font-mono font-medium text-[var(--text-secondary)] flex items-center gap-1.5 truncate">
+                  <Terminal size={12} className="text-[var(--accent-primary)] shrink-0" />
                   agentix-telemetry://cluster.local
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto max-w-full pb-1 sm:pb-0">
                 <button
                   onClick={() => setActiveConsoleTab('inference')}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                     activeConsoleTab === 'inference'
                       ? 'bg-[var(--surface-primary)] text-[var(--accent-primary)] shadow-sm'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -165,7 +165,7 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={() => setActiveConsoleTab('security')}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                     activeConsoleTab === 'security'
                       ? 'bg-[var(--surface-primary)] text-[var(--accent-primary)] shadow-sm'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -175,7 +175,7 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={() => setActiveConsoleTab('pipeline')}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                     activeConsoleTab === 'pipeline'
                       ? 'bg-[var(--surface-primary)] text-[var(--accent-primary)] shadow-sm'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
