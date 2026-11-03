@@ -6,6 +6,9 @@ numpy
 requests
 langgraph
 pydantic
+pydantic-settings
+pyjwt[crypto]
+aiofiles
 psutil
 redis
 rq
@@ -23,7 +26,6 @@ duckdb
 polars
 cloudinary
 google-generativeai
-python-jose[cryptography]
 passlib[bcrypt]
 fakeredis
 xgboost

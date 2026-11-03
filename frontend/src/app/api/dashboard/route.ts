@@ -58,8 +58,10 @@ export async function GET() {
     // render permanently regardless of whether anything had actually run.
     let workflow: { state: string; nodes: any[] } = { state: "IDLE", nodes: [] };
 
+    const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/api\/v1\/?$/, '');
+
     try {
-      const resMetrics = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/platform/dashboard-metrics`, { timeout: 1500 });
+      const resMetrics = await axios.get(`${backendBase}/api/v1/platform/dashboard-metrics`, { timeout: 1500 });
       const metrics = resMetrics.data?.data;
       if (metrics) {
         const stateMap: Record<string, string> = {
@@ -81,7 +83,7 @@ export async function GET() {
         // Also surface real activity from the backend (dataset uploads /
         // pipeline runs), merged ahead of the frontend's own DB-backed log.
         try {
-          const resActivity = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/platform/recent-activity`, { timeout: 1500 });
+          const resActivity = await axios.get(`${backendBase}/api/v1/platform/recent-activity`, { timeout: 1500 });
           if (Array.isArray(resActivity.data?.data)) {
             const backendLogs = resActivity.data.data.map((log: any) => ({
               id: log.id,

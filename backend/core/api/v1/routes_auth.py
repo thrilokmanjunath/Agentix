@@ -1,31 +1,41 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.repositories.database import get_db
 from core.models.models import User
 from core.auth import verify_password, get_password_hash, create_access_token, get_current_user
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import timedelta
 
 router = APIRouter()
 
 class UserCreate(BaseModel):
     email: str
-    password: str
+    password: str = Field(..., min_length=8, description="Password must be at least 8 characters long")
     role: str = "user"
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+EMAIL_REGEX = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
+
 @router.post("/register", response_model=Token)
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
+    if not EMAIL_REGEX.match(user.email.strip()):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+
+    if len(user.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+
+    db_user = db.query(User).filter(User.email == user.email.strip().lower()).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = get_password_hash(user.password)
-    db_user = User(email=user.email, hashed_password=hashed_password, role=user.role)
+    # Always assign standard 'user' role on public registration to prevent privilege escalation
+    db_user = User(email=user.email.strip().lower(), hashed_password=hashed_password, role="user")
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

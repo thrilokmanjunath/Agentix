@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -9,9 +10,11 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 logger = logging.getLogger("agentix_v2")
 
-class NoOpSpanExporter(ConsoleSpanExporter):
-    """Silent exporter when telemetry is completely disabled or unreachable."""
+class NoOpSpanExporter:
+    """Silent exporter when telemetry is completely disabled, unreachable, or running tests."""
     def export(self, spans):
+        return
+    def shutdown(self):
         return
 
 def setup_telemetry(app):
@@ -19,23 +22,21 @@ def setup_telemetry(app):
     Initializes telemetry with a graceful fallback hierarchy:
     1. OTLPSpanExporter (Production/Staging if OTEL_ENDPOINT is set)
     2. ConsoleSpanExporter (Development)
-    3. NoOpSpanExporter (Fallback if disabled or unreachable)
+    3. NoOpSpanExporter (Fallback if disabled, unreachable, or in test mode)
     """
     telemetry_enabled = os.getenv("TELEMETRY_ENABLED", "true").lower() == "true"
+    is_testing = "PYTEST_CURRENT_TEST" in os.environ or os.getenv("TESTING") == "true" or "pytest" in sys.modules
     env = os.getenv("ENVIRONMENT", "development")
     otel_endpoint = os.getenv("OTEL_TRACES_EXPORTER_ENDPOINT", "http://otel-collector:4317")
     
     resource = Resource(attributes={SERVICE_NAME: "agentix-backend"})
     trace_provider = TracerProvider(resource=resource)
     
-    if not telemetry_enabled:
+    if not telemetry_enabled or is_testing:
         processor = BatchSpanProcessor(NoOpSpanExporter())
-        logger.info("Telemetry disabled. Using NoOp exporter.")
+        logger.info("Telemetry disabled or running in test mode. Using NoOp exporter.")
     else:
         try:
-            # We attempt to setup OTLP, but we shouldn't fail if the network is down.
-            # OTLPSpanExporter will queue and log internally. To avoid crash, 
-            # we can check if it's production or we explicitly want OTLP.
             if env == "production" or os.getenv("FORCE_OTLP") == "true":
                 exporter = OTLPSpanExporter(endpoint=otel_endpoint, insecure=True)
                 logger.info(f"Using OTLPSpanExporter at {otel_endpoint}")

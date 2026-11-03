@@ -141,6 +141,29 @@ export async function POST(req: Request) {
     }
 
     if (action === "add_member") {
+      if (!workspaceId || !email) {
+        return NextResponse.json({ error: "Missing workspaceId or email" }, { status: 400 });
+      }
+
+      // Check caller authorization
+      const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+      if (!workspace) {
+        return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+      }
+
+      const callerMembership = await prisma.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId,
+            userId,
+          }
+        }
+      });
+
+      if (callerMembership?.role !== "ADMIN" && workspace.ownerId !== userId) {
+        return NextResponse.json({ error: "Forbidden: Admin access to workspace required" }, { status: 403 });
+      }
+
       let user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
         user = await prisma.user.create({
@@ -177,6 +200,34 @@ export async function POST(req: Request) {
     }
 
     if (action === "update_role") {
+      if (!memberId || !role) {
+        return NextResponse.json({ error: "Missing memberId or role" }, { status: 400 });
+      }
+      if (!["ADMIN", "EDITOR", "VIEWER"].includes(role)) {
+        return NextResponse.json({ error: "Invalid role specified" }, { status: 400 });
+      }
+
+      const targetMember = await prisma.workspaceMember.findUnique({
+        where: { id: memberId },
+        include: { workspace: true },
+      });
+      if (!targetMember) {
+        return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      }
+
+      const callerMembership = await prisma.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: targetMember.workspaceId,
+            userId,
+          }
+        }
+      });
+
+      if (callerMembership?.role !== "ADMIN" && targetMember.workspace.ownerId !== userId) {
+        return NextResponse.json({ error: "Forbidden: Admin access to workspace required" }, { status: 403 });
+      }
+
       const updated = await prisma.workspaceMember.update({
         where: { id: memberId },
         data: { role }
@@ -185,6 +236,37 @@ export async function POST(req: Request) {
     }
 
     if (action === "remove_member") {
+      if (!memberId) {
+        return NextResponse.json({ error: "Missing memberId" }, { status: 400 });
+      }
+
+      const targetMember = await prisma.workspaceMember.findUnique({
+        where: { id: memberId },
+        include: { workspace: true },
+      });
+      if (!targetMember) {
+        return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      }
+
+      const isSelf = targetMember.userId === userId;
+      const callerMembership = await prisma.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: targetMember.workspaceId,
+            userId,
+          }
+        }
+      });
+      const isAdmin = callerMembership?.role === "ADMIN" || targetMember.workspace.ownerId === userId;
+
+      if (!isSelf && !isAdmin) {
+        return NextResponse.json({ error: "Forbidden: Admin access required to remove members" }, { status: 403 });
+      }
+
+      if (targetMember.userId === targetMember.workspace.ownerId) {
+        return NextResponse.json({ error: "Cannot remove workspace owner" }, { status: 400 });
+      }
+
       await prisma.workspaceMember.delete({
         where: { id: memberId }
       });

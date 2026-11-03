@@ -20,10 +20,15 @@ export const authConfig = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Demo credential login. Upserts a real, stable Prisma User row so every
-        // downstream API route can trust session.user.id as a real DB identity
-        // instead of falling back to "whichever user happens to be first".
-        if (credentials?.email === "admin@agentix.com" && credentials?.password === "admin") {
+        if (!credentials?.email || !credentials?.password) return null;
+        const email = String(credentials.email).trim().toLowerCase();
+        const password = String(credentials.password);
+
+        // Controlled demo authentication gated strictly to development or explicit DEMO flag
+        const isDev = process.env.NODE_ENV !== "production" || process.env.ENABLE_DEMO_LOGIN === "true";
+        const demoAdminPass = process.env.DEMO_ADMIN_PASSWORD || (isDev ? "admin" : undefined);
+
+        if (isDev && email === "admin@agentix.com" && demoAdminPass && password === demoAdminPass) {
           const user = await prisma.user.upsert({
             where: { email: "admin@agentix.com" },
             update: {},
@@ -40,6 +45,18 @@ export const authConfig = {
             email: user.email,
             role: user.role,
             image: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin"
+          };
+        }
+
+        // Standard user authentication from database
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (user) {
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            image: user.image || undefined,
           };
         }
         return null;

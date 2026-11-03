@@ -131,7 +131,8 @@ interface PlatformState {
   fetchHistory: () => Promise<{ runs: any[]; activity: any[] }>;
 }
 
-const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const rawBackendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const backendBase = rawBackendBase.replace(/\/api\/v1\/?$/, '');
 const API_BASE = `${backendBase}/api/v1/platform`;
 
 export const usePlatformStore = create<PlatformState>()(

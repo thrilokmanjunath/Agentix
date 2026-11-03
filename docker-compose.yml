@@ -8,6 +8,7 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - AUTH_SECRET=agentix-auth-secret-change-in-production-2026
     depends_on:
       - backend
 
@@ -20,6 +21,7 @@ services:
       - DATABASE_URL=postgresql://agentix:agentixpass@db:5432/agentix
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=production
+      - JWT_SECRET_KEY=agentix-production-jwt-secret-replace-with-secure-vault-key-2026
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +35,7 @@ services:
       - POSTGRES_PASSWORD=agentixpass
       - POSTGRES_DB=agentix
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -45,7 +47,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:

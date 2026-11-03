@@ -5,7 +5,8 @@ import axios from "axios";
 // hardcoded :8000), while every other route in this app uses
 // NEXT_PUBLIC_API_URL (:8001 locally) - meant this call could never reach
 // the real backend regardless of what port it was actually running on.
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
+const rawBackendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || "http://127.0.0.1:8000";
+const BACKEND_URL = rawBackendUrl.replace(/\/api\/v1\/?$/, '');
 
 export async function GET() {
   try {

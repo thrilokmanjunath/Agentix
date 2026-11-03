@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from core.repositories.database import get_db, engine
+from core.auth import get_current_admin
 import psutil
 import time
 import os
 
 router = APIRouter()
+admin_system_router = APIRouter()
 START_TIME = time.time()
 
 @router.get("/health")
@@ -43,9 +45,10 @@ def readiness_check(db: Session = Depends(get_db)):
         "redis": redis_status
     }
 
+@admin_system_router.get("/system")
 @router.get("/system")
-def system_info():
-    """Detailed system performance metrics"""
+def system_info(admin = Depends(get_current_admin)):
+    """Detailed system performance metrics (admin protected)"""
     uptime = time.time() - START_TIME
     cpu_percent = psutil.cpu_percent(interval=0.1)
     memory = psutil.virtual_memory()

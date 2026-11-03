@@ -29,7 +29,7 @@ export async function DELETE(req: Request) {
 
   try {
     const { sessionId } = await req.json();
-    await prisma.session.delete({
+    await prisma.session.deleteMany({
       where: { id: sessionId, userId }
     });
     return NextResponse.json({ status: "success" });

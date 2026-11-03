@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ status: "success" });
     } else if (action === "read" && id) {
-      await prisma.notification.update({
+      await prisma.notification.updateMany({
         where: { id, userId },
         data: { read: true },
       });

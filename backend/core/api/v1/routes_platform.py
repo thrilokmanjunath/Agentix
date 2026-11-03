@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 from typing import Optional, Any, Dict
 
@@ -12,7 +13,7 @@ from core.agents.profiling_agent import ProfilingAgent, ProfilingInput
 from core.orchestrator import PipelineOrchestrator
 from core.context import current_user_id
 from core.repositories.database import SessionLocal
-from core.models.models import WorkflowRun, PipelineStage, Dataset
+from core.models.models import WorkflowRun, PipelineStage, Dataset, User
 from core.hardware.detector import HardwareDetector
 from core.hardware.models import ModelRegistry
 from core.engines.execution import ExecutionEngine
@@ -29,13 +30,17 @@ orchestrator = PipelineOrchestrator()
 # retried); we always read the most recent one.
 # ---------------------------------------------------------------------------
 
-def _latest_dataset_and_run(db: Session, dataset_name: str):
-    dataset = (
-        db.query(Dataset)
-        .filter_by(name=dataset_name)
-        .order_by(Dataset.created_at.desc())
-        .first()
-    )
+def _latest_dataset_and_run(db: Session, dataset_name: str, user_id: Optional[str] = None):
+    uid = user_id or current_user_id.get() or "guest_user"
+    query = db.query(Dataset).filter_by(name=dataset_name)
+    if uid and uid not in ("guest_user", "default", "default-user"):
+        dataset = query.filter_by(owner_id=uid).order_by(Dataset.created_at.desc()).first()
+        if not dataset:
+            # Fall back to public/guest dataset for backward compatibility
+            dataset = query.filter(Dataset.owner_id.in_(["guest_user", "default", "default-user"])).order_by(Dataset.created_at.desc()).first()
+    else:
+        dataset = query.order_by(Dataset.created_at.desc()).first()
+
     if not dataset:
         return None, None
     run = (
@@ -339,11 +344,19 @@ async def chat_endpoint(req: ChatRequest):
             data={"response": "No local AI model is currently available. Start Ollama with a pulled model to enable chat."},
         )
 
+    # Input sanitization and prompt injection protection (OWASP LLM01)
+    sanitized_query = (query or "").strip()[:1000]
+    sanitized_query = re.sub(
+        r'(?i)(ignore\s+all\s+previous\s+instructions|disregard\s+all\s+previous|system\s+prompt\s+extraction)',
+        '[filtered]',
+        sanitized_query
+    )
+
     prompt = (
         "You are Agentix's data analyst assistant. Answer the user's question using ONLY the real pipeline "
-        f"data given below; if the data doesn't cover the question, say so honestly instead of guessing.\n"
-        f"Dataset context: {context_blob or 'No pipeline results available for this dataset yet.'}\n"
-        f"User question: {query}"
+        "data given below in <dataset_context>; if the data doesn't cover the question, say so honestly instead of guessing.\n"
+        f"<dataset_context>\n{context_blob or 'No pipeline results available for this dataset yet.'}\n</dataset_context>\n"
+        f"User question: {sanitized_query}"
     )
     try:
         text = llm_generate(prompt, model)
@@ -385,6 +398,13 @@ async def workflow_status(run_id: str):
         if not run:
             raise HTTPException(status_code=404, detail="Run not found")
 
+        # Tenant isolation & authorization check
+        user_id = current_user_id.get() or "guest_user"
+        if user_id not in ("guest_user", "default", "default-user") and run.owner_id != user_id:
+            user = db.query(User).filter_by(id=user_id).first()
+            if not user or user.role != "admin":
+                raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this run.")
+
         stages = db.query(PipelineStage).filter_by(run_id=run_id).order_by(PipelineStage.step_order).all()
         stages_data = [
             {
@@ -412,7 +432,12 @@ async def workflow_status(run_id: str):
 async def dashboard_metrics_endpoint():
     db = SessionLocal()
     try:
-        latest_run = db.query(WorkflowRun).order_by(WorkflowRun.created_at.desc()).first()
+        user_id = current_user_id.get() or "guest_user"
+        query = db.query(WorkflowRun)
+        if user_id not in ("guest_user", "default", "default-user"):
+            latest_run = query.filter_by(owner_id=user_id).order_by(WorkflowRun.created_at.desc()).first()
+        else:
+            latest_run = query.order_by(WorkflowRun.created_at.desc()).first()
         active_dataset = None
         best_model = None
         model_accuracy = None
@@ -530,9 +555,12 @@ async def model_registry_endpoint():
 async def experiment_runs_endpoint(dataset_name: Optional[str] = None):
     db = SessionLocal()
     try:
+        user_id = current_user_id.get() or "guest_user"
         query = db.query(WorkflowRun)
+        if user_id not in ("guest_user", "default", "default-user"):
+            query = query.filter_by(owner_id=user_id)
         if dataset_name:
-            dataset = db.query(Dataset).filter_by(name=dataset_name).order_by(Dataset.created_at.desc()).first()
+            dataset, _ = _latest_dataset_and_run(db, dataset_name)
             if not dataset:
                 return BaseResponse(status="success", message="OK", data=[])
             query = query.filter_by(dataset_id=dataset.id)
@@ -619,7 +647,11 @@ async def benchmark_stats_endpoint():
 async def recent_activity_endpoint():
     db = SessionLocal()
     try:
-        runs = db.query(WorkflowRun).order_by(WorkflowRun.created_at.desc()).limit(10).all()
+        user_id = current_user_id.get() or "guest_user"
+        query = db.query(WorkflowRun)
+        if user_id not in ("guest_user", "default", "default-user"):
+            query = query.filter_by(owner_id=user_id)
+        runs = query.order_by(WorkflowRun.created_at.desc()).limit(10).all()
         data = []
         for run in runs:
             dataset = db.query(Dataset).filter_by(id=run.dataset_id).first() if run.dataset_id else None

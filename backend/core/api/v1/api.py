@@ -5,14 +5,17 @@ from core.api.v1 import routes_system
 
 api_router = APIRouter()
 
-# Public (Standard User) Routes
+# Public Probes (Kubernetes liveness/readiness/health checks as per README specification)
+api_router.include_router(routes_system.router, prefix="/system", tags=["System Probes"])
+
+# Authenticated Standard User Routes
 api_router.include_router(routes_data.router, prefix="/dataset", tags=["Dataset"], dependencies=[Depends(set_user_context)])
 api_router.include_router(routes_platform.router, prefix="/platform", tags=["Platform Capabilities"], dependencies=[Depends(set_user_context)])
-api_router.include_router(routes_jobs.router, prefix="/jobs", tags=["Jobs"])
+api_router.include_router(routes_jobs.router, prefix="/jobs", tags=["Jobs"], dependencies=[Depends(set_user_context)])
 api_router.include_router(routes_auth.router, prefix="/auth", tags=["Authentication"])
 
 # Admin Routes (Protected by get_current_admin)
 admin_router = APIRouter(dependencies=[Depends(get_current_admin)])
-admin_router.include_router(routes_system.router, prefix="/system", tags=["System"])
+admin_router.include_router(routes_system.admin_system_router, prefix="/system", tags=["System Telemetry"])
 
 api_router.include_router(admin_router, prefix="/admin")
