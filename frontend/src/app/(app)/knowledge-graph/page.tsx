@@ -232,10 +232,10 @@ export default function KnowledgeGraphPage() {
               </Badge>
             )}
           </div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-100 font-serif">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
             Institutional Knowledge Graph
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-[var(--text-secondary)] text-sm mt-1">
             Topological map of datasets, neural architecture nodes, benchmarks, and meta-learning models.
           </p>
         </div>
@@ -248,11 +248,11 @@ export default function KnowledgeGraphPage() {
       </div>
 
       {isLoading ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-16 flex flex-col items-center justify-center min-h-[500px] gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-            <Loader2 size={24} className="text-amber-400 animate-spin" />
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] p-16 flex flex-col items-center justify-center min-h-[500px] gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 flex items-center justify-center">
+            <Loader2 size={24} className="text-[var(--accent-primary)] animate-spin" />
           </div>
-          <p className="text-slate-300 font-medium">Constructing neural topology & relationship vectors...</p>
+          <p className="text-[var(--text-secondary)] font-medium">Constructing neural topology & relationship vectors...</p>
         </div>
       ) : nodes.length === 0 ? (
         <div className="w-full flex items-center justify-center min-h-[55vh]">
@@ -268,7 +268,7 @@ export default function KnowledgeGraphPage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-slate-800/80 bg-slate-950/80 shadow-2xl overflow-hidden"
+          className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] shadow-xl overflow-hidden"
           style={{ height: 680 }}
         >
           <ReactFlow
@@ -276,16 +276,16 @@ export default function KnowledgeGraphPage() {
             edges={edges}
             fitView
             attributionPosition="bottom-left"
-            style={{ width: '100%', height: '100%', backgroundColor: '#090d14' }}
+            style={{ width: '100%', height: '100%', backgroundColor: 'var(--background)' }}
           >
-            <Background color="#1e293b" gap={20} size={1} />
-            <Controls className="bg-slate-900 border border-slate-800 text-slate-200 fill-slate-200" />
+            <Background color="var(--border-subtle)" gap={20} size={1} />
+            <Controls className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] fill-[var(--text-primary)]" />
             <MiniMap 
-              style={{ background: '#0b0f17', border: '1px solid #1e293b', borderRadius: '8px' }}
+              style={{ background: 'var(--surface-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
               nodeColor={(node) => {
-                if (node.id === 'dataset') return '#d4af37';
+                if (node.id === 'dataset') return '#168B83';
                 if (node.id === 'decision-intel') return '#d946ef';
-                if (node.id === 'automl') return '#f59e0b';
+                if (node.id === 'automl') return '#36B5A7';
                 if (node.id === 'profile') return '#10b981';
                 return '#0284c7';
               }}
@@ -295,10 +295,10 @@ export default function KnowledgeGraphPage() {
       )}
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-6 p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-400 font-mono">
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-400 border border-amber-300 shadow-sm shadow-amber-400/50" /> Active Dataset</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-400" /> Profiling Node</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500" /> AutoML Engine</div>
+      <div className="flex flex-wrap items-center gap-6 p-4 rounded-xl bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] font-mono">
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[var(--accent-primary)] shadow-sm" /> Active Dataset</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500" /> Profiling Node</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-teal-500" /> AutoML Engine</div>
         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-purple-500" /> Neural Candidates</div>
         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-fuchsia-500" /> Meta-Learning Core</div>
         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-sky-500" /> Historical Runs</div>

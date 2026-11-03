@@ -75,7 +75,8 @@ export default function WorkspacePage() {
     fetchData();
 
     // Fetch AI Status from backend
-    const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const rawBackend = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+    const backendBase = rawBackend.replace(/\/api\/v1\/?$/, '');
     fetch(`${backendBase}/api/v1/platform/ai/status`)
       .then(res => res.ok ? res.json() : null)
       .then(json => {

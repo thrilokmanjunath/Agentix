@@ -4,6 +4,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
 const isPostgresConfigured = Boolean(
+  process.env.USE_DATABASE_ADAPTER === "true" &&
   process.env.DATABASE_URL &&
   (process.env.DATABASE_URL.startsWith("postgresql://") || process.env.DATABASE_URL.startsWith("postgres://"))
 );

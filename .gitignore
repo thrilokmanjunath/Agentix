@@ -65,3 +65,4 @@ data/
 *.db
 *.db-shm
 *.db-wal
+audit_screenshots/

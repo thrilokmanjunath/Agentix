@@ -11,15 +11,11 @@ import {
   ArrowRight,
   Clock,
   Cpu,
-  FileSpreadsheet,
-  Shield,
   Lock,
   Database
 } from 'lucide-react';
 import { usePlatformStore } from '@/store/platformStore';
 import { useRouter } from 'next/navigation';
-import { getTerm } from '@/lib/terminology';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
@@ -142,13 +138,13 @@ export default function DatasetsPage() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-8 pb-16 max-w-5xl mx-auto pt-8 px-6 font-sans text-slate-100">
+    <div className="w-full flex flex-col gap-8 pb-16 max-w-5xl mx-auto pt-8 px-6 font-sans text-[var(--text-primary)]">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800/80 pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[var(--border-subtle)] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="gold" size="sm">
+            <Badge variant="teal" size="sm">
               <Database size={11} />
               Data Engineering Dock
             </Badge>
@@ -157,10 +153,10 @@ export default function DatasetsPage() {
               Isolated Storage
             </Badge>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-100">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
             Dataset Ingestion & Profiling
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
             Ingest structured tabular files for automated 9-stage profiling, cleaning, feature engineering, and model training.
           </p>
         </div>
@@ -178,28 +174,28 @@ export default function DatasetsPage() {
               {...getRootProps()}
               className={`border-2 border-dashed rounded-2xl p-14 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[420px] ${
                 isDragActive
-                  ? 'border-amber-400 bg-amber-500/10 scale-[1.01]'
-                  : 'border-slate-800/80 bg-slate-900/40 hover:border-amber-500/40 hover:bg-slate-900/60 shadow-xl'
+                  ? 'border-[var(--accent-primary)] bg-[var(--accent-soft-alpha)] scale-[1.01]'
+                  : 'border-[var(--border-subtle)] bg-[var(--surface-primary)] hover:border-[var(--accent-primary)] hover:bg-[var(--surface-secondary)]/50 shadow-md'
               }`}
             >
               <input {...getInputProps()} />
               <div
                 className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
-                  isDragActive ? 'bg-amber-400 text-slate-950 shadow-lg scale-110' : 'bg-slate-800/70 border border-slate-700/60 text-amber-400 shadow-md'
+                  isDragActive ? 'bg-[var(--accent-primary)] text-white shadow-lg scale-110' : 'bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 text-[var(--accent-primary)] shadow-md'
                 }`}
               >
                 <UploadCloud size={36} />
               </div>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-100 mb-2 font-heading">
+              <h3 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] mb-2 font-heading">
                 {isDragActive ? 'Release dataset to begin ingestion' : 'Ingest Tabular Dataset'}
               </h3>
-              <p className="text-slate-400 text-sm max-w-sm mb-6 leading-relaxed">
+              <p className="text-[var(--text-secondary)] text-sm max-w-sm mb-6 leading-relaxed">
                 Drag and drop your dataset here or click to browse. Supports CSV, Parquet, and JSON files up to 500MB.
               </p>
-              <div className="flex items-center gap-3 text-xs font-mono text-slate-500">
-                <span className="px-2.5 py-1 rounded bg-slate-950 border border-slate-800">.CSV</span>
-                <span className="px-2.5 py-1 rounded bg-slate-950 border border-slate-800">.XLSX</span>
-                <span className="px-2.5 py-1 rounded bg-slate-950 border border-slate-800">.JSON</span>
+              <div className="flex items-center gap-3 text-xs font-mono text-[var(--text-secondary)]">
+                <span className="px-2.5 py-1 rounded bg-[var(--surface-secondary)] border border-[var(--border-subtle)]">.CSV</span>
+                <span className="px-2.5 py-1 rounded bg-[var(--surface-secondary)] border border-[var(--border-subtle)]">.XLSX</span>
+                <span className="px-2.5 py-1 rounded bg-[var(--surface-secondary)] border border-[var(--border-subtle)]">.JSON</span>
               </div>
             </div>
           </motion.div>
@@ -211,24 +207,24 @@ export default function DatasetsPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="border border-slate-800 rounded-2xl p-14 flex flex-col items-center justify-center text-center bg-slate-900/70 shadow-xl min-h-[400px]"
+            className="border border-[var(--border-subtle)] rounded-2xl p-14 flex flex-col items-center justify-center text-center bg-[var(--surface-primary)] shadow-xl min-h-[400px]"
           >
-            <div className="w-18 h-18 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-6 text-amber-400">
+            <div className="w-18 h-18 rounded-2xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 flex items-center justify-center mb-6 text-[var(--accent-primary)]">
               <Loader2 size={36} className="animate-spin" />
             </div>
-            <h3 className="text-xl font-bold text-slate-100 mb-2">
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
               Ingesting {file?.name}...
             </h3>
-            <p className="text-slate-400 text-sm mb-6">Uploading securely to isolated tenant storage.</p>
+            <p className="text-[var(--text-secondary)] text-sm mb-6">Uploading securely to isolated tenant storage.</p>
             
             <div className="w-full max-w-md">
               <div className="flex justify-between mb-2 text-xs font-mono">
-                <span className="text-slate-400">Stream Progress</span>
-                <span className="text-amber-300 font-bold">{uploadProgress}%</span>
+                <span className="text-[var(--text-secondary)]">Stream Progress</span>
+                <span className="text-[var(--accent-primary)] font-bold">{uploadProgress}%</span>
               </div>
-              <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+              <div className="w-full h-2.5 bg-[var(--surface-secondary)] rounded-full overflow-hidden border border-[var(--border-subtle)]">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full"
+                  className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-emerald-400 rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${uploadProgress}%` }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -244,42 +240,42 @@ export default function DatasetsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl overflow-hidden font-mono"
+            className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-2xl shadow-xl overflow-hidden font-mono"
           >
-            <div className="p-8 border-b border-slate-800/80">
+            <div className="p-8 border-b border-[var(--border-subtle)]">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 text-[var(--accent-primary)] flex items-center justify-center shrink-0">
                   <Cpu size={24} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-100 font-sans">Executing Pipeline: {file?.name}</h2>
-                  <p className="text-slate-400 text-xs flex items-center gap-2 mt-1 font-mono">
-                    <Clock size={13} className="text-amber-400" />
+                  <h2 className="text-lg font-bold text-[var(--text-primary)] font-sans">Executing Pipeline: {file?.name}</h2>
+                  <p className="text-[var(--text-secondary)] text-xs flex items-center gap-2 mt-1 font-mono">
+                    <Clock size={13} className="text-[var(--accent-primary)]" />
                     {formatETA(estimatedRemaining)}
                   </p>
                 </div>
                 <div className="ml-auto text-right">
-                  <div className="text-2xl font-bold text-amber-300">{progress}%</div>
-                  <div className="text-[11px] text-slate-500 font-sans">
+                  <div className="text-2xl font-bold text-[var(--accent-primary)]">{progress}%</div>
+                  <div className="text-[11px] text-[var(--text-secondary)] font-sans">
                     Multi-Stage Autonomous ML
                   </div>
                 </div>
               </div>
 
               <div className="w-full flex items-center gap-4 mb-2">
-                <div className="text-amber-400 font-bold text-xs">
+                <div className="text-[var(--accent-primary)] font-bold text-xs">
                   {progress < 10 ? `0${progress}` : progress}%
                 </div>
-                <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div className="w-full h-2 bg-[var(--surface-secondary)] rounded-full overflow-hidden border border-[var(--border-subtle)]">
                   <div 
-                    className="h-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-emerald-400 transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
             </div>
 
-            <div className="p-6 bg-slate-950/70 text-xs space-y-3">
+            <div className="p-6 bg-[var(--surface-secondary)]/50 text-xs space-y-3">
               {[
                 { label: 'Ingestion & Validation', index: -1 },
                 { label: 'Data Quality & Imputation', index: 0 },
@@ -293,21 +289,21 @@ export default function DatasetsPage() {
                 const isActive = stage.index === currentStageIndex;
 
                 let statusText = 'Queued';
-                let statusColor = 'text-slate-600';
+                let statusColor = 'text-[var(--text-muted)]';
                 
                 if (stage.index === -1 || isDone) {
                    statusText = 'Completed';
-                   statusColor = 'text-emerald-400';
+                   statusColor = 'text-emerald-600 dark:text-emerald-400';
                 } else if (isActive) {
                   statusText = 'Executing';
-                  statusColor = 'text-amber-300 font-bold';
+                  statusColor = 'text-[var(--accent-primary)] font-bold';
                 }
 
                 return (
-                  <div key={stage.label} className="flex items-center justify-between py-1.5 border-b border-slate-900 last:border-none">
-                    <span className="text-slate-300 font-sans">{stage.label}</span>
+                  <div key={stage.label} className="flex items-center justify-between py-1.5 border-b border-[var(--border-subtle)] last:border-none">
+                    <span className="text-[var(--text-primary)] font-sans">{stage.label}</span>
                     <span className={`font-mono text-xs ${statusColor} flex items-center gap-1.5`}>
-                      {isActive && <Loader2 size={11} className="animate-spin text-amber-400" />}
+                      {isActive && <Loader2 size={11} className="animate-spin text-[var(--accent-primary)]" />}
                       {statusText}
                     </span>
                   </div>
@@ -322,16 +318,16 @@ export default function DatasetsPage() {
             key="completed"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="border border-emerald-500/30 rounded-2xl p-14 flex flex-col items-center justify-center text-center bg-slate-900/80 shadow-xl min-h-[400px]"
+            className="border border-emerald-500/30 rounded-2xl p-14 flex flex-col items-center justify-center text-center bg-[var(--surface-primary)] shadow-xl min-h-[400px]"
           >
-            <div className="w-18 h-18 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-6 text-emerald-400">
+            <div className="w-18 h-18 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 size={38} />
             </div>
-            <h3 className="text-2xl font-bold text-slate-100 mb-2 font-heading">Pipeline Complete</h3>
-            <p className="text-slate-400 text-sm max-w-sm mb-6 leading-relaxed">
+            <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2 font-heading">Pipeline Complete</h3>
+            <p className="text-[var(--text-secondary)] text-sm max-w-sm mb-6 leading-relaxed">
               All 9 autonomous stages executed successfully. Transitioning to Analysis & XAI Console...
             </p>
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-mono font-medium">
+            <div className="flex items-center gap-2 text-[var(--accent-primary)] text-xs font-mono font-medium">
               <Loader2 size={14} className="animate-spin" />
               Redirecting
               <ArrowRight size={14} />
@@ -344,15 +340,15 @@ export default function DatasetsPage() {
             key="error"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="border border-rose-500/30 rounded-2xl p-14 flex flex-col items-center justify-center text-center bg-slate-900/80 shadow-xl min-h-[400px]"
+            className="border border-rose-500/30 rounded-2xl p-14 flex flex-col items-center justify-center text-center bg-[var(--surface-primary)] shadow-xl min-h-[400px]"
           >
-            <div className="w-18 h-18 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mb-6 text-rose-400">
+            <div className="w-18 h-18 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mb-6 text-rose-500">
               <AlertCircle size={38} />
             </div>
-            <h3 className="text-2xl font-bold text-slate-100 mb-2 font-heading">Processing Interrupted</h3>
-            <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">{uploadError}</p>
+            <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2 font-heading">Processing Interrupted</h3>
+            <p className="text-[var(--text-secondary)] text-sm max-w-md mb-6 leading-relaxed">{uploadError}</p>
             <Button
-              variant="gold"
+              variant="teal"
               size="md"
               onClick={handleRetry}
             >

@@ -21,7 +21,8 @@ export function SystemHealthDashboard({ simplified = false }: { simplified?: boo
 
   useEffect(() => {
     let isMounted = true;
-    const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const rawBackend = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+    const backendBase = rawBackend.replace(/\/api\/v1\/?$/, '');
 
     const fetchHealth = () => {
       fetch(`${backendBase}/api/v1/platform/system-health`)

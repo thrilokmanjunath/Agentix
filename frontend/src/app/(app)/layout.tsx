@@ -77,7 +77,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       .catch(() => {});
 
     const checkHealth = () => {
-      const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const rawBackend = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const backendBase = rawBackend.replace(/\/api\/v1\/?$/, '');
       const start = performance.now();
       fetch(`${backendBase}/api/v1/platform/ai/status`)
         .then(res => res.ok ? res.json() : Promise.reject())
@@ -202,9 +203,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <button 
-            className="xl:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 ml-1 rounded-lg hover:bg-[var(--surface-hover)] transition-colors"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 ml-1 rounded-lg hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
             onClick={() => setRightPanelOpen(!isRightPanelOpen)}
             aria-label="Toggle Telemetry Panel"
+            title="Toggle Live Telemetry & Pipeline Feed"
           >
             <Activity size={18} />
           </button>
@@ -312,9 +314,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Right Intelligence & Telemetry Drawer */}
         <aside 
-          className={`fixed xl:relative right-0 flex flex-col bg-[var(--surface-primary)] border-l border-[var(--border-subtle)] w-80 h-full flex-shrink-0 z-40 transition-transform duration-300 ease-in-out shadow-xl xl:shadow-none ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'}`}
+          className={`fixed 2xl:relative right-0 flex flex-col bg-[var(--surface-primary)] border-l border-[var(--border-subtle)] w-80 h-full flex-shrink-0 z-40 transition-transform duration-300 ease-in-out shadow-xl 2xl:shadow-none ${
+            isRightPanelOpen ? 'translate-x-0' : (pathname === '/agent-console' ? 'translate-x-full' : 'translate-x-full 2xl:translate-x-0')
+          }`}
         >
-          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+          <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)] 2xl:hidden">
+            <span className="text-xs font-bold text-[var(--text-primary)]">Telemetry Drawer</span>
+            <button
+              onClick={() => setRightPanelOpen(false)}
+              className="p-1 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] cursor-pointer"
+              aria-label="Close telemetry drawer"
+            >
+              <X size={15} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 min-w-0">
             
             {/* Live Model Status Card */}
             <div className="p-4 rounded-xl teal-glass-card">

@@ -11,6 +11,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   
   const handleLogin = async (formData: FormData) => {
     "use server";
+    const { redirect } = await import("next/navigation");
+    let failureUrl = "";
     try {
       await signIn("credentials", {
         email: formData.get("email"),
@@ -21,22 +23,27 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       if (error?.digest?.startsWith("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
         throw error;
       }
-      const errorString = String(error?.type || "") + String(error?.name || "") + String(error?.message || "");
-      if (errorString.includes("CredentialsSignin") || errorString.includes("CallbackRouteError")) {
-        const { redirect } = await import("next/navigation");
-        redirect("/login?error=InvalidCredentials");
-      }
-      throw error;
+      failureUrl = "/login?error=InvalidCredentials";
+    }
+    if (failureUrl) {
+      redirect(failureUrl);
     }
   };
 
   const handleGoogleLogin = async () => {
     "use server";
+    const { redirect } = await import("next/navigation");
     if (!googleConfigured) {
-      const { redirect } = await import("next/navigation");
       redirect("/login?error=GoogleNotConfigured");
     }
-    await signIn("google", { redirectTo: "/dashboard" });
+    try {
+      await signIn("google", { redirectTo: "/dashboard" });
+    } catch (error: any) {
+      if (error?.digest?.startsWith("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
+        throw error;
+      }
+      redirect("/login?error=OAuthFailed");
+    }
   };
 
   return (

@@ -23,7 +23,7 @@ export function Card({
 
   return (
     <div
-      className={`rounded-xl transition-all duration-200 ${variantStyles} ${className}`}
+      className={`rounded-xl transition-all duration-200 min-w-0 overflow-hidden ${variantStyles} ${className}`}
       {...props}
     >
       {children}

@@ -28,38 +28,38 @@ export default function HistoryPage() {
   const hasData = runs.length > 0 || activity.length > 0;
 
   return (
-    <div className="w-full flex flex-col gap-8 pb-12 max-w-5xl mx-auto pt-6 px-4 md:px-0">
+    <div className="w-full flex flex-col gap-8 pb-12 max-w-5xl mx-auto pt-6 px-4 md:px-0 font-sans">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800/80 pb-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-subtle)] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="gold">
+            <Badge variant="teal">
               <Sparkles className="w-3 h-3 mr-1" />
               AUDIT TRAILS & PROVENANCE
             </Badge>
           </div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-100 font-serif">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
             Institutional Execution History
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-[var(--text-secondary)] text-sm mt-1">
             Chronological audit log of model training runs, dataset transformations, and system events.
           </p>
         </div>
         <Link href="/data-dock">
           <Button variant="outline" size="sm">
-            <Database className="w-4 h-4 mr-2 text-amber-400" />
+            <Database className="w-4 h-4 mr-2 text-[var(--accent-primary)]" />
             Launch New Run
           </Button>
         </Link>
       </div>
 
       {isLoading ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-16 flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-            <Loader2 size={24} className="text-amber-400 animate-spin" />
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] p-16 flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 flex items-center justify-center">
+            <Loader2 size={24} className="text-[var(--accent-primary)] animate-spin" />
           </div>
-          <p className="text-slate-300 font-medium">Retrieving institutional activity logs...</p>
+          <p className="text-[var(--text-secondary)] font-medium">Retrieving institutional activity logs...</p>
         </div>
       ) : !hasData ? (
         <div className="w-full flex items-center justify-center min-h-[55vh]">
@@ -78,30 +78,30 @@ export default function HistoryPage() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-slate-800/80 bg-slate-900/70 backdrop-blur-md shadow-xl overflow-hidden"
+              className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] shadow-md overflow-hidden"
             >
-              <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-slate-100 flex items-center gap-2 font-serif">
-                  <FlaskConical size={18} className="text-amber-400" /> Experiment Runs
+              <div className="p-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <FlaskConical size={18} className="text-[var(--accent-primary)]" /> Experiment Runs
                 </h2>
                 <Badge variant="outline" className="font-mono text-xs">{runs.length} Runs Logged</Badge>
               </div>
-              <div className="divide-y divide-slate-800/80">
+              <div className="divide-y divide-[var(--border-subtle)]">
                 {runs.map((run: any, i: number) => (
-                  <div key={i} className="p-5 hover:bg-slate-800/30 transition-colors flex items-center justify-between">
+                  <div key={i} className="p-5 hover:bg-[var(--surface-secondary)]/50 transition-colors flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center shrink-0">
                         <Cpu size={18} />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-200 text-sm">{run.dataset || run.name || `Experiment #${i + 1}`}</p>
-                        <p className="text-xs text-slate-400 font-mono mt-0.5">{run.model || run.algorithm || 'CatBoost'} &bull; {run.created_at ? new Date(run.created_at).toLocaleDateString() : 'Recent'}</p>
+                        <p className="font-semibold text-[var(--text-primary)] text-sm">{run.dataset || run.name || `Experiment #${i + 1}`}</p>
+                        <p className="text-xs text-[var(--text-secondary)] font-mono mt-0.5">{run.model || run.algorithm || 'LightGBM'} &bull; {run.created_at ? new Date(run.created_at).toLocaleDateString() : 'Recent'}</p>
                       </div>
                     </div>
                     {run.score !== undefined && (
-                      <div className="flex items-center gap-2 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800">
-                        <TrendingUp size={14} className="text-emerald-400" />
-                        <span className="text-xs font-mono font-semibold text-emerald-400">
+                      <div className="flex items-center gap-2 bg-[var(--surface-secondary)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)]">
+                        <TrendingUp size={14} className="text-emerald-500" />
+                        <span className="text-xs font-mono font-bold text-emerald-500">
                           {typeof run.score === 'number' ? run.score.toFixed(4) : run.score}
                         </span>
                       </div>
@@ -118,22 +118,22 @@ export default function HistoryPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="rounded-2xl border border-slate-800/80 bg-slate-900/70 backdrop-blur-md shadow-xl overflow-hidden"
+              className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] shadow-md overflow-hidden"
             >
-              <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-slate-100 flex items-center gap-2 font-serif">
-                  <Clock size={18} className="text-amber-400" /> System Activity Log
+              <div className="p-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <Clock size={18} className="text-[var(--accent-primary)]" /> System Activity Log
                 </h2>
                 <Badge variant="outline" className="font-mono text-xs">Live Journal</Badge>
               </div>
-              <div className="divide-y divide-slate-800/80 font-mono text-xs">
+              <div className="divide-y divide-[var(--border-subtle)] font-mono text-xs">
                 {activity.slice(0, 20).map((item: any, i: number) => (
-                  <div key={i} className="p-4 hover:bg-slate-800/30 transition-colors flex items-center justify-between gap-4">
+                  <div key={i} className="p-4 hover:bg-[var(--surface-secondary)]/50 transition-colors flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                      <span className="text-slate-300 font-sans text-sm">{item.action || item.type || item.message || 'Workflow executed'}</span>
+                      <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] shrink-0" />
+                      <span className="text-[var(--text-primary)] font-sans text-sm">{item.action || item.type || item.message || 'Workflow executed'}</span>
                     </div>
-                    <span className="text-slate-500 text-xs shrink-0">{item.created_at ? new Date(item.created_at).toLocaleTimeString() : 'Recent'}</span>
+                    <span className="text-[var(--text-muted)] text-xs shrink-0">{item.created_at ? new Date(item.created_at).toLocaleTimeString() : 'Recent'}</span>
                   </div>
                 ))}
               </div>
