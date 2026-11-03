@@ -6,6 +6,7 @@ import shutil
 from typing import Optional, Any, Dict
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from core.schemas.api_schemas import DatasetRequest, ChatRequest, BaseResponse, PredictRequest
@@ -227,7 +228,7 @@ async def xai_endpoint(dataset_name: str):
 
 def _ollama_model_or_none() -> Optional[str]:
     provider = ExecutionEngine.select_llm_provider()
-    if provider.get("provider") == "ollama":
+    if provider.get("provider") in ("ollama", "lm_studio"):
         return provider.get("model")
     return None
 
@@ -367,6 +368,29 @@ async def chat_endpoint(req: ChatRequest):
             message="AI chat unavailable",
             data={"response": f"The local AI model is unavailable right now ({e})."},
         )
+
+
+class ConnectionTestRequest(BaseModel):
+    provider: str
+    base_url: Optional[str] = None
+
+
+@router.get("/ai/status", response_model=BaseResponse)
+async def ai_status_endpoint():
+    """Retrieve full AI inference subsystem status, detected local models, and cloud configuration."""
+    from core.services.llm_service import test_provider_connection
+    registry = ModelRegistry.get_registry()
+    ollama_test = test_provider_connection("ollama")
+    registry["ollama_connection"] = ollama_test
+    return BaseResponse(status="success", message="OK", data=registry)
+
+
+@router.post("/ai/test-connection", response_model=BaseResponse)
+async def ai_test_connection_endpoint(req: ConnectionTestRequest):
+    """Test connectivity to a specific local or cloud inference provider."""
+    from core.services.llm_service import test_provider_connection
+    result = test_provider_connection(req.provider, req.base_url)
+    return BaseResponse(status="success", message="OK", data=result)
 
 
 @router.get("/mlops", response_model=BaseResponse)

@@ -9,8 +9,12 @@ import {
   User as UserIcon,
   Bell,
   Shield,
-  Loader2
+  Loader2,
+  Sparkles,
+  Save
 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 
 export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
@@ -59,8 +63,10 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center w-full h-full min-h-[400px]">
-        <Loader2 size={36} className="text-primary animate-spin" />
+      <div className="flex items-center justify-center w-full min-h-[400px]">
+        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <Loader2 size={24} className="text-amber-400 animate-spin" />
+        </div>
       </div>
     );
   }
@@ -69,18 +75,29 @@ export default function ProfilePage() {
     <div className="flex flex-col w-full h-full relative overflow-y-auto p-4 md:p-8 max-w-5xl mx-auto pb-16">
       
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-6">
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-800/80 pb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary mb-2 font-heading">My Profile</h1>
-          <p className="text-text-secondary text-[15px]">Manage your personal details and AI Analyst preferences.</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="gold">
+              <Sparkles className="w-3 h-3 mr-1" />
+              INSTITUTIONAL IDENTITY
+            </Badge>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-100 font-serif">
+            Operator Profile & AI Persona
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Configure institutional user identity, credentials, and neural reasoning persona.
+          </p>
         </div>
-        <button 
+        <Button 
+          variant="gold"
           onClick={handleSave}
-          className="bg-primary hover:bg-primary-hover text-white font-medium py-2.5 px-6 rounded-xl transition-all shadow-md hover:-translate-y-[1px] flex items-center gap-2 text-sm"
+          className="flex items-center gap-2"
         >
-          {saved ? <CheckCircle2 size={16} /> : <CheckCircle2 size={16} />}
-          {saved ? 'Saved' : 'Save Changes'}
-        </button>
+          {saved ? <CheckCircle2 size={16} /> : <Save size={16} />}
+          {saved ? 'Changes Saved' : 'Save Profile'}
+        </Button>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -90,23 +107,33 @@ export default function ProfilePage() {
           <motion.div 
             initial={{opacity: 0, y: 10}} 
             animate={{opacity: 1, y: 0}}
-            className="bg-white border border-border rounded-2xl p-8 flex flex-col items-center text-center shadow-sm"
+            className="rounded-2xl border border-slate-800/80 bg-slate-900/70 backdrop-blur-md p-8 flex flex-col items-center text-center shadow-xl"
           >
             <div className="relative mb-6">
-              <div className="w-28 h-28 rounded-full bg-primary-light text-primary flex items-center justify-center text-4xl font-bold shadow-inner font-heading uppercase">
-                {profile.firstName ? profile.firstName[0] : 'U'}
+              <div className="w-24 h-24 rounded-full bg-slate-950 border-2 border-amber-400/50 text-amber-400 flex items-center justify-center text-3xl font-bold shadow-lg shadow-black/60 font-serif uppercase">
+                {profile.firstName ? profile.firstName[0] : 'O'}
               </div>
-              <button className="absolute bottom-0 right-0 bg-white border border-border p-2 rounded-full shadow-md text-text-tertiary hover:text-primary hover:border-primary-light transition-all hover:scale-105">
-                <Camera size={16} />
+              <button 
+                type="button"
+                className="absolute bottom-0 right-0 bg-slate-900 border border-slate-700 p-2 rounded-full text-slate-300 hover:text-amber-400 hover:border-amber-400/40 transition-all shadow-md"
+              >
+                <Camera size={14} />
               </button>
             </div>
             
-            <h3 className="text-xl font-bold text-text-primary mb-6 font-heading">{profile.firstName} {profile.lastName}</h3>
+            <h3 className="text-lg font-semibold text-slate-100 font-serif mb-1">
+              {profile.firstName || profile.lastName ? `${profile.firstName} ${profile.lastName}`.trim() : 'Institutional Operator'}
+            </h3>
+            <p className="text-xs font-mono text-amber-400/90 mb-4">ROLE: TENANT_LEAD</p>
 
-            <div className="w-full text-left space-y-3 pt-6 border-t border-border">
-              <div className="flex items-center gap-3 text-text-secondary text-[13px] font-medium">
-                <Mail size={16} className="text-text-tertiary" />
-                <span>{profile.email}</span>
+            <div className="w-full text-left space-y-3 pt-6 border-t border-slate-800">
+              <div className="flex items-center gap-3 text-slate-400 text-xs font-mono">
+                <Mail size={14} className="text-slate-500 shrink-0" />
+                <span className="truncate">{profile.email || 'operator@institution.local'}</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-400 text-xs font-mono">
+                <Shield size={14} className="text-emerald-400 shrink-0" />
+                <span>TENANT ENCLAVE VERIFIED</span>
               </div>
             </div>
           </motion.div>
@@ -115,23 +142,20 @@ export default function ProfilePage() {
             initial={{opacity: 0, y: 10}} 
             animate={{opacity: 1, y: 0}}
             transition={{delay: 0.1}}
+            className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-3"
           >
-            <nav className="flex flex-col gap-1">
-              <button className="flex items-center gap-3 p-3.5 text-[15px] font-medium rounded-xl text-primary bg-primary-light/50 transition-colors">
-                <UserIcon size={18} />
-                Personal Details
+            <nav className="flex flex-col gap-1 text-sm font-medium">
+              <button className="flex items-center gap-3 p-3 rounded-xl text-amber-400 bg-amber-400/10 border border-amber-400/20 transition-colors text-left">
+                <UserIcon size={16} />
+                Identity & Details
               </button>
-              <button className="flex items-center gap-3 p-3.5 text-[15px] font-medium rounded-xl text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
-                <Settings2 size={18} className="text-text-tertiary" />
-                AI Preferences
+              <button className="flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 transition-colors text-left">
+                <Settings2 size={16} className="text-slate-500" />
+                Reasoning Persona
               </button>
-              <button className="flex items-center gap-3 p-3.5 text-[15px] font-medium rounded-xl text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
-                <Bell size={18} className="text-text-tertiary" />
-                Notifications
-              </button>
-              <button className="flex items-center gap-3 p-3.5 text-[15px] font-medium rounded-xl text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors">
-                <Shield size={18} className="text-text-tertiary" />
-                Security
+              <button className="flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 transition-colors text-left">
+                <Bell size={16} className="text-slate-500" />
+                Security Alerts
               </button>
             </nav>
           </motion.div>
@@ -144,37 +168,42 @@ export default function ProfilePage() {
             initial={{opacity: 0, y: 10}} 
             animate={{opacity: 1, y: 0}}
             transition={{delay: 0.2}}
-            className="bg-white border border-border rounded-2xl p-8 shadow-sm"
+            className="rounded-2xl border border-slate-800/80 bg-slate-900/70 backdrop-blur-md p-8 shadow-xl"
           >
-            <h2 className="text-lg font-bold text-text-primary mb-6 pb-4 border-b border-border font-heading">Personal Details</h2>
+            <h2 className="text-base font-semibold text-slate-100 mb-6 pb-4 border-b border-slate-800 font-serif">
+              Personal Identity Credentials
+            </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="font-bold text-sm text-text-primary">First Name</label>
+                <label className="text-xs font-mono font-semibold text-slate-300">FIRST NAME</label>
                 <input 
-                  className="bg-surface border border-border rounded-xl px-4 py-3 text-[15px] text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" 
+                  className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-amber-400/60 transition-all font-sans" 
                   type="text" 
                   value={profile.firstName}
                   onChange={(e) => handleChange('firstName', e.target.value)}
+                  placeholder="e.g. Eleanor"
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="font-bold text-sm text-text-primary">Last Name</label>
+                <label className="text-xs font-mono font-semibold text-slate-300">LAST NAME</label>
                 <input 
-                  className="bg-surface border border-border rounded-xl px-4 py-3 text-[15px] text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" 
+                  className="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-amber-400/60 transition-all font-sans" 
                   type="text" 
                   value={profile.lastName}
                   onChange={(e) => handleChange('lastName', e.target.value)}
+                  placeholder="e.g. Vance"
                 />
               </div>
               <div className="flex flex-col gap-2 md:col-span-2">
-                <label className="font-bold text-sm text-text-primary">Email Address</label>
+                <label className="text-xs font-mono font-semibold text-slate-300">OFFICIAL INSTITUTION EMAIL</label>
                 <input 
-                  className="bg-surface-hover border border-border rounded-xl px-4 py-3 text-[15px] text-text-secondary shadow-sm" 
+                  className="bg-slate-950/50 border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-400 font-mono" 
                   type="email" 
                   value={profile.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  disabled
                 />
+                <span className="text-[11px] text-slate-500">Email is pinned to the current institutional tenant domain.</span>
               </div>
             </div>
           </motion.div>
@@ -183,46 +212,56 @@ export default function ProfilePage() {
             initial={{opacity: 0, y: 10}} 
             animate={{opacity: 1, y: 0}}
             transition={{delay: 0.3}}
-            className="bg-white border border-border rounded-2xl p-8 shadow-sm"
+            className="rounded-2xl border border-slate-800/80 bg-slate-900/70 backdrop-blur-md p-8 shadow-xl"
           >
-            <h2 className="text-lg font-bold text-text-primary mb-6 pb-4 border-b border-border font-heading">AI Persona Preferences</h2>
+            <h2 className="text-base font-semibold text-slate-100 mb-6 pb-4 border-b border-slate-800 font-serif">
+              Autonomous Agent Persona & Tone
+            </h2>
             
             <div className="space-y-4">
               <label 
-                className={`flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all shadow-sm ${
-                  profile.aiPersona === 'Executive Analyst (Recommended)' ? 'border-primary bg-primary-light/20 hover:bg-primary-light/30' : 'border-transparent bg-surface hover:border-border'
+                className={`flex items-start gap-4 p-5 rounded-xl border cursor-pointer transition-all ${
+                  profile.aiPersona === 'Executive Analyst (Recommended)' 
+                    ? 'border-amber-400/60 bg-amber-400/5 ring-1 ring-amber-400/20' 
+                    : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
                 }`}
                 onClick={() => handleChange('aiPersona', 'Executive Analyst (Recommended)')}
               >
                 <input 
                   type="radio" 
                   name="tone" 
-                  className="mt-1 w-4 h-4 text-primary focus:ring-primary" 
+                  className="mt-1 text-amber-400 focus:ring-amber-400" 
                   checked={profile.aiPersona === 'Executive Analyst (Recommended)'} 
                   readOnly
                 />
                 <div>
-                  <div className="font-bold text-text-primary text-[15px]">Executive Analyst (Recommended)</div>
-                  <div className="text-[14px] text-text-secondary mt-1.5 leading-relaxed">Agentix will focus on bottom-line impact, avoiding complex math jargon and explaining statistical concepts in plain business English.</div>
+                  <div className="font-semibold text-slate-100 text-sm">Executive Analyst (Recommended)</div>
+                  <div className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Focuses on high-level institutional impact, ROI, key risk factors, and actionable prescriptions without unnecessary statistical jargon.
+                  </div>
                 </div>
               </label>
 
               <label 
-                className={`flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all shadow-sm ${
-                  profile.aiPersona === 'Data Scientist Mode' ? 'border-primary bg-primary-light/20 hover:bg-primary-light/30' : 'border-transparent bg-surface hover:border-border'
+                className={`flex items-start gap-4 p-5 rounded-xl border cursor-pointer transition-all ${
+                  profile.aiPersona === 'Data Scientist Mode' 
+                    ? 'border-amber-400/60 bg-amber-400/5 ring-1 ring-amber-400/20' 
+                    : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
                 }`}
                 onClick={() => handleChange('aiPersona', 'Data Scientist Mode')}
               >
                 <input 
                   type="radio" 
                   name="tone" 
-                  className="mt-1 w-4 h-4 text-primary focus:ring-primary" 
+                  className="mt-1 text-amber-400 focus:ring-amber-400" 
                   checked={profile.aiPersona === 'Data Scientist Mode'} 
                   readOnly
                 />
                 <div>
-                  <div className="font-bold text-text-primary text-[15px]">Data Scientist Mode</div>
-                  <div className="text-[14px] text-text-secondary mt-1.5 leading-relaxed">Agentix will provide raw statistical outputs, including p-values, standard deviations, and detailed causal inference rationales.</div>
+                  <div className="font-semibold text-slate-100 text-sm">Data Scientist Mode</div>
+                  <div className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Produces granular mathematical telemetry, cross-validation variance, loss convergence curves, p-values, and raw SHAP feature distributions.
+                  </div>
                 </div>
               </label>
             </div>

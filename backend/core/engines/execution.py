@@ -37,16 +37,27 @@ class ExecutionEngine:
             
     @staticmethod
     def select_llm_provider(task_type: str = "general") -> Dict[str, Any]:
-        """Dynamically routes to Ollama if models exist, otherwise fallback to Gemini."""
+        """Dynamically routes to Ollama/LM Studio if local models exist, otherwise checks cloud configuration."""
+        from ..config import settings
         registry = ModelRegistry.get_registry()
         
         if registry.get("has_local_llm"):
-            models = registry.get("local_ollama_models", [])
-            # For this simple prototype, pick the first available local model
+            models = registry.get("local_models", [])
             if models:
                 model_name = models[0].get("name")
-                logger.info(f"[ExecutionEngine] Routing LLM to local Ollama model: {model_name}")
-                return {"provider": "ollama", "model": model_name}
+                provider = models[0].get("provider", "ollama")
+                logger.info(f"[ExecutionEngine] Routing LLM to local {provider} model: {model_name}")
+                return {"provider": provider, "model": model_name}
                 
-        logger.info("[ExecutionEngine] No local LLM found. Routing LLM to Gemini fallback.")
-        return {"provider": "gemini", "model": "gemini-1.5-pro"}
+        # If in local-only mode and no local model is running:
+        if settings.AI_INFERENCE_MODE == "local" or not settings.AI_ALLOW_CLOUD_FALLBACK:
+            return {"provider": "none", "model": None}
+
+        if settings.GEMINI_API_KEY:
+            logger.info("[ExecutionEngine] Routing LLM to configured Gemini fallback.")
+            return {"provider": "gemini", "model": settings.GEMINI_MODEL}
+        elif settings.OPENAI_API_KEY:
+            logger.info("[ExecutionEngine] Routing LLM to configured OpenAI fallback.")
+            return {"provider": "openai", "model": settings.OPENAI_MODEL}
+
+        return {"provider": "none", "model": None}

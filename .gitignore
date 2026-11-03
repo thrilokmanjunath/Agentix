@@ -50,8 +50,9 @@ yarn-error.log*
 *.swo
 .DS_Store
 
-# Logs
+# Logs & Runtime
 logs/
+.run/
 *.log
 decision_logs.json
 execution_logs.json

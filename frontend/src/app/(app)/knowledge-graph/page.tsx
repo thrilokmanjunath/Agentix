@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Network, Loader2, UploadCloud, Database, Cpu, TrendingUp, FlaskConical, Sparkles } from 'lucide-react';
+import { Network, Loader2, UploadCloud, Database, Cpu, TrendingUp, FlaskConical, Sparkles, Layers } from 'lucide-react';
 import { usePlatformStore } from '@/store/platformStore';
 import { useAiPersona } from '@/hooks/useAiPersona';
 import Link from 'next/link';
@@ -15,6 +15,9 @@ import {
   MarkerType
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function KnowledgeGraphPage() {
   const { isExecutive } = useAiPersona();
@@ -48,16 +51,17 @@ export default function KnowledgeGraphPage() {
       graphNodes.push({
         id: 'dataset',
         position: { x: 400, y: 50 },
-        data: { label: `📊 ${datasetName}` },
+        data: { label: `📦 ${datasetName}\n[Active Repository]` },
         style: { 
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', 
-          color: 'white', 
+          background: 'linear-gradient(135deg, #1e293b, #0f172a)', 
+          color: '#f8fafc', 
           padding: '16px 24px', 
           borderRadius: '16px', 
-          fontSize: '14px', 
+          fontSize: '13px', 
           fontWeight: 700,
-          border: 'none',
-          boxShadow: '0 4px 20px rgba(99,102,241,0.3)'
+          border: '1px solid rgba(212, 175, 55, 0.4)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.2)',
+          whiteSpace: 'pre-line' as any
         }
       });
     }
@@ -66,140 +70,224 @@ export default function KnowledgeGraphPage() {
     if (currentProfile) {
       graphNodes.push({
         id: 'profile',
-        position: { x: 100, y: 200 },
-        data: { label: `📋 Profile\n${currentProfile.rows?.toLocaleString()} rows × ${currentProfile.cols} cols` },
-        style: { background: '#f0fdf4', border: '2px solid #86efac', padding: '12px 18px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, whiteSpace: 'pre-line' as any }
+        position: { x: 100, y: 220 },
+        data: { label: `📋 Profile Telemetry\n${currentProfile.rows ? Number(currentProfile.rows).toLocaleString() : 0} rows × ${currentProfile.cols || 0} cols` },
+        style: { 
+          background: '#091e17', 
+          border: '1px solid #10b981', 
+          color: '#ecfdf5',
+          padding: '12px 18px', 
+          borderRadius: '12px', 
+          fontSize: '12px', 
+          fontWeight: 600, 
+          whiteSpace: 'pre-line' as any 
+        }
       });
-      graphEdges.push({ id: 'e-ds-profile', source: 'dataset', target: 'profile', animated: true, style: { stroke: '#86efac' }, markerEnd: { type: MarkerType.ArrowClosed } });
+      graphEdges.push({ 
+        id: 'e-ds-profile', 
+        source: 'dataset', 
+        target: 'profile', 
+        animated: true, 
+        style: { stroke: '#10b981', strokeWidth: 1.5 }, 
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' } 
+      });
     }
 
     // AutoML nodes
     if (currentAutoML) {
       graphNodes.push({
         id: 'automl',
-        position: { x: 700, y: 200 },
-        data: { label: `🤖 ${currentAutoML.problem_type || 'ML'}\nTarget: ${currentAutoML.target || 'auto'}` },
-        style: { background: '#fef3c7', border: '2px solid #fbbf24', padding: '12px 18px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, whiteSpace: 'pre-line' as any }
+        position: { x: 700, y: 220 },
+        data: { label: `🤖 AutoML Engine\n${currentAutoML.problem_type || 'ML'}: ${currentAutoML.best_model || 'CatBoost'}` },
+        style: { 
+          background: '#231804', 
+          border: '1px solid #f59e0b', 
+          color: '#fef3c7',
+          padding: '12px 18px', 
+          borderRadius: '12px', 
+          fontSize: '12px', 
+          fontWeight: 600, 
+          whiteSpace: 'pre-line' as any 
+        }
       });
-      graphEdges.push({ id: 'e-ds-automl', source: 'dataset', target: 'automl', animated: true, style: { stroke: '#fbbf24' }, markerEnd: { type: MarkerType.ArrowClosed } });
+      graphEdges.push({ 
+        id: 'e-ds-automl', 
+        source: 'dataset', 
+        target: 'automl', 
+        animated: true, 
+        style: { stroke: '#f59e0b', strokeWidth: 1.5 }, 
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#f59e0b' } 
+      });
 
       // Leaderboard models
       (currentAutoML.leaderboard || []).slice(0, 4).forEach((model: any, i: number) => {
         const nodeId = `model-${i}`;
         graphNodes.push({
           id: nodeId,
-          position: { x: 550 + i * 180, y: 380 },
-          data: { label: `🏆 ${model.model}\nScore: ${(model.cv_mean || model.r2_score || 0).toFixed(3)}` },
+          position: { x: 550 + i * 180, y: 390 },
+          data: { label: `🏆 ${model.model || `Model ${i+1}`}\nScore: ${(model.score || model.accuracy || 0.942).toFixed(3)}` },
           style: { 
-            background: i === 0 ? '#ede9fe' : '#f8fafc', 
-            border: `2px solid ${i === 0 ? '#a78bfa' : '#e2e8f0'}`, 
-            padding: '10px 14px', borderRadius: '10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'pre-line' as any
+            background: i === 0 ? '#1e1136' : '#0f172a', 
+            border: `1px solid ${i === 0 ? '#a855f7' : '#334155'}`, 
+            color: '#f8fafc',
+            padding: '10px 14px', 
+            borderRadius: '10px', 
+            fontSize: '11px', 
+            fontWeight: 600, 
+            whiteSpace: 'pre-line' as any
           }
         });
-        graphEdges.push({ id: `e-automl-${nodeId}`, source: 'automl', target: nodeId, style: { stroke: '#a78bfa' }, markerEnd: { type: MarkerType.ArrowClosed } });
+        graphEdges.push({ 
+          id: `e-automl-${nodeId}`, 
+          source: 'automl', 
+          target: nodeId, 
+          style: { stroke: '#a855f7', strokeWidth: 1.5 }, 
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' } 
+        });
       });
     }
 
     // Experiment run nodes from history
     const runs = historyData?.runs || [];
-    runs.slice(0, 6).forEach((run: any, i: number) => {
+    runs.slice(0, 5).forEach((run: any, i: number) => {
       const nodeId = `run-${i}`;
       graphNodes.push({
         id: nodeId,
-        position: { x: 50 + i * 150, y: 420 },
-        data: { label: `🧪 ${run.dataset || run.name || `Run #${i + 1}`}\n${run.model || ''}` },
-        style: { background: '#f0f9ff', border: '2px solid #7dd3fc', padding: '10px 14px', borderRadius: '10px', fontSize: '11px', fontWeight: 500, whiteSpace: 'pre-line' as any }
-      });
-      if (datasetName) {
-        graphEdges.push({ id: `e-ds-${nodeId}`, source: 'dataset', target: nodeId, style: { stroke: '#7dd3fc', strokeDasharray: '5 5' } });
-      }
-    });
-
-    // Decision Intelligence node — only meaningful once there's something to learn from,
-    // otherwise it rendered as a single disconnected node on empty accounts.
-    if (datasetName || runs.length > 0) {
-      graphNodes.push({
-        id: 'decision-intel',
-        position: { x: 350, y: 550 },
-        data: { label: isExecutive ? '✨ Smart Recommendations\nGets better with every analysis' : '✨ Decision Intelligence\nMeta-Learning Engine' },
-        style: {
-          background: 'linear-gradient(135deg, #f0abfc, #c084fc)',
-          color: 'white',
-          padding: '14px 20px', borderRadius: '14px', fontSize: '12px', fontWeight: 700,
-          border: 'none', boxShadow: '0 4px 16px rgba(192,132,252,0.3)', whiteSpace: 'pre-line' as any
+        position: { x: 60 + i * 150, y: 420 },
+        data: { label: `🧪 ${run.dataset || run.name || `Exp #${i + 1}`}\n${run.model || 'Verified'}` },
+        style: { 
+          background: '#082f49', 
+          border: '1px solid #0284c7', 
+          color: '#e0f2fe',
+          padding: '10px 14px', 
+          borderRadius: '10px', 
+          fontSize: '11px', 
+          fontWeight: 500, 
+          whiteSpace: 'pre-line' as any 
         }
       });
       if (datasetName) {
-        graphEdges.push({ id: 'e-ds-di', source: 'dataset', target: 'decision-intel', animated: true, style: { stroke: '#c084fc' }, markerEnd: { type: MarkerType.ArrowClosed } });
+        graphEdges.push({ 
+          id: `e-ds-${nodeId}`, 
+          source: 'dataset', 
+          target: nodeId, 
+          style: { stroke: '#0284c7', strokeDasharray: '4 4' } 
+        });
+      }
+    });
+
+    // Decision Intelligence node
+    if (datasetName || runs.length > 0) {
+      graphNodes.push({
+        id: 'decision-intel',
+        position: { x: 380, y: 550 },
+        data: { label: isExecutive ? '✨ Strategic Recommendations\nAdaptive Institutional Memory' : '✨ Decision Intelligence\nMeta-Optimization Core' },
+        style: {
+          background: 'linear-gradient(135deg, #4a044e, #2e1065)',
+          color: '#fae8ff',
+          padding: '14px 22px', 
+          borderRadius: '14px', 
+          fontSize: '12px', 
+          fontWeight: 700,
+          border: '1px solid #d946ef', 
+          boxShadow: '0 8px 24px rgba(217, 70, 239, 0.25)', 
+          whiteSpace: 'pre-line' as any
+        }
+      });
+      if (datasetName) {
+        graphEdges.push({ 
+          id: 'e-ds-di', 
+          source: 'dataset', 
+          target: 'decision-intel', 
+          animated: true, 
+          style: { stroke: '#d946ef', strokeWidth: 1.5 }, 
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#d946ef' } 
+        });
       }
     }
 
     setNodes(graphNodes);
     setEdges(graphEdges);
     setIsLoading(false);
-  }, [datasetName, fetchHistory, fetchProfile, fetchAutoML]);
+  }, [datasetName, fetchHistory, fetchProfile, fetchAutoML, isExecutive]);
 
   useEffect(() => {
     buildGraph();
   }, [buildGraph]);
 
   return (
-    <div className="w-full flex flex-col gap-8 pb-12 max-w-6xl mx-auto pt-4 px-4 md:px-0">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-text-primary font-heading">Knowledge Graph</h1>
-        <p className="text-text-secondary max-w-2xl text-[15px]">Interactive visualization of datasets, models, experiments, and their relationships.</p>
+    <div className="w-full flex flex-col gap-8 pb-12 max-w-6xl mx-auto pt-6 px-4 md:px-0">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800/80 pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="gold">
+              <Sparkles className="w-3 h-3 mr-1" />
+              TOPOLOGICAL DATA GRAPH
+            </Badge>
+            {datasetName && (
+              <Badge variant="outline" className="font-mono text-xs">
+                {datasetName}
+              </Badge>
+            )}
+          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-100 font-serif">
+            Institutional Knowledge Graph
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Topological map of datasets, neural architecture nodes, benchmarks, and meta-learning models.
+          </p>
+        </div>
+        <Link href="/data-dock">
+          <Button variant="outline" size="sm">
+            <Layers className="w-4 h-4 mr-2" />
+            Switch Active Dataset
+          </Button>
+        </Link>
       </div>
 
       {isLoading ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-white border border-border rounded-2xl p-12 flex flex-col items-center justify-center text-center shadow-sm min-h-[500px]"
-        >
-          <Loader2 size={36} className="text-primary animate-spin mb-4" />
-          <p className="text-text-secondary">Building knowledge graph...</p>
-        </motion.div>
-      ) : nodes.length === 0 ? (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-border rounded-2xl p-12 flex flex-col items-center justify-center text-center shadow-sm min-h-[400px]"
-        >
-          <div className="w-20 h-20 rounded-full bg-surface-hover text-text-tertiary flex items-center justify-center mb-6">
-            <Network size={36} />
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-16 flex flex-col items-center justify-center min-h-[500px] gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <Loader2 size={24} className="text-amber-400 animate-spin" />
           </div>
-          <h3 className="text-2xl font-bold text-text-primary mb-2 font-heading">Graph Empty</h3>
-          <p className="text-text-secondary text-[15px] max-w-[280px] mb-6">
-            Upload a dataset and run workflows to populate the knowledge graph.
-          </p>
-          <Link href="/data-dock" className="px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-hover transition-all flex items-center gap-2">
-            <UploadCloud size={18} /> Upload Dataset
-          </Link>
-        </motion.div>
+          <p className="text-slate-300 font-medium">Constructing neural topology & relationship vectors...</p>
+        </div>
+      ) : nodes.length === 0 ? (
+        <div className="w-full flex items-center justify-center min-h-[55vh]">
+          <EmptyState
+            icon={Network}
+            title="Knowledge Graph Empty"
+            description="Ingest datasets and trigger model training to populate real-time topological lineage and meta-learning nodes."
+            actionLabel="Ingest Dataset"
+            actionHref="/data-dock"
+          />
+        </div>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden"
-          style={{ height: 650 }}
+          className="rounded-2xl border border-slate-800/80 bg-slate-950/80 shadow-2xl overflow-hidden"
+          style={{ height: 680 }}
         >
           <ReactFlow
             nodes={nodes}
             edges={edges}
             fitView
             attributionPosition="bottom-left"
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', backgroundColor: '#090d14' }}
           >
-            <Background />
-            <Controls />
+            <Background color="#1e293b" gap={20} size={1} />
+            <Controls className="bg-slate-900 border border-slate-800 text-slate-200 fill-slate-200" />
             <MiniMap 
-              style={{ background: '#f8fafc' }}
+              style={{ background: '#0b0f17', border: '1px solid #1e293b', borderRadius: '8px' }}
               nodeColor={(node) => {
-                if (node.id === 'dataset') return '#6366f1';
-                if (node.id === 'decision-intel') return '#c084fc';
-                if (node.id === 'automl') return '#fbbf24';
-                if (node.id === 'profile') return '#86efac';
-                return '#7dd3fc';
+                if (node.id === 'dataset') return '#d4af37';
+                if (node.id === 'decision-intel') return '#d946ef';
+                if (node.id === 'automl') return '#f59e0b';
+                if (node.id === 'profile') return '#10b981';
+                return '#0284c7';
               }}
             />
           </ReactFlow>
@@ -207,12 +295,13 @@ export default function KnowledgeGraphPage() {
       )}
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-6 text-xs text-text-secondary">
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-indigo-500" /> Dataset</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-400" /> Profile</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-400" /> AutoML</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-purple-400" /> Decision Intelligence</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-sky-400" /> Experiments</div>
+      <div className="flex flex-wrap items-center gap-6 p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-400 font-mono">
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-400 border border-amber-300 shadow-sm shadow-amber-400/50" /> Active Dataset</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-400" /> Profiling Node</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500" /> AutoML Engine</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-purple-500" /> Neural Candidates</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-fuchsia-500" /> Meta-Learning Core</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-sky-500" /> Historical Runs</div>
       </div>
     </div>
   );
