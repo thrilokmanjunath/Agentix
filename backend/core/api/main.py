@@ -103,6 +103,10 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+@app.get("/")
+def root_probe():
+    return {"status": "ok", "service": settings.PROJECT_NAME}
+
 @app.get("/health", response_model=BaseResponse)
 def health_check():
     logger.info("Health check endpoint accessed")
