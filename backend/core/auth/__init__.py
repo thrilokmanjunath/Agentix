@@ -98,7 +98,29 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
         
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
-        raise credentials_exception
+        token_email = (payload.get("email") or "").strip().lower()
+        if token_email:
+            user = db.query(User).filter(User.email == token_email).first()
+        if user is None and token_email:
+            # Provision federated/NextAuth user row whose identity was cryptographically verified by JWT_SECRET_KEY
+            token_role = str(payload.get("role") or "user").lower()
+            safe_role = token_role if token_role in ("user", "admin", "analyst") else "user"
+            user = User(
+                id=user_id,
+                email=token_email,
+                hashed_password="!external_auth",
+                role=safe_role,
+                is_active=True,
+            )
+            try:
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            except Exception:
+                db.rollback()
+                user = db.query(User).filter(User.email == token_email).first()
+        if user is None:
+            raise credentials_exception
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user

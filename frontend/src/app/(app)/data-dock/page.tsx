@@ -181,7 +181,7 @@ export default function DatasetsPage() {
               <input {...getInputProps()} />
               <div
                 className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
-                  isDragActive ? 'bg-[var(--accent-primary)] text-white shadow-lg scale-110' : 'bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 text-[var(--accent-primary)] shadow-md'
+                  isDragActive ? 'bg-[var(--accent-primary)] text-[var(--accent-foreground)] shadow-lg scale-110' : 'bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 text-[var(--accent-primary)] shadow-md'
                 }`}
               >
                 <UploadCloud size={36} />

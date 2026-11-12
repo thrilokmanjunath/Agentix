@@ -7,7 +7,12 @@ from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agentix.db")
+RAW_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agentix.db")
+DATABASE_URL = (
+    "postgresql://" + RAW_DATABASE_URL[len("postgres://"):]
+    if RAW_DATABASE_URL.startswith("postgres://")
+    else RAW_DATABASE_URL
+)
 
 # Connection Pooling & Configuration
 if DATABASE_URL.startswith("sqlite"):
@@ -38,11 +43,11 @@ if DATABASE_URL.startswith("sqlite"):
 else:
     engine = create_engine(
         DATABASE_URL,
-        pool_size=20,
+        pool_size=5,
         max_overflow=10,
         pool_timeout=30,
         pool_pre_ping=True,  # Health Check before using a connection
-        pool_recycle=1800    # Recycle connections every 30 minutes
+        pool_recycle=300     # Recycle connections cleanly for serverless Postgres
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -91,21 +96,26 @@ def ensure_guest_user():
             db.commit()
             logger.info("Created default guest_user row.")
 
-        admin = db.query(User).filter(User.email == "admin@agentix.com").first()
-        if not admin:
-            db.add(User(
-                id="default-user",
-                email="admin@agentix.com",
-                hashed_password=get_password_hash("admin123"),
-                role="admin",
-                is_active=True,
-            ))
-            db.commit()
-            logger.info("Created default admin user row.")
-        elif admin.role != "admin":
-            admin.role = "admin"
-            db.commit()
-            logger.info("Updated admin user role to 'admin'.")
+        allow_demo_admin = (
+            os.getenv("ENVIRONMENT", "development") == "development"
+            or os.getenv("ENABLE_DEMO_LOGIN") == "true"
+        )
+        if allow_demo_admin:
+            admin = db.query(User).filter(User.email == "admin@agentix.com").first()
+            if not admin:
+                db.add(User(
+                    id="default-user",
+                    email="admin@agentix.com",
+                    hashed_password=get_password_hash("admin123"),
+                    role="admin",
+                    is_active=True,
+                ))
+                db.commit()
+                logger.info("Created default admin user row.")
+            elif admin.role != "admin":
+                admin.role = "admin"
+                db.commit()
+                logger.info("Updated admin user role to 'admin'.")
     finally:
         db.close()
 

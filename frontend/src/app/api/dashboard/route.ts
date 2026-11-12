@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import axios from "axios";
+import { getServerBackendAuthHeaders, getServerBackendBase } from "@/lib/backendServer";
 
 // Maps a real PipelineStage.status value to the labels the dashboard's
 // workflow bar already knows how to render (dashboard/page.tsx).
@@ -58,48 +59,57 @@ export async function GET() {
     // render permanently regardless of whether anything had actually run.
     let workflow: { state: string; nodes: any[] } = { state: "IDLE", nodes: [] };
 
-    const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/api\/v1\/?$/, '');
+    const backendBase = getServerBackendBase();
+    const authHeaders = await getServerBackendAuthHeaders();
 
-    try {
-      const resMetrics = await axios.get(`${backendBase}/api/v1/platform/dashboard-metrics`, { timeout: 1500 });
-      const metrics = resMetrics.data?.data;
-      if (metrics) {
-        const stateMap: Record<string, string> = {
-          Idle: "IDLE",
-          Processing: "PROCESSING",
-          Completed: "COMPLETED",
-          Failed: "FAILED",
-        };
-        workflow = {
-          state: stateMap[metrics.workflow_state] || "IDLE",
-          nodes: (metrics.stages || []).map((s: any) => ({
-            id: s.agent_name,
-            label: s.agent_name,
-            status: mapStageStatus(s.status),
-            duration: s.duration,
-          })),
-        };
+    if (backendBase) {
+      try {
+        const resMetrics = await axios.get(`${backendBase}/api/v1/platform/dashboard-metrics`, {
+          timeout: 3000,
+          headers: authHeaders,
+        });
+        const metrics = resMetrics.data?.data;
+        if (metrics) {
+          const stateMap: Record<string, string> = {
+            Idle: "IDLE",
+            Processing: "PROCESSING",
+            Completed: "COMPLETED",
+            Failed: "FAILED",
+          };
+          workflow = {
+            state: stateMap[metrics.workflow_state] || "IDLE",
+            nodes: (metrics.stages || []).map((s: any) => ({
+              id: s.agent_name,
+              label: s.agent_name,
+              status: mapStageStatus(s.status),
+              duration: s.duration,
+            })),
+          };
 
-        // Also surface real activity from the backend (dataset uploads /
-        // pipeline runs), merged ahead of the frontend's own DB-backed log.
-        try {
-          const resActivity = await axios.get(`${backendBase}/api/v1/platform/recent-activity`, { timeout: 1500 });
-          if (Array.isArray(resActivity.data?.data)) {
-            const backendLogs = resActivity.data.data.map((log: any) => ({
-              id: log.id,
-              userId: uid,
-              action: log.action,
-              metadata: {},
-              createdAt: log.createdAt,
-            }));
-            activityLogs = [...backendLogs, ...activityLogs].slice(0, 15);
+          // Also surface real activity from the backend (dataset uploads /
+          // pipeline runs), merged ahead of the frontend's own DB-backed log.
+          try {
+            const resActivity = await axios.get(`${backendBase}/api/v1/platform/recent-activity`, {
+              timeout: 3000,
+              headers: authHeaders,
+            });
+            if (Array.isArray(resActivity.data?.data)) {
+              const backendLogs = resActivity.data.data.map((log: any) => ({
+                id: log.id,
+                userId: uid,
+                action: log.action,
+                metadata: {},
+                createdAt: log.createdAt,
+              }));
+              activityLogs = [...backendLogs, ...activityLogs].slice(0, 15);
+            }
+          } catch {
+            // Backend activity feed unavailable - keep the DB-backed logs only.
           }
-        } catch {
-          // Backend activity feed unavailable - keep the DB-backed logs only.
         }
+      } catch {
+        // Backend unreachable - keep the honest IDLE/no-runs default above.
       }
-    } catch {
-      // Backend unreachable - keep the honest IDLE/no-runs default above.
     }
 
     return NextResponse.json({

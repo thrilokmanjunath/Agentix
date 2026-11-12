@@ -9,3 +9,6 @@ __pycache__/
 venv/
 .pytest_cache/
 *.log
+logs/
+data/temp/
+data/ai_runtime_config.json

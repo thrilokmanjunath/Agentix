@@ -45,9 +45,12 @@ from core.repositories.database import engine, Base, init_db
 
 # Create DB tables with retry logic
 init_db()
+_is_production = os.getenv("ENVIRONMENT", settings.ENVIRONMENT) == "production"
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=None if _is_production else f"{settings.API_V1_STR}/openapi.json",
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
 )
 
 # Instrument FastAPI with OpenTelemetry
@@ -86,11 +89,13 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(SecurityMiddleware, rate_limit=200)
 
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001")
-origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+origins = [origin.strip().rstrip("/") for origin in allowed_origins_str.split(",") if origin.strip()]
+allowed_origin_regex = os.getenv("ALLOWED_ORIGIN_REGEX") or None
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=allowed_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-API-Key"],

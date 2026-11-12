@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Download,
-  Share2,
   TrendingUp,
   Users,
   Target,
@@ -14,8 +13,7 @@ import {
   Sparkles,
   Printer,
   ShieldCheck,
-  CheckCircle2,
-  Database
+  CheckCircle2
 } from 'lucide-react';
 import { usePlatformStore } from '@/store/platformStore';
 import {
@@ -28,7 +26,6 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -277,7 +274,7 @@ export default function ReportsPage() {
                       cursor={{fill: 'var(--surface-secondary)', opacity: 0.5}}
                     />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px', color: 'var(--text-secondary)' }}/>
-                    <Bar dataKey="score" name="Empirical Score" fill="#168B83" radius={[6, 6, 0, 0]} maxBarSize={56} />
+                    <Bar dataKey="score" name="Empirical Score" fill="var(--accent-primary)" radius={[6, 6, 0, 0]} maxBarSize={56} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

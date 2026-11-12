@@ -18,18 +18,30 @@ export default auth((req) => {
   if (!isLoggedIn) {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("redirect", pathname)
-    return NextResponse.redirect(loginUrl)
+    const redirectRes = NextResponse.redirect(loginUrl)
+    redirectRes.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+    redirectRes.headers.set("Pragma", "no-cache")
+    redirectRes.headers.set("Expires", "0")
+    return redirectRes
   }
 
   if (pathname.startsWith("/admin")) {
     // @ts-expect-error role is added to the session in auth.config.ts
     const role = req.auth?.user?.role
     if (role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", req.url))
+      const redirectRes = NextResponse.redirect(new URL("/dashboard", req.url))
+      redirectRes.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+      return redirectRes
     }
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next()
+  // Enforce zero caching on all authenticated routes so that logging out and
+  // pressing the browser's back button never serves cached user data from bfcache.
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+  response.headers.set("Pragma", "no-cache")
+  response.headers.set("Expires", "0")
+  return response
 })
 
 export const config = {

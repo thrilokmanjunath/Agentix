@@ -30,15 +30,19 @@ def readiness_check(db: Session = Depends(get_db)):
     except Exception:
         db_status = "error"
 
-    redis_status = "ok"
-    try:
-        import redis
-        r = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"), socket_timeout=1)
-        r.ping()
-    except Exception:
-        redis_status = "error"
-        
-    status = "ready" if db_status == "ok" and redis_status == "ok" else "not_ready"
+    redis_url = os.getenv("REDIS_URL", "").strip()
+    if not redis_url:
+        redis_status = "not_configured"
+        status = "ready" if db_status == "ok" else "not_ready"
+    else:
+        redis_status = "ok"
+        try:
+            import redis
+            r = redis.from_url(redis_url, socket_timeout=1)
+            r.ping()
+        except Exception:
+            redis_status = "error"
+        status = "ready" if db_status == "ok" and redis_status == "ok" else "not_ready"
     return {
         "status": status,
         "database": db_status,

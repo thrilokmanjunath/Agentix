@@ -2,6 +2,7 @@ import type { NextAuthConfig } from 'next-auth';
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/password";
 
 export const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
@@ -62,7 +63,15 @@ export const authConfig = {
         // Standard user authentication from database
         try {
           const user = await prisma.user.findUnique({ where: { email } });
-          if (user) {
+          if (user && verifyPassword(password, user.passwordHash)) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                lastLogin: new Date(),
+                loginCount: { increment: 1 },
+              },
+            }).catch(() => {});
+
             return {
               id: user.id,
               name: user.name,
@@ -85,6 +94,7 @@ export const authConfig = {
   pages: { 
     signIn: "/login",
   },
+  basePath: "/api/auth",
   // No hardcoded fallback: a known secret string committed in source would
   // let anyone forge a valid session JWT against any deployment that forgot
   // to override it. AUTH_SECRET must be set (frontend/.env for local dev -
@@ -92,6 +102,22 @@ export const authConfig = {
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on same origin or localhost/127.0.0.1 loopback equivalents
+      try {
+        const urlObj = new URL(url);
+        const baseObj = new URL(baseUrl);
+        if (urlObj.origin === baseObj.origin) return url;
+        const isLoopbackUrl = urlObj.hostname === "localhost" || urlObj.hostname === "127.0.0.1";
+        const isLoopbackBase = baseObj.hostname === "localhost" || baseObj.hostname === "127.0.0.1";
+        if (isLoopbackUrl && isLoopbackBase && urlObj.port === baseObj.port) {
+          return url;
+        }
+      } catch {}
+      return baseUrl;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { logoutAction } from '@/app/actions/auth';
 import {
   Camera,
   Mail,
@@ -11,7 +12,8 @@ import {
   Shield,
   Loader2,
   Sparkles,
-  Save
+  Save,
+  LogOut
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -264,6 +266,45 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </label>
+            </div>
+          </motion.div>
+
+          {/* Active Session & Security Management */}
+          <motion.div 
+            initial={{opacity: 0, y: 10}} 
+            animate={{opacity: 1, y: 0}}
+            transition={{delay: 0.4}}
+            className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] p-8 shadow-md"
+          >
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[var(--border-subtle)]">
+              <div>
+                <h2 className="text-base font-bold text-[var(--text-primary)]">
+                  Session & Security Management
+                </h2>
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  Manage active credentials, token expiration, and secure session termination.
+                </p>
+              </div>
+              <Badge variant="teal" size="sm">
+                Active Session
+              </Badge>
+            </div>
+
+            <div className="mt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-xl bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)]">
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-[var(--text-primary)] block">Current Authentication State</span>
+                <span className="text-xs text-[var(--text-secondary)] block">
+                  Signed in as <strong className="text-[var(--text-primary)] font-mono">{profile.email || 'admin@agentix.com'}</strong> &bull; Scoped to institutional tenant
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => logoutAction()}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white border border-red-600/30 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              >
+                <LogOut size={14} />
+                Sign Out of Session
+              </button>
             </div>
           </motion.div>
 

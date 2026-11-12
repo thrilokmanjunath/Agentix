@@ -36,28 +36,80 @@ class ExecutionEngine:
             return DaskEngine()
             
     @staticmethod
-    def select_llm_provider(task_type: str = "general") -> Dict[str, Any]:
-        """Dynamically routes to Ollama/LM Studio if local models exist, otherwise checks cloud configuration."""
+    def select_llm_provider(
+        task_type: str = "general",
+        requested_model: Optional[str] = None,
+        requested_provider: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Dynamically resolves the active local or configured API-key LLM provider and model."""
         from ..config import settings
+
         registry = ModelRegistry.get_registry()
-        
-        if registry.get("has_local_llm"):
-            models = registry.get("local_models", [])
-            if models:
-                model_name = models[0].get("name")
-                provider = models[0].get("provider", "ollama")
-                logger.info(f"[ExecutionEngine] Routing LLM to local {provider} model: {model_name}")
-                return {"provider": provider, "model": model_name}
-                
-        # If in local-only mode and no local model is running:
-        if settings.AI_INFERENCE_MODE == "local" or not settings.AI_ALLOW_CLOUD_FALLBACK:
+        inference_mode = (settings.AI_INFERENCE_MODE or "local").lower()
+        local_models = registry.get("local_models", [])
+
+        cloud_keys = {
+            "gemini": (settings.GEMINI_API_KEY, settings.GEMINI_MODEL),
+            "openai": (settings.OPENAI_API_KEY, settings.OPENAI_MODEL),
+            "anthropic": (settings.ANTHROPIC_API_KEY, settings.ANTHROPIC_MODEL),
+        }
+
+        # 1. Explicit request override (e.g. from Agent Console model dropdown)
+        if requested_provider:
+            req_prov = requested_provider.lower()
+            if req_prov in ("ollama", "lm_studio"):
+                matching = [m["name"] for m in local_models if m.get("provider") == req_prov]
+                if requested_model and requested_model in matching:
+                    return {"provider": req_prov, "model": requested_model}
+                if matching:
+                    return {"provider": req_prov, "model": requested_model or matching[0]}
+            elif req_prov in cloud_keys and inference_mode != "local":
+                key, default_m = cloud_keys[req_prov]
+                if key:
+                    return {"provider": req_prov, "model": requested_model or default_m}
+
+        # 2. If only requested_model was provided, check local models then configured cloud keys
+        if requested_model and not requested_provider:
+            for lm in local_models:
+                if lm.get("name") == requested_model:
+                    return {"provider": lm.get("provider", "ollama"), "model": requested_model}
+            if inference_mode != "local":
+                if settings.GEMINI_API_KEY and requested_model.lower().startswith(("gemini", "gemma")):
+                    return {"provider": "gemini", "model": requested_model}
+                if settings.OPENAI_API_KEY and requested_model.lower().startswith(("gpt", "o1", "o3", "o4", "chatgpt")):
+                    return {"provider": "openai", "model": requested_model}
+                if settings.ANTHROPIC_API_KEY and requested_model.lower().startswith("claude"):
+                    return {"provider": "anthropic", "model": requested_model}
+
+        # 3. Configured active cloud provider when mode is 'cloud' or explicitly selected as primary in 'auto'
+        active_prov = (settings.AI_PROVIDER or "ollama").lower()
+        if active_prov in cloud_keys and inference_mode != "local":
+            key, default_m = cloud_keys[active_prov]
+            if key:
+                logger.info(f"[ExecutionEngine] Routing LLM to active provider {active_prov}: {default_m}")
+                return {"provider": active_prov, "model": default_m}
+
+        # 4. Local inference engine (Ollama / LM Studio)
+        if local_models:
+            preferred_local = settings.OLLAMA_MODEL if active_prov == "ollama" else settings.LM_STUDIO_MODEL
+            local_names = [m.get("name") for m in local_models]
+            if preferred_local and preferred_local in local_names:
+                return {"provider": active_prov, "model": preferred_local}
+            model_name = local_models[0].get("name")
+            provider = local_models[0].get("provider", "ollama")
+            logger.info(f"[ExecutionEngine] Routing LLM to local {provider} model: {model_name}")
+            return {"provider": provider, "model": model_name}
+
+        # 5. Respect local-only institutional restriction
+        if inference_mode == "local":
             return {"provider": "none", "model": None}
 
-        if settings.GEMINI_API_KEY:
-            logger.info("[ExecutionEngine] Routing LLM to configured Gemini fallback.")
-            return {"provider": "gemini", "model": settings.GEMINI_MODEL}
-        elif settings.OPENAI_API_KEY:
-            logger.info("[ExecutionEngine] Routing LLM to configured OpenAI fallback.")
-            return {"provider": "openai", "model": settings.OPENAI_MODEL}
+        # 6. Cloud API key fallback when permitted
+        if inference_mode == "cloud" or settings.AI_ALLOW_CLOUD_FALLBACK or inference_mode == "auto":
+            for prov_id in ("gemini", "openai", "anthropic"):
+                key, default_m = cloud_keys[prov_id]
+                if key:
+                    logger.info(f"[ExecutionEngine] Routing LLM to configured {prov_id} API key: {default_m}")
+                    return {"provider": prov_id, "model": default_m}
 
         return {"provider": "none", "model": None}

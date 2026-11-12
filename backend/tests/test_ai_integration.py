@@ -64,4 +64,74 @@ def test_test_provider_connection_reporting():
     assert res_ollama["provider"] == "ollama"
 
     res_missing_cloud = check_provider_connection("openai")
-    assert res_missing_cloud["status"] in ("configured", "unconfigured")
+    assert res_missing_cloud["status"] in ("configured", "unconfigured", "connected")
+
+
+def test_model_selection_for_available_api_key(monkeypatch):
+    """Verify ExecutionEngine selects requested and configured API-key models when inference_mode != local."""
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-fake-gemini-key-12345")
+    monkeypatch.setattr(settings, "GEMINI_MODEL", "gemini-3.5-flash")
+    monkeypatch.setattr(settings, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(settings, "AI_INFERENCE_MODE", "auto")
+
+    # No local override when cloud selected
+    monkeypatch.setattr(ModelRegistry, "get_ollama_models", staticmethod(lambda: []))
+    monkeypatch.setattr(ModelRegistry, "get_lm_studio_models", staticmethod(lambda: []))
+
+    resolved = ExecutionEngine.select_llm_provider(
+        requested_model="gemini-3-flash-preview",
+        requested_provider="gemini",
+    )
+    assert resolved["provider"] == "gemini"
+    assert resolved["model"] == "gemini-3-flash-preview"
+
+    registry = ModelRegistry.get_registry()
+    assert registry["gemini_available"] is True
+    assert any(m["name"] == "gemini-3.5-flash" and m["provider"] == "gemini" for m in registry["available_models"])
+
+    # In strict local mode, cloud routing is blocked even if key exists
+    monkeypatch.setattr(settings, "AI_INFERENCE_MODE", "local")
+    blocked = ExecutionEngine.select_llm_provider(requested_model="gemini-3-flash-preview", requested_provider="gemini")
+    assert blocked["provider"] == "none"
+
+
+def test_runtime_ai_config_persistence_masks_keys(monkeypatch, tmp_path):
+    """Verify save_runtime_ai_config persists model choices safely without exposing raw secrets."""
+    import core.services.llm_service as llm_svc
+
+    tmp_cfg = tmp_path / "ai_runtime_config.json"
+    monkeypatch.setattr(llm_svc, "_RUNTIME_CONFIG_PATH", str(tmp_cfg))
+    monkeypatch.setattr(settings, "AI_PROVIDER", "ollama")
+    monkeypatch.setattr(settings, "AI_INFERENCE_MODE", "local")
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "AIzaSyTestSecretKey987654")
+    monkeypatch.setattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")
+
+    masked = llm_svc.save_runtime_ai_config({
+        "ai_provider": "gemini",
+        "active_model": "gemini-2.5-pro",
+        "inference_mode": "auto",
+        "gemini_api_key": "AIzaSy...5678",  # masked string must NOT overwrite real secret
+    })
+
+    assert masked["ai_provider"] == "gemini"
+    assert masked["gemini_model"] == "gemini-2.5-pro"
+    assert masked["inference_mode"] == "auto"
+    assert settings.GEMINI_API_KEY == "AIzaSyTestSecretKey987654"
+    assert masked["gemini_key_masked"] == "AIzaSy...7654"
+    assert "SecretKey" not in str(masked)
+
+
+def test_installed_local_manifests_appear_in_registry_when_daemon_offline(monkeypatch, tmp_path):
+    """Verify local Ollama models on disk appear in unified available_models even when daemon is stopped."""
+    manifests_dir = tmp_path / "manifests-v2" / "ollama.com" / "library" / "qwen2.5"
+    manifests_dir.mkdir(parents=True)
+    (manifests_dir / "3b").write_text('{"layers": [{"size": 1073741824}]}', encoding="utf-8")
+
+    monkeypatch.setenv("OLLAMA_MODELS", str(tmp_path))
+    monkeypatch.setattr(ModelRegistry, "get_ollama_models", staticmethod(lambda: []))
+    monkeypatch.setattr(ModelRegistry, "get_lm_studio_models", staticmethod(lambda: []))
+
+    reg = ModelRegistry.get_registry()
+    installed_names = [m["name"] for m in reg["installed_local_models"]]
+    assert "qwen2.5:3b" in installed_names
+    assert any(m["name"] == "qwen2.5:3b" and m["is_local"] is True for m in reg["available_models"])

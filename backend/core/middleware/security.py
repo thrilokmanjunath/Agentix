@@ -66,13 +66,18 @@ class SecurityMiddleware:
         self.tenant_limiter = TenantTokenBucketLimiter(capacity=tenant_capacity)
 
     def _get_client_ip(self, scope) -> str:
-        client = scope.get("client")
-        if client:
-            return client[0]
         headers = dict(scope.get("headers") or [])
         forwarded = headers.get(b"x-forwarded-for")
         if forwarded:
-            return forwarded.decode().split(",")[0].strip()
+            try:
+                first_ip = forwarded.decode("utf-8").split(",")[0].strip()
+                if first_ip:
+                    return first_ip
+            except UnicodeDecodeError:
+                pass
+        client = scope.get("client")
+        if client:
+            return client[0]
         return "127.0.0.1"
 
     def _get_tenant_id(self, scope) -> str:

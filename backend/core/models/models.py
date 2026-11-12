@@ -16,6 +16,7 @@ class User(Base):
     datasets = relationship("Dataset", back_populates="owner", cascade="all, delete-orphan")
     settings = relationship("UserSettings", back_populates="owner", uselist=False, cascade="all, delete-orphan")
     workflow_runs = relationship("WorkflowRun", back_populates="owner", cascade="all, delete-orphan")
+    conversations = relationship("Conversation", back_populates="owner", cascade="all, delete-orphan")
 
 class UserSettings(Base):
     __tablename__ = "user_settings"
@@ -81,3 +82,30 @@ class PipelineStage(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     run = relationship("WorkflowRun", back_populates="stages")
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    title = Column(String, nullable=False, default="New Conversation")
+    owner_id = Column(String, ForeignKey("users.id"), nullable=False)
+    tenant_id = Column(String, default="default", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = relationship("User", back_populates="conversations")
+    messages = relationship("ChatMessage", back_populates="conversation", cascade="all, delete-orphan", order_by="ChatMessage.created_at")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    conversation_id = Column(String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String, nullable=False) # 'user' or 'agent'
+    content = Column(Text, nullable=False)
+    model = Column(String, nullable=True)
+    latency_ms = Column(Integer, nullable=True)
+    tokens = Column(Integer, nullable=True)
+    cached = Column(Boolean, default=False)
+    guardrail_status = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    conversation = relationship("Conversation", back_populates="messages")

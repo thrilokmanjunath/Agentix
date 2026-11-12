@@ -1,6 +1,23 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import axios from 'axios';
+import { getBackendAuthToken, getClientBackendBase } from '@/lib/backendClient';
+
+const backendAxios = axios.create();
+backendAxios.interceptors.request.use(async (config) => {
+  const base = getClientBackendBase();
+  if (config.url && !config.url.startsWith('http')) {
+    config.url = `${base}${config.url.startsWith('/') ? '' : '/'}${config.url}`;
+  }
+  const token = await getBackendAuthToken();
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+const PLATFORM_PATH = '/api/v1/platform';
 
 export interface DashboardMetrics {
   active_dataset: string;
@@ -32,37 +49,89 @@ export interface EDAData {
   statistics: Record<string, { mean: number; std: number; skew: number }>;
 }
 
+export interface AlgorithmCatalogItem {
+  id: string;
+  name: string;
+  task_type: string;
+  tier: string;
+  description: string;
+  pros: string[];
+  cons: string[];
+  interpretability: string;
+  computational_complexity: string;
+  supports_sparse: boolean;
+  requires_scaling: boolean;
+  handles_missing_natively: boolean;
+  is_available: boolean;
+  speed_tier: string;
+}
+
+export interface CandidateRecommendationItem {
+  algorithm_id: string;
+  algorithm_name: string;
+  task_type: string;
+  tier: string;
+  is_recommended: boolean;
+  is_baseline: boolean;
+  priority_rank: number;
+  rationale: string;
+  estimated_training_speed: string;
+  interpretability: string;
+}
+
+export interface LeaderboardItem {
+  rank?: number;
+  model: string;
+  algorithm_id?: string;
+  tier?: string;
+  is_best?: boolean;
+  is_baseline?: boolean;
+  score: number | null;
+  primary_metric?: string;
+  fit_time_sec?: number;
+  problem_type?: string;
+  accuracy?: number;
+  precision?: number;
+  recall?: number;
+  f1_score?: number;
+  roc_auc?: number;
+  mae?: number;
+  rmse?: number;
+  r2?: number;
+  mape?: number;
+  silhouette_score?: number;
+  davies_bouldin_score?: number;
+  calinski_harabasz_score?: number;
+  feature_importances?: Record<string, number>;
+  confusion_matrix?: number[][];
+  class_labels?: string[];
+}
+
 export interface AutoMLData {
   problem_type: string;
-  target: string;
+  target?: string;
   best_model: string;
-  // Real shape returned by backend's _leaderboard_from_stages(): a single
-  // trained model's row (score = accuracy for classification, r2 for
-  // regression), plus whatever the real EvaluationAgent computed spread in
-  // (accuracy/f1_score, or mae/rmse/r2) - not a multi-candidate AutoML
-  // search with cross-validation, which this project does not implement.
-  leaderboard: {
-    model: string;
-    score: number | null;
-    problem_type?: string;
-    accuracy?: number;
-    f1_score?: number;
-    mae?: number;
-    rmse?: number;
-    r2?: number;
-    feature_importances?: Record<string, number>;
-  }[];
+  best_score?: number;
+  primary_metric?: string;
+  leaderboard: LeaderboardItem[];
+  recommended_candidates?: CandidateRecommendationItem[];
+  feature_importances?: Record<string, number>;
 }
 
 export interface XAIData {
+  method?: string;
+  method_label?: string;
+  model?: string | null;
+  best_model?: string | null;
+  target?: string | null;
   top_drivers: string[];
-  bias_detected: boolean;
-  leakage_alert: boolean;
-  dominant_feature: string;
+  bias_detected?: boolean;
+  leakage_alert?: boolean;
+  dominant_feature: string | null;
   importances: Record<string, number>;
-  waterfall: { feature: string; start: number; end: number; impact: number }[];
-  base_value: number;
-  final_prediction: number;
+  waterfall?: { feature: string; start: number; end: number; impact: number }[];
+  base_value?: number;
+  final_prediction?: number;
 }
 
 export interface InsightsData {
@@ -106,6 +175,7 @@ interface PlatformState {
   insightsData: InsightsData | null;
   recommendationsData: RecommendationsData | null;
   mlopsData: MLOpsData | null;
+  algorithmCatalog: AlgorithmCatalogItem[];
 
   currentJobId: string | null;
   jobStatus: JobStatus | null;
@@ -117,6 +187,7 @@ interface PlatformState {
   fetchDashboardMetrics: () => Promise<void>;
   fetchEDA: () => Promise<void>;
   fetchAutoML: () => Promise<void>;
+  fetchAlgorithms: () => Promise<void>;
   fetchXAI: () => Promise<void>;
   fetchInsights: () => Promise<void>;
   fetchRecommendations: () => Promise<void>;
@@ -130,10 +201,6 @@ interface PlatformState {
   fetchReports: () => Promise<any>;
   fetchHistory: () => Promise<{ runs: any[]; activity: any[] }>;
 }
-
-const rawBackendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const backendBase = rawBackendBase.replace(/\/api\/v1\/?$/, '');
-const API_BASE = `${backendBase}/api/v1/platform`;
 
 export const usePlatformStore = create<PlatformState>()(
   persist(
@@ -150,6 +217,7 @@ export const usePlatformStore = create<PlatformState>()(
   insightsData: null,
   recommendationsData: null,
   mlopsData: null,
+  algorithmCatalog: [],
 
   currentJobId: null,
   jobStatus: null,
@@ -162,7 +230,7 @@ export const usePlatformStore = create<PlatformState>()(
   fetchDashboardMetrics: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/dashboard-metrics`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/dashboard-metrics`);
       set({ dashboardMetrics: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -175,7 +243,7 @@ export const usePlatformStore = create<PlatformState>()(
     if (!ds) { set({ error: 'No active dataset', edaData: null }); return; }
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/eda?dataset_name=${ds}`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/eda?dataset_name=${encodeURIComponent(ds)}`);
       set({ edaData: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -188,11 +256,22 @@ export const usePlatformStore = create<PlatformState>()(
     if (!ds) { set({ error: 'No active dataset', automlData: null }); return; }
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.post(`${API_BASE}/predict`, { dataset_name: ds });
+      const res = await backendAxios.post(`${PLATFORM_PATH}/predict`, { dataset_name: ds });
       set({ automlData: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       set({ error: msg, isLoading: false });
+    }
+  },
+
+  fetchAlgorithms: async () => {
+    try {
+      const res = await backendAxios.get(`${PLATFORM_PATH}/algorithms`);
+      if (res.data?.data?.algorithms) {
+        set({ algorithmCatalog: res.data.data.algorithms });
+      }
+    } catch (err: unknown) {
+      console.error("Failed to fetch algorithms catalog:", err);
     }
   },
 
@@ -201,7 +280,7 @@ export const usePlatformStore = create<PlatformState>()(
     if (!ds) { set({ error: 'No active dataset', xaiData: null }); return; }
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/xai?dataset_name=${ds}`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/xai?dataset_name=${encodeURIComponent(ds)}`);
       set({ xaiData: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -214,7 +293,7 @@ export const usePlatformStore = create<PlatformState>()(
     if (!ds) { set({ error: 'No active dataset', insightsData: null }); return; }
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/insights?dataset_name=${ds}`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/insights?dataset_name=${encodeURIComponent(ds)}`);
       set({ insightsData: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -227,7 +306,7 @@ export const usePlatformStore = create<PlatformState>()(
     if (!ds) { set({ error: 'No active dataset', recommendationsData: null }); return; }
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/recommendations?dataset_name=${ds}`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/recommendations?dataset_name=${encodeURIComponent(ds)}`);
       set({ recommendationsData: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -238,7 +317,7 @@ export const usePlatformStore = create<PlatformState>()(
   fetchMLOps: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/mlops`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/mlops`);
       set({ mlopsData: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -252,12 +331,12 @@ export const usePlatformStore = create<PlatformState>()(
     }
     set({ isLoading: true, error: null, currentJobId: null, jobStatus: null, uploadProgress: 0, workflowState: 'Uploading' });
     try {
-      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
-      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks (safe under Vercel's 4.5MB serverless limit)
+      const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
       const MAX_RETRIES = 3;
 
       // Init upload
-      const initRes = await axios.post(`${backendBase}/api/v1/dataset/upload/init`, {
+      const initRes = await backendAxios.post('/api/v1/dataset/upload/init', {
         file_name: file.name,
         total_chunks: totalChunks,
         total_size: file.size
@@ -278,11 +357,11 @@ export const usePlatformStore = create<PlatformState>()(
         let success = false;
         while (attempt < MAX_RETRIES && !success) {
           try {
-            await axios.post(`${backendBase}/api/v1/dataset/upload/chunk`, formData, {
+            await backendAxios.post('/api/v1/dataset/upload/chunk', formData, {
               headers: { 'Content-Type': 'multipart/form-data' },
             });
             success = true;
-          } catch (err) {
+          } catch {
             attempt++;
             if (attempt >= MAX_RETRIES) throw new Error(`Failed to upload chunk ${chunkIndex} after ${MAX_RETRIES} attempts`);
             await new Promise(res => setTimeout(res, 1000 * attempt)); // exponential backoff
@@ -293,7 +372,7 @@ export const usePlatformStore = create<PlatformState>()(
       }
 
       // Complete upload
-      const completeRes = await axios.post(`${backendBase}/api/v1/dataset/upload/complete`, {
+      const completeRes = await backendAxios.post('/api/v1/dataset/upload/complete', {
         upload_id: uploadId,
         file_name: file.name
       });
@@ -332,7 +411,7 @@ export const usePlatformStore = create<PlatformState>()(
     }
 
     try {
-      const res = await axios.get(`${backendBase}/api/v1/jobs/${jobId}`);
+      const res = await backendAxios.get(`/api/v1/jobs/${jobId}`);
       const status: JobStatus = res.data;
       set({ jobStatus: status });
       if (status.status === 'completed') {
@@ -364,7 +443,7 @@ export const usePlatformStore = create<PlatformState>()(
   startWorkflow: async (datasetName: string) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${API_BASE}/start-workflow`, { dataset_name: datasetName });
+      await backendAxios.post(`${PLATFORM_PATH}/start-workflow`, { dataset_name: datasetName });
       set({ isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -376,7 +455,7 @@ export const usePlatformStore = create<PlatformState>()(
     const ds = get().datasetName;
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.post(`${API_BASE}/chat`, { query, dataset_name: ds || '' });
+      const res = await backendAxios.post(`${PLATFORM_PATH}/chat`, { query, dataset_name: ds || '' });
       set({ isLoading: false });
       return res.data?.data?.response || res.data?.data || 'No response received.';
     } catch (err: unknown) {
@@ -391,7 +470,7 @@ export const usePlatformStore = create<PlatformState>()(
     if (!ds) { set({ error: 'No active dataset', profileData: null }); return; }
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.post(`${API_BASE}/profile`, { dataset_name: ds });
+      const res = await backendAxios.post(`${PLATFORM_PATH}/profile`, { dataset_name: ds });
       set({ profileData: res.data.data, isLoading: false });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -404,7 +483,7 @@ export const usePlatformStore = create<PlatformState>()(
     if (!ds) return null;
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/reports?dataset_name=${ds}`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/reports?dataset_name=${encodeURIComponent(ds)}`);
       set({ isLoading: false });
       return res.data?.data;
     } catch (err: unknown) {
@@ -417,8 +496,8 @@ export const usePlatformStore = create<PlatformState>()(
   fetchHistory: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get(`${API_BASE}/experiment-runs`);
-      const activity = await axios.get(`${API_BASE}/recent-activity`);
+      const res = await backendAxios.get(`${PLATFORM_PATH}/experiment-runs`);
+      const activity = await backendAxios.get(`${PLATFORM_PATH}/recent-activity`);
       set({ isLoading: false });
       return { runs: res.data?.data?.runs || [], activity: activity.data?.data || [] };
     } catch (err: unknown) {

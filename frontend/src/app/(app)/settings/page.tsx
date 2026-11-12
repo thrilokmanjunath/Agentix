@@ -6,20 +6,24 @@ import {
   Database,
   Cpu,
   Palette,
-  KeyRound,
   Save,
   CheckCircle2,
   Loader2,
-  Lock,
   Shield,
-  Activity,
   HardDrive,
   RefreshCw,
-  Server,
-  Zap,
-  AlertCircle
+  Monitor,
+  Check,
+  Sun,
+  Moon,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
+import Link from 'next/link';
+import { useTheme } from 'next-themes';
+import { THEME_OPTIONS, getThemeOption } from '@/lib/themes';
 import { useAiPersona } from '@/hooks/useAiPersona';
+import { backendFetch } from '@/lib/backendClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -33,6 +37,7 @@ const SETTINGS_TABS = [
 
 export default function SettingsPage() {
   const { isExecutive } = useAiPersona();
+  const { theme: activeTheme, setTheme, resolvedTheme } = useTheme();
   const visibleTabs = SETTINGS_TABS.filter(tab => !tab.advanced || !isExecutive);
   const [activeTab, setActiveTab] = useState('llm');
   const [saved, setSaved] = useState(false);
@@ -40,18 +45,76 @@ export default function SettingsPage() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [modelAppliedMsg, setModelAppliedMsg] = useState<string | null>(null);
+  const [providerModels, setProviderModels] = useState<Record<string, string[]>>({
+    ollama: [],
+    lm_studio: [],
+    gemini: ['gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-3.8-flash', 'gemini-flash-latest'],
+    openai: ['gpt-4o', 'gpt-4o-mini', 'o3-mini', 'gpt-4-turbo'],
+    anthropic: ['claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+  });
+
   const [aiStatus, setAiStatus] = useState<any>(null);
   const [settings, setSettings] = useState({
     llmProvider: 'ollama',
+    activeModel: '',
     inferenceMode: 'local',
     allowCloudFallback: false,
     apiKey: '',
     geminiKey: '',
-    ollamaBaseUrl: 'http://127.0.0.1:11434',
-    theme: 'Dark Midnight'
+    anthropicKey: '',
+    ollamaBaseUrl: '',
+    theme: 'light'
   });
 
+  const hydrateFromBackendStatus = (data: any) => {
+    if (!data) return;
+    setAiStatus(data);
+
+    const cfg = data.config || {};
+    const liveOllama = (data.local_ollama_models || data.local_models || []).map((m: any) => m.name);
+    const diskOllama = (data.installed_local_models || []).map((m: any) => m.name);
+    const localList = Array.from(new Set([...liveOllama, ...diskOllama]));
+    const lmsList = (data.local_lm_studio_models || []).map((m: any) => m.name);
+
+    const nextModels: Record<string, string[]> = {
+      ollama: localList,
+      lm_studio: lmsList,
+      gemini: ['gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-3.8-flash', 'gemini-flash-latest'],
+      openai: ['gpt-4o', 'gpt-4o-mini', 'o3-mini', 'gpt-4-turbo'],
+      anthropic: ['claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+    };
+
+    const cloudProvs = Array.isArray(data.cloud_providers) ? data.cloud_providers : [];
+    for (const cp of cloudProvs) {
+      if (cp?.provider && Array.isArray(cp.available_models) && cp.available_models.length > 0) {
+        nextModels[cp.provider] = cp.available_models;
+      }
+    }
+    setProviderModels(nextModels);
+
+    const resolvedProvider = (cfg.ai_provider || data.active_provider || 'ollama').toLowerCase();
+    const resolvedModelsForProv = nextModels[resolvedProvider] || [];
+    const resolvedActiveModel =
+      data.active_model || cfg.active_model || resolvedModelsForProv[0] || '';
+
+    setSettings(prev => ({
+      ...prev,
+      llmProvider: resolvedProvider,
+      activeModel: resolvedActiveModel,
+      inferenceMode: cfg.inference_mode || data.inference_mode || prev.inferenceMode,
+      allowCloudFallback: Boolean(cfg.allow_cloud_fallback ?? data.allow_cloud_fallback),
+      ollamaBaseUrl: cfg.ollama_base_url || prev.ollamaBaseUrl,
+    }));
+  };
+
   useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get('tab');
+    if (requestedTab && SETTINGS_TABS.some(t => t.id === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+
     const fetchSettings = async () => {
       try {
         const res = await fetch('/api/users/settings');
@@ -60,12 +123,10 @@ export default function SettingsPage() {
           setSettings(prev => ({ ...prev, ...data }));
         }
 
-        const rawBackend = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-        const backendBase = rawBackend.replace(/\/api\/v1\/?$/, '');
-        const aiRes = await fetch(`${backendBase}/api/v1/platform/ai/status`);
+        const aiRes = await backendFetch('/api/v1/platform/ai/status');
         if (aiRes.ok) {
           const aiJson = await aiRes.json();
-          setAiStatus(aiJson.data);
+          hydrateFromBackendStatus(aiJson.data);
         }
       } catch (err) {
         console.error("Failed to load settings:", err);
@@ -76,13 +137,52 @@ export default function SettingsPage() {
     fetchSettings();
   }, []);
 
+  const persistBackendAiConfig = async (overrides: Partial<typeof settings> = {}) => {
+    const merged = { ...settings, ...overrides };
+    const isCloud = !['ollama', 'lm_studio'].includes(merged.llmProvider);
+    const effectiveMode =
+      isCloud && merged.inferenceMode === 'local' ? 'auto' : merged.inferenceMode;
+
+    const payload: Record<string, any> = {
+      ai_provider: merged.llmProvider,
+      active_model: merged.activeModel || undefined,
+      inference_mode: effectiveMode,
+      allow_cloud_fallback: isCloud ? true : merged.allowCloudFallback,
+      ollama_base_url: merged.ollamaBaseUrl || undefined,
+    };
+
+    if (merged.geminiKey && !merged.geminiKey.includes('...')) {
+      payload.gemini_api_key = merged.geminiKey.trim();
+    }
+    if (merged.apiKey && !merged.apiKey.includes('...')) {
+      payload.openai_api_key = merged.apiKey.trim();
+    }
+    if (merged.anthropicKey && !merged.anthropicKey.includes('...')) {
+      payload.anthropic_api_key = merged.anthropicKey.trim();
+    }
+
+    const res = await backendFetch('/api/v1/platform/ai/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      hydrateFromBackendStatus(json.data);
+      return json.data;
+    }
+    return null;
+  };
+
   const handleSave = async () => {
     try {
+      await persistBackendAiConfig();
       await fetch('/api/users/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
-      });
+        body: JSON.stringify({ ...settings, theme: activeTheme || settings.theme })
+      }).catch(() => {});
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -90,19 +190,93 @@ export default function SettingsPage() {
     }
   };
 
+  const handleApplyActiveModel = async () => {
+    try {
+      if (settings.llmProvider === 'ollama' && !aiStatus?.ollama_daemon_online) {
+        await backendFetch('/api/v1/platform/ai/ollama/start', { method: 'POST' }).catch(() => {});
+      }
+      const updated = await persistBackendAiConfig();
+      if (updated) {
+        setModelAppliedMsg(`Activated ${updated.active_model || settings.activeModel} via ${updated.active_provider || settings.llmProvider}`);
+        setTimeout(() => setModelAppliedMsg(null), 3500);
+      }
+    } catch (err) {
+      console.error("Failed to activate model:", err);
+    }
+  };
+
+  const handleDiscoverModels = async (providerId: string) => {
+    setIsDiscovering(true);
+    try {
+      const suppliedKey =
+        providerId === 'gemini'
+          ? settings.geminiKey
+          : providerId === 'openai'
+          ? settings.apiKey
+          : providerId === 'anthropic'
+          ? settings.anthropicKey
+          : undefined;
+
+      const res = await backendFetch('/api/v1/platform/ai/models/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: providerId,
+          api_key: suppliedKey && !suppliedKey.includes('...') ? suppliedKey.trim() : undefined,
+          base_url: settings.ollamaBaseUrl || undefined,
+          force_refresh: true,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const models: string[] = json?.data?.models || [];
+        if (models.length > 0) {
+          setProviderModels(prev => ({ ...prev, [providerId]: models }));
+          if (!models.includes(settings.activeModel)) {
+            setSettings(prev => ({ ...prev, activeModel: models[0] }));
+          }
+          setTestResult({
+            status: json?.data?.live ? 'connected' : 'configured',
+            latency_ms: 0,
+            models,
+            provider: providerId,
+          });
+        }
+      }
+    } catch (err: any) {
+      setTestResult({ status: 'error', error: err.message });
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
   const handleTestConnection = async (provider: string) => {
     setIsTesting(true);
     setTestResult(null);
     try {
-      const rawBackend = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const backendBase = rawBackend.replace(/\/api\/v1\/?$/, '');
-      const res = await fetch(`${backendBase}/api/v1/platform/ai/test-connection`, {
+      const suppliedKey =
+        provider === 'gemini'
+          ? settings.geminiKey
+          : provider === 'openai'
+          ? settings.apiKey
+          : provider === 'anthropic'
+          ? settings.anthropicKey
+          : undefined;
+      const res = await backendFetch('/api/v1/platform/ai/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, base_url: settings.ollamaBaseUrl })
+        body: JSON.stringify({
+          provider,
+          base_url: settings.ollamaBaseUrl || undefined,
+          api_key: suppliedKey && !suppliedKey.includes('...') ? suppliedKey.trim() : undefined,
+        })
       });
       const json = await res.json();
-      setTestResult(json.data || json);
+      const result = json.data || json;
+      setTestResult(result);
+      if (Array.isArray(result?.models) && result.models.length > 0) {
+        setProviderModels(prev => ({ ...prev, [provider]: result.models }));
+      }
     } catch (err: any) {
       setTestResult({ status: 'error', error: err.message });
     } finally {
@@ -117,12 +291,11 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center w-full h-full min-h-[400px]">
-        <Loader2 size={36} className="text-amber-400 animate-spin" />
+        <Loader2 size={36} className="text-[var(--accent-primary)] animate-spin" />
       </div>
     );
   }
 
-  const localModels = aiStatus?.local_models || [];
   const memoryInfo = aiStatus?.memory_guidance || { available_ram_gb: 8.0, recommended_parameters: '<= 7B Parameters' };
 
   return (
@@ -192,19 +365,195 @@ export default function SettingsPage() {
             transition={{ duration: 0.2 }}
             className="space-y-6"
           >
-            {activeTab === 'llm' && (
+            {activeTab === 'llm' && (() => {
+              const cfg = aiStatus?.config || {};
+              const isGeminiReady = Boolean(cfg.has_gemini_key || aiStatus?.gemini_available || (settings.geminiKey && !settings.geminiKey.includes('...')));
+              const isOpenAiReady = Boolean(cfg.has_openai_key || aiStatus?.openai_available || (settings.apiKey && !settings.apiKey.includes('...')));
+              const isAnthropicReady = Boolean(cfg.has_anthropic_key || aiStatus?.anthropic_available || (settings.anthropicKey && !settings.anthropicKey.includes('...')));
+
+              const ollamaModelNames = providerModels.ollama || [];
+              const lmsModelNames = providerModels.lm_studio || [];
+              const selectedProviderModels = providerModels[settings.llmProvider] || [];
+              const allSelectableGroups = [
+                ...(ollamaModelNames.length > 0 ? [{ group: aiStatus?.ollama_daemon_online ? 'Local Hardware (Ollama Online)' : 'Local Hardware (Ollama on Disk)', provider: 'ollama', models: ollamaModelNames }] : []),
+                ...(lmsModelNames.length > 0 ? [{ group: 'Local Hardware (LM Studio)', provider: 'lm_studio', models: lmsModelNames }] : []),
+                ...(isGeminiReady ? [{ group: 'Google Gemini (API Key Active)', provider: 'gemini', models: providerModels.gemini || [] }] : []),
+                ...(isOpenAiReady ? [{ group: 'OpenAI (API Key Active)', provider: 'openai', models: providerModels.openai || [] }] : []),
+                ...(isAnthropicReady ? [{ group: 'Anthropic Claude (API Key Active)', provider: 'anthropic', models: providerModels.anthropic || [] }] : []),
+              ];
+
+              return (
               <div className="space-y-6">
                 
+                {/* Active Model Selection Dropdown for Available API Key & Local Engine */}
+                <Card variant="teal">
+                  <CardHeader>
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles size={16} className="text-[var(--accent-primary)]" />
+                        Active Model Selection (Available API Key &amp; Local Engines)
+                      </CardTitle>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                        Pick any model available for your configured API key or local runtime and activate it across Agent Console.
+                      </p>
+                    </div>
+                    <Badge variant={settings.inferenceMode === 'local' ? 'local' : 'cloud'} size="sm" className="whitespace-nowrap shrink-0">
+                      {settings.inferenceMode === 'local' ? 'Local Only' : settings.inferenceMode === 'cloud' ? 'Cloud Key Primary' : 'Hybrid Auto'}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {/* Inference Policy Selector */}
+                    <div>
+                      <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                        Execution Policy
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {[
+                          { id: 'local', label: 'Local Only (Air-Gapped)', desc: 'Hardware boundary only' },
+                          { id: 'auto', label: 'Hybrid Auto (Local + API Key)', desc: 'Permits configured API keys' },
+                          { id: 'cloud', label: 'Cloud API Key Primary', desc: 'Routes via selected API key' },
+                        ].map((mode) => (
+                          <button
+                            key={mode.id}
+                            type="button"
+                            onClick={() => handleChange('inferenceMode', mode.id)}
+                            className={`text-left px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer ${
+                              settings.inferenceMode === mode.id
+                                ? 'bg-[var(--accent-soft-alpha)] border-[var(--accent-primary)] text-[var(--text-primary)] ring-1 ring-[var(--accent-primary)]/30'
+                                : 'bg-[var(--surface-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]'
+                            }`}
+                          >
+                            <span className="block text-xs font-semibold text-[var(--text-primary)]">{mode.label}</span>
+                            <span className="block text-[10px] text-[var(--text-secondary)] mt-0.5">{mode.desc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Dropdown Menu for Model Selection */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                      <div className="md:col-span-4">
+                        <label
+                          htmlFor="settings-provider-select"
+                          className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5"
+                        >
+                          Provider Source
+                        </label>
+                        <select
+                          id="settings-provider-select"
+                          value={settings.llmProvider}
+                          onChange={(e) => {
+                            const nextProv = e.target.value;
+                            const nextList = providerModels[nextProv] || [];
+                            const isCloudProv = !['ollama', 'lm_studio'].includes(nextProv);
+                            setSettings(prev => ({
+                              ...prev,
+                              llmProvider: nextProv,
+                              activeModel: nextList[0] || '',
+                              inferenceMode: isCloudProv && prev.inferenceMode === 'local' ? 'auto' : prev.inferenceMode,
+                            }));
+                          }}
+                          className="w-full bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2.5 text-xs font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+                        >
+                          <option value="ollama">Ollama Local ({ollamaModelNames.length} available)</option>
+                          <option value="lm_studio">LM Studio Local ({lmsModelNames.length} loaded)</option>
+                          <option value="gemini">Google Gemini {isGeminiReady ? '✓ Key Ready' : '(No Key)'}</option>
+                          <option value="openai">OpenAI Platform {isOpenAiReady ? '✓ Key Ready' : '(No Key)'}</option>
+                          <option value="anthropic">Anthropic Claude {isAnthropicReady ? '✓ Key Ready' : '(No Key)'}</option>
+                        </select>
+                      </div>
+
+                      <div className="md:col-span-4">
+                        <label
+                          htmlFor="settings-model-select"
+                          className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5"
+                        >
+                          Select Model for Available Key
+                        </label>
+                        <select
+                          id="settings-model-select"
+                          value={settings.activeModel}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val.includes('::')) {
+                              const [p, m] = val.split('::');
+                              const isCloudProv = !['ollama', 'lm_studio'].includes(p);
+                              setSettings(prev => ({
+                                ...prev,
+                                llmProvider: p,
+                                activeModel: m,
+                                inferenceMode: isCloudProv && prev.inferenceMode === 'local' ? 'auto' : prev.inferenceMode,
+                              }));
+                            } else {
+                              handleChange('activeModel', val);
+                            }
+                          }}
+                          className="w-full bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+                        >
+                          {selectedProviderModels.length > 0 ? (
+                            selectedProviderModels.map((modelId) => (
+                              <option key={modelId} value={modelId}>
+                                {modelId}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="">No models detected for {settings.llmProvider}</option>
+                          )}
+                          {allSelectableGroups.map((grp) => (
+                            <optgroup key={grp.group} label={`── ${grp.group} ──`}>
+                              {grp.models.map((m: string) => (
+                                <option key={`${grp.provider}::${m}`} value={`${grp.provider}::${m}`}>
+                                  [{grp.provider.toUpperCase()}] {m}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="md:col-span-4 flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          isLoading={isDiscovering}
+                          onClick={() => handleDiscoverModels(settings.llmProvider)}
+                          leftIcon={<RefreshCw size={13} />}
+                          className="shrink-0 whitespace-nowrap"
+                          title="Query provider API for live available models"
+                        >
+                          Fetch
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleApplyActiveModel}
+                          className="flex-1 whitespace-nowrap"
+                        >
+                          Use Model
+                        </Button>
+                      </div>
+                    </div>
+
+                    {modelAppliedMsg && (
+                      <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-700 dark:text-emerald-300">
+                        <span className="font-medium flex items-center gap-1.5">
+                          <CheckCircle2 size={14} /> {modelAppliedMsg}
+                        </span>
+                        <Link href="/agent-console" className="font-semibold underline inline-flex items-center gap-1">
+                          Open AI Assistant <ArrowRight size={12} />
+                        </Link>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 {/* Provider Architecture Overview */}
                 <Card variant="elevated">
                   <CardHeader>
                     <div>
                       <CardTitle>Inference Routing Architecture</CardTitle>
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">Select your primary reasoning backend and data boundary policy.</p>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">Select your primary reasoning backend and verify connection diagnostics.</p>
                     </div>
-                    <Badge variant={settings.inferenceMode === 'local' ? 'local' : 'cloud'} size="sm">
-                      {settings.inferenceMode === 'local' ? 'Zero Cloud Leakage' : 'Cloud Enabled'}
-                    </Badge>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     
@@ -213,42 +562,50 @@ export default function SettingsPage() {
                       {[
                         { 
                           id: 'ollama', 
-                          name: 'Ollama (Local Daemon)', 
-                          status: 'CONNECTED', 
-                          desc: 'Hardware inference executing on loopback (127.0.0.1:11434). Zero token transmission outside host.',
+                          name: 'Ollama (Local Engine)', 
+                          desc: 'Hardware inference executing on dedicated local host. Zero token transmission outside machine boundary.',
                           isLocal: true,
-                          models: localModels.map((m: any) => m.name).join(', ') || 'researcher-m4:latest, qwen2.5:3b'
-                        },
-                        { 
-                          id: 'lm_studio', 
-                          name: 'LM Studio (Local Server)', 
-                          status: 'CONFIGURED', 
-                          desc: 'Local OpenAI-compatible inference via LM Studio server (127.0.0.1:1234/v1).',
-                          isLocal: true,
-                          models: 'Dynamic Local Models'
+                          ready: (providerModels.ollama || []).length > 0,
+                          models: (providerModels.ollama || []).slice(0, 3).join(', ') || 'No local daemon active'
                         },
                         { 
                           id: 'gemini', 
                           name: 'Google Gemini', 
-                          status: 'SERVER-SIDE', 
-                          desc: 'Remote API fallback for high-complexity workflows when explicitly enabled by policy.',
+                          desc: 'High-speed reasoning and multimodal analysis via configured Google AI Studio API key.',
                           isLocal: false,
-                          models: 'Gemini 1.5 Flash / Pro'
+                          ready: isGeminiReady,
+                          models: (providerModels.gemini || []).slice(0, 3).join(', ')
                         },
                         { 
                           id: 'openai', 
                           name: 'OpenAI Platform', 
-                          status: 'SERVER-SIDE', 
-                          desc: 'Commercial cloud endpoint. Strictly requires administrator permission and API key.',
+                          desc: 'GPT-4o / o3-mini reasoning endpoint gated by your configured API key.',
                           isLocal: false,
-                          models: 'GPT-4o / GPT-4o-mini'
+                          ready: isOpenAiReady,
+                          models: (providerModels.openai || []).slice(0, 3).join(', ')
+                        },
+                        { 
+                          id: 'anthropic', 
+                          name: 'Anthropic Claude', 
+                          desc: 'Claude Sonnet / Haiku long-context analysis via configured Anthropic API key.',
+                          isLocal: false,
+                          ready: isAnthropicReady,
+                          models: (providerModels.anthropic || []).slice(0, 3).join(', ')
                         },
                       ].map(provider => {
                         const isSelected = settings.llmProvider === provider.id;
                         return (
                           <div
                             key={provider.id}
-                            onClick={() => handleChange('llmProvider', provider.id)}
+                            onClick={() => {
+                              const nextList = providerModels[provider.id] || [];
+                              setSettings(prev => ({
+                                ...prev,
+                                llmProvider: provider.id,
+                                activeModel: nextList[0] || prev.activeModel,
+                                inferenceMode: !provider.isLocal && prev.inferenceMode === 'local' ? 'auto' : prev.inferenceMode,
+                              }));
+                            }}
                             className={`p-4 rounded-xl border transition-all cursor-pointer ${
                               isSelected 
                                 ? 'bg-[var(--accent-soft-alpha)] border-[var(--accent-primary)]/50 shadow-xs ring-1 ring-[var(--accent-primary)]/30' 
@@ -257,12 +614,17 @@ export default function SettingsPage() {
                           >
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-bold text-sm text-[var(--text-primary)]">{provider.name}</span>
-                              <Badge variant={provider.isLocal ? 'local' : 'cloud'} size="sm">
-                                {provider.isLocal ? 'Local' : 'Cloud'}
-                              </Badge>
+                              <div className="flex items-center gap-1.5">
+                                {provider.ready && (
+                                  <Badge variant="success" size="sm">Ready</Badge>
+                                )}
+                                <Badge variant={provider.isLocal ? 'local' : 'cloud'} size="sm">
+                                  {provider.isLocal ? 'Local' : 'API Key'}
+                                </Badge>
+                              </div>
                             </div>
                             <p className="text-xs text-[var(--text-secondary)] mb-2 leading-relaxed">{provider.desc}</p>
-                            <div className="text-[11px] font-mono text-[var(--accent-primary)] font-medium">
+                            <div className="text-[11px] font-mono text-[var(--accent-primary)] font-medium truncate">
                               Models: {provider.models}
                             </div>
                           </div>
@@ -274,13 +636,15 @@ export default function SettingsPage() {
                     <div className="p-4 rounded-xl bg-[var(--surface-secondary)]/60 border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div>
                         <span className="text-xs font-semibold text-[var(--text-primary)] block">Inference Probe Diagnostic</span>
-                        <span className="text-xs text-[var(--text-secondary)]">Verify loopback socket availability and measuring inference latency.</span>
+                        <span className="text-xs text-[var(--text-secondary)]">Verify endpoint / API key availability and refresh discoverable model list.</span>
                         {testResult && (
                           <div className="mt-2 text-xs font-mono">
-                            {testResult.status === 'connected' ? (
-                              <span className="text-emerald-500 font-bold">✓ Connected ({testResult.latency_ms}ms) • Models: {testResult.models?.join(', ')}</span>
+                            {testResult.status === 'connected' || testResult.status === 'configured' ? (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                ✓ {testResult.provider?.toUpperCase()} {testResult.status} ({testResult.latency_ms}ms) • {testResult.models?.length || 0} models available
+                              </span>
                             ) : (
-                              <span className="text-amber-500">Status: {testResult.status} {testResult.error && `(${testResult.error})`}</span>
+                              <span className="text-amber-600 dark:text-amber-400">Status: {testResult.status} {testResult.error && `(${testResult.error})`}</span>
                             )}
                           </div>
                         )}
@@ -292,7 +656,7 @@ export default function SettingsPage() {
                         onClick={() => handleTestConnection(settings.llmProvider)}
                         leftIcon={<RefreshCw size={13} />}
                       >
-                        Run Socket Probe
+                        Probe {settings.llmProvider.toUpperCase()}
                       </Button>
                     </div>
 
@@ -321,28 +685,59 @@ export default function SettingsPage() {
                 <Card variant="elevated">
                   <CardHeader>
                     <div>
-                      <CardTitle>Cloud Credentials (Optional Fallback)</CardTitle>
-                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">Stored strictly server-side. Never rendered in plaintext to browser.</p>
+                      <CardTitle>API Key Credentials (Server-Side Protected)</CardTitle>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">Keys configured on the server are never exposed in plaintext. Enter a key and click Fetch/Save to discover its available models.</p>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">OpenAI Secret Key</label>
-                      <input 
-                        type="password"
-                        value={settings.apiKey}
-                        onChange={(e) => handleChange('apiKey', e.target.value)}
-                        placeholder="sk-... (Configured on server)"
-                        className="w-full bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Google Gemini API Key</label>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Google Gemini API Key</label>
+                        {cfg.has_gemini_key && (
+                          <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                            Active on Server ({cfg.gemini_key_masked})
+                          </span>
+                        )}
+                      </div>
                       <input 
                         type="password"
                         value={settings.geminiKey}
                         onChange={(e) => handleChange('geminiKey', e.target.value)}
-                        placeholder="AIzaSy... (Configured on server)"
+                        placeholder={cfg.has_gemini_key ? `Server Key Active (${cfg.gemini_key_masked}) — enter new key to replace` : 'AIzaSy... (Paste Google Gemini API key)'}
+                        className="w-full bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">OpenAI Secret Key</label>
+                        {cfg.has_openai_key && (
+                          <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                            Active on Server ({cfg.openai_key_masked})
+                          </span>
+                        )}
+                      </div>
+                      <input 
+                        type="password"
+                        value={settings.apiKey}
+                        onChange={(e) => handleChange('apiKey', e.target.value)}
+                        placeholder={cfg.has_openai_key ? `Server Key Active (${cfg.openai_key_masked}) — enter new key to replace` : 'sk-... (Paste OpenAI API key)'}
+                        className="w-full bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Anthropic API Key</label>
+                        {cfg.has_anthropic_key && (
+                          <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                            Active on Server ({cfg.anthropic_key_masked})
+                          </span>
+                        )}
+                      </div>
+                      <input 
+                        type="password"
+                        value={settings.anthropicKey}
+                        onChange={(e) => handleChange('anthropicKey', e.target.value)}
+                        placeholder={cfg.has_anthropic_key ? `Server Key Active (${cfg.anthropic_key_masked}) — enter new key to replace` : 'sk-ant-... (Paste Anthropic API key)'}
                         className="w-full bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                       />
                     </div>
@@ -350,7 +745,8 @@ export default function SettingsPage() {
                 </Card>
 
               </div>
-            )}
+              );
+            })()}
 
             {activeTab === 'database' && (
               <Card variant="elevated">
@@ -369,7 +765,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">Cache & Queue Service</span>
-                      <span className="font-mono text-[var(--text-primary)] font-medium">Redis (127.0.0.1:6379)</span>
+                      <span className="font-mono text-[var(--text-primary)] font-medium">Managed Redis Cluster (High Availability)</span>
                     </div>
                   </div>
                 </CardContent>
@@ -394,31 +790,149 @@ export default function SettingsPage() {
               </Card>
             )}
 
-            {activeTab === 'theme' && (
-              <Card variant="elevated">
-                <CardHeader>
-                  <CardTitle>Design System Appearance</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] text-[var(--text-primary)] flex items-center justify-between shadow-xs">
-                      <div>
-                        <span className="font-bold text-sm block">Pearl Teal (Light Mode)</span>
-                        <span className="text-xs text-[var(--text-secondary)]">Clean pearl background & polished teal accents</span>
-                      </div>
-                      <Badge variant="teal" size="sm">Active</Badge>
+            {activeTab === 'theme' && (() => {
+              const effectiveThemeId = activeTheme === 'system' ? resolvedTheme || 'light' : activeTheme || resolvedTheme || 'light';
+              const activeDef = getThemeOption(effectiveThemeId);
+
+              const handleSelectTheme = (id: string) => {
+                setTheme(id);
+                handleChange('theme', id);
+              };
+
+              return (
+                <Card variant="elevated">
+                  <CardHeader>
+                    <div>
+                      <CardTitle>Design System & Theme Studio</CardTitle>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                        Select a curated minimalist palette. Applied instantaneously across Executive Console, Admin, and Governance modules.
+                      </p>
                     </div>
-                    <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] text-[var(--text-primary)] flex items-center justify-between shadow-xs">
-                      <div>
-                        <span className="font-bold text-sm block">Obsidian Teal (Dark Mode)</span>
-                        <span className="text-xs text-[var(--text-secondary)]">Deep obsidian surface & luminous teal glass</span>
+                    <Badge variant="teal" size="sm">
+                      {activeDef.name}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* System Auto Row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-secondary)]/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-[var(--surface-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)]">
+                          <Monitor size={17} />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-[var(--text-primary)] block">Match Operating System</span>
+                          <span className="text-xs text-[var(--text-secondary)]">Automatically toggle between Pearl Teal and Obsidian Teal based on host OS preference.</span>
+                        </div>
                       </div>
-                      <Badge variant="outline" size="sm">Supported</Badge>
+                      <Button
+                        variant={activeTheme === 'system' ? 'teal' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSelectTheme('system')}
+                      >
+                        {activeTheme === 'system' ? 'System Active' : 'Use System'}
+                      </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
+                    {[
+                      { label: 'Minimalist Light Editions', mode: 'light' as const, Icon: Sun },
+                      { label: 'Minimalist Dark Editions', mode: 'dark' as const, Icon: Moon },
+                    ].map(({ label, mode, Icon }) => (
+                      <div key={mode} className="space-y-3">
+                        <div className="flex items-center gap-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                          <Icon size={13} className="text-[var(--accent-primary)]" />
+                          <span>{label}</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {THEME_OPTIONS.filter(t => t.mode === mode).map(option => {
+                            const isSelected = activeTheme !== 'system' ? activeTheme === option.id : effectiveThemeId === option.id;
+                            return (
+                              <button
+                                key={option.id}
+                                type="button"
+                                onClick={() => handleSelectTheme(option.id)}
+                                className={`group text-left rounded-2xl border p-3.5 transition-all cursor-pointer flex flex-col gap-3 ${
+                                  isSelected
+                                    ? 'border-[var(--accent-primary)] bg-[var(--accent-soft-alpha)] ring-2 ring-[var(--accent-primary)]/25 shadow-md'
+                                    : 'border-[var(--border-subtle)] bg-[var(--surface-primary)] hover:border-[var(--accent-primary)]/50 hover:shadow-sm'
+                                }`}
+                              >
+                                {/* Mini UI Wireframe Preview */}
+                                <div
+                                  className="w-full h-24 rounded-xl border p-2 flex gap-2 overflow-hidden shadow-inner"
+                                  style={{
+                                    backgroundColor: option.preview.background,
+                                    borderColor: option.preview.border,
+                                  }}
+                                >
+                                  <div
+                                    className="w-6 h-full rounded-md border flex flex-col gap-1 p-1"
+                                    style={{
+                                      backgroundColor: option.preview.surface,
+                                      borderColor: option.preview.border,
+                                    }}
+                                  >
+                                    <div className="w-full h-2 rounded-xs" style={{ backgroundColor: option.preview.accent }} />
+                                    <div className="w-full h-1.5 rounded-xs opacity-60" style={{ backgroundColor: option.preview.secondary }} />
+                                    <div className="w-full h-1.5 rounded-xs opacity-60" style={{ backgroundColor: option.preview.secondary }} />
+                                  </div>
+                                  <div className="flex-1 flex flex-col gap-1.5">
+                                    <div
+                                      className="h-3.5 w-full rounded-md border flex items-center justify-between px-1.5"
+                                      style={{
+                                        backgroundColor: option.preview.surface,
+                                        borderColor: option.preview.border,
+                                      }}
+                                    >
+                                      <span className="w-8 h-1 rounded-full" style={{ backgroundColor: option.preview.text }} />
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: option.preview.accent }} />
+                                    </div>
+                                    <div
+                                      className="flex-1 rounded-md border p-1.5 flex flex-col justify-between"
+                                      style={{
+                                        backgroundColor: option.preview.surface,
+                                        borderColor: option.preview.border,
+                                      }}
+                                    >
+                                      <div className="space-y-1">
+                                        <div className="w-14 h-1.5 rounded-full" style={{ backgroundColor: option.preview.text }} />
+                                        <div className="w-20 h-1 rounded-full opacity-75" style={{ backgroundColor: option.preview.muted }} />
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="w-10 h-2.5 rounded-xs" style={{ backgroundColor: option.preview.secondary }} />
+                                        <span className="w-7 h-2.5 rounded-xs" style={{ backgroundColor: option.preview.accent }} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Theme Label & Metadata */}
+                                <div className="space-y-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-bold text-sm text-[var(--text-primary)]">{option.name}</span>
+                                    {isSelected ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[var(--accent-primary)] text-[var(--accent-foreground)]">
+                                        <Check size={10} /> Active
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] font-mono uppercase text-[var(--text-muted)]">
+                                        {option.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                                    {option.description}
+                                  </p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </motion.div>
         </div>
 

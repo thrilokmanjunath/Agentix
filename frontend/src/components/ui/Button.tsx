@@ -28,7 +28,7 @@ export function Button({
 
   let variantStyles = 'bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)]';
   if (variant === 'teal' || variant === 'gold' || variant === 'primary') {
-    variantStyles = 'bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white font-medium border border-[var(--accent-primary)] shadow-sm hover:shadow-md transition-all';
+    variantStyles = 'bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-[var(--accent-foreground)] font-medium border border-[var(--accent-primary)] shadow-sm hover:shadow-md transition-all';
   } else if (variant === 'outline') {
     variantStyles = 'bg-transparent hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]';
   } else if (variant === 'ghost') {

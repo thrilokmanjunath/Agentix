@@ -51,18 +51,18 @@ class ParserAgent(BaseAgent[PipelineInput, PipelineOutput]):
         data_obj = engine.load_dataset(file_path)
         engine.save_dataset(data_obj, parquet_path)
         
-        # Retrieve computed dataset for row/col metadata
-        df = engine.compute(engine.load_dataset(parquet_path))
-        rows, cols = df.shape
-
-        # Decide the target column once, here, while column order still
-        # matches the raw upload. FeatureEngineeringAgent later appends new
-        # one-hot columns at the end, which shifts what "the last column" is -
-        # if TrainingAgent re-derives the target as columns[-1] after that,
-        # it silently trains on the wrong column AND leaks the real target
-        # in as an input feature (confirmed: produced a "target" entry inside
-        # feature_importances). Persisting the name now keeps it stable.
-        target_column = df.columns[-1]
+        # Retrieve metadata directly from Parquet file to preserve memory for large datasets (500MB+)
+        try:
+            import pyarrow.parquet as pq
+            pf = pq.ParquetFile(parquet_path)
+            rows = pf.metadata.num_rows
+            cols = pf.metadata.num_columns
+            target_column = pf.schema.names[-1]
+        except Exception:
+            # Fallback to engine compute if parquet metadata inspection fails
+            df = engine.compute(engine.load_dataset(parquet_path))
+            rows, cols = df.shape
+            target_column = df.columns[-1]
 
         data_service.store_dataset(validated_data.dataset_name, {"parquet_path": parquet_path, "target_column": target_column}, change_summary="Parsed dataset to parquet")
         return PipelineOutput(status="success", message="Parsed and stored as Parquet", result={"rows": rows, "cols": cols, "parquet_path": parquet_path, "target_column": target_column})
@@ -270,103 +270,55 @@ class TrainingAgent(BaseAgent[PipelineInput, PipelineOutput]):
         target = dataset_info.get("target_column")
         if target is None or target not in columns:
             raise ValueError(f"Target column '{target}' not found in dataset (available: {columns}).")
-        features = [c for c in columns if c != target]
 
-        X = df[features].fillna(0).select_dtypes(include=[np.number])
-        y = df[target]
+        # Execute Agentix AutoML multi-candidate search & evaluation
+        from core.automl.engine import automl_engine
+        summary = automl_engine.run_automl(
+            df=df,
+            target_column=target,
+            dataset_name=validated_data.dataset_name,
+            max_candidates=5,
+        )
 
-        if X.shape[1] == 0:
-            raise ValueError("No numeric features available to train on.")
+        problem_type = summary.task_type.value
+        best_model_name = summary.best_model
+        best_score = summary.best_score
+        feature_importances = summary.best_feature_importances or {}
+        y_test = summary.y_test
+        y_pred = summary.y_pred
+        leaderboard_data = [m.model_dump() for m in summary.leaderboard]
+        recommended_candidates = [c.model_dump() for c in summary.recommended_candidates]
 
-        # Detect problem type instead of always forcing a binary classifier: a numeric
-        # target with many distinct values (e.g. a continuous score) is a regression
-        # problem, not a 0/1 classification problem. Uses an absolute threshold rather
-        # than a unique-value ratio, since a ratio misfires on small datasets (e.g. a
-        # binary 0/1 column has a 40% unique-ratio with only 5 rows).
-        n_unique = y.nunique(dropna=True)
-        is_regression = pd.api.types.is_numeric_dtype(y) and n_unique > 20
-
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-        # SGD's gradient updates are scale-sensitive: unscaled features spanning very
-        # different ranges (e.g. age ~0-75 vs income ~0-130000) make it diverge instead
-        # of converge, producing unusable predictions despite "successful" training.
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-
-        if is_regression:
-            problem_type = "regression"
-            # SGDRegressor is just as scale-sensitive about the TARGET as it is about
-            # the features above: fitting directly against an unscaled target (e.g.
-            # house prices in the hundreds of thousands) makes a single partial_fit
-            # pass produce huge gradients and converge nowhere near the optimum -
-            # verified empirically: on a dataset generated from a known linear
-            # relationship plus small noise (where R^2 should be ~0.99), the
-            # unscaled-target model scored R^2 ~ 0.37. Scaling y the same way X is
-            # scaled, then inverse-transforming predictions back to real units before
-            # they're used for evaluation/reporting, fixes this without changing the
-            # units MAE/RMSE are reported in.
-            y_scaler = StandardScaler()
-            y_train_scaled = y_scaler.fit_transform(y_train.to_numpy().reshape(-1, 1)).ravel()
-            model = SGDRegressor(random_state=42)
-            model.partial_fit(X_train_scaled, y_train_scaled)
-            y_pred_scaled = model.predict(X_test_scaled)
-            y_pred = y_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).ravel()
-        else:
-            problem_type = "classification"
-            # SGDClassifier.partial_fit requires labels sklearn recognizes as a
-            # discrete type (int/bool/str) via type_of_target. A numeric target
-            # that is legitimately a classification target by cardinality (e.g.
-            # only 3 distinct values) but happens to hold non-integer floats -
-            # observed for real on a live dataset with values like -1.25/0/1.25 -
-            # is rejected outright with "ValueError: Unknown label type", crashing
-            # training even though the cardinality-based classification decision
-            # above was correct. Encode to plain integer class labels for fitting
-            # regardless of the target's original dtype, then decode predictions
-            # back so y_pred stays in the same value-space as y_test (which is
-            # left unencoded) for EvaluationAgent's accuracy/F1 comparison.
-            label_encoder = LabelEncoder()
-            y_train_encoded = label_encoder.fit_transform(y_train)
-            classes = np.unique(y_train_encoded)
-            if len(classes) < 2:
-                raise ValueError(f"Target column '{target}' has fewer than 2 distinct classes; cannot train a classifier.")
-            model = SGDClassifier(loss='log_loss', random_state=42)
-            model.partial_fit(X_train_scaled, y_train_encoded, classes=classes)
-            y_pred_encoded = model.predict(X_test_scaled)
-            y_pred = label_encoder.inverse_transform(y_pred_encoded)
-
-        # Real per-feature importance from the trained linear model's coefficients
-        # (mean absolute weight across classes for multi-class), instead of a
-        # fabricated {"feature1": 0.6} placeholder. Persisted in the stage's own
-        # result so it survives a backend restart, unlike data_service below.
-        coef = np.atleast_2d(model.coef_)
-        importance = np.abs(coef).mean(axis=0)
-        feature_importances = {
-            feat: float(imp) for feat, imp in sorted(
-                zip(X.columns, importance), key=lambda kv: kv[1], reverse=True
-            )
-        }
-
-        # Stash the held-out predictions for EvaluationAgent — PipelineInput only carries
-        # dataset_name/file_path/user_id between stages, so real values must go through
-        # data_service rather than the pipeline's own input/output chaining.
+        # Stash the held-out predictions and complete multi-candidate AutoML summary for EvaluationAgent
+        # and platform routes.
         data_service.store_dataset(validated_data.dataset_name, {
             **dataset_info,
             "problem_type": problem_type,
             "y_test": y_test,
             "y_pred": y_pred,
-        }, change_summary="Trained model")
+            "automl_summary": summary.model_dump(),
+            "leaderboard": leaderboard_data,
+            "recommended_candidates": recommended_candidates,
+            "feature_importances": feature_importances,
+            "best_model": best_model_name,
+            "best_score": best_score,
+            "primary_metric": summary.primary_metric,
+        }, change_summary="AutoML Multi-Candidate Training Complete")
 
         return PipelineOutput(
             status="success",
-            message=f"Training complete using partial_fit ({problem_type})",
+            message=f"AutoML training complete: evaluated {len(leaderboard_data)} candidates ({problem_type}). Best: {best_model_name} ({summary.primary_metric}={best_score:.4f})",
             result={
-                "model_id": f"sgd_{problem_type}_v1",
-                "model_type": type(model).__name__,
+                "model_id": f"automl_{summary.best_algorithm_id or 'best'}_v1",
+                "model_type": best_model_name,
+                "best_model": best_model_name,
                 "target": target,
                 "problem_type": problem_type,
                 "feature_importances": feature_importances,
+                "best_score": best_score,
+                "primary_metric": summary.primary_metric,
+                "leaderboard": leaderboard_data,
+                "recommended_candidates": recommended_candidates,
             },
         )
 
@@ -383,9 +335,24 @@ class EvaluationAgent(BaseAgent[PipelineInput, PipelineOutput]):
         
     def execute(self, validated_data: PipelineInput, engine: ProcessingEngine) -> PipelineOutput:
         dataset_info = data_service.get_dataset(validated_data.dataset_name) or {}
+        automl_summary = dataset_info.get("automl_summary")
         y_test = dataset_info.get("y_test")
         y_pred = dataset_info.get("y_pred")
         problem_type = dataset_info.get("problem_type")
+
+        # If automl_summary is present, retrieve rich evaluation metrics directly from the winning model
+        if automl_summary:
+            leaderboard = automl_summary.get("leaderboard", [])
+            winning_entry = next((m for m in leaderboard if m.get("is_best")), None) or (leaderboard[0] if leaderboard else None)
+            if winning_entry and winning_entry.get("metrics"):
+                metrics = winning_entry.get("metrics")
+                result = {
+                    "problem_type": problem_type,
+                    "model": winning_entry.get("algorithm_name"),
+                    "algorithm_id": winning_entry.get("algorithm_id"),
+                    **metrics,
+                }
+                return PipelineOutput(status="success", message="Evaluation complete", result=result)
 
         if y_test is None or y_pred is None:
             raise ValueError("No held-out predictions found; TrainingAgent must run before EvaluationAgent.")

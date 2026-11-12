@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Network, Loader2, UploadCloud, Database, Cpu, TrendingUp, FlaskConical, Sparkles, Layers } from 'lucide-react';
+import { Network, Loader2, Sparkles, Layers } from 'lucide-react';
 import { usePlatformStore } from '@/store/platformStore';
 import { useAiPersona } from '@/hooks/useAiPersona';
 import Link from 'next/link';

@@ -1,5 +1,18 @@
 from .base import ProcessingEngine, PandasEngine, ChunkedPandasEngine, DaskEngine, EngineFactory
 from .execution import ExecutionEngine
+from .format_detector import (
+    FormatDetector,
+    DatasetFormat,
+    FormatMetadata,
+    DatasetIngestionError,
+    UnsupportedFormatError,
+    EmptyDatasetError,
+    LegacyExcelFormatError,
+    InvalidJSONStructureError,
+    CorruptWorkbookError,
+    SecurityValidationError,
+    ZipBombError
+)
 
 __all__ = [
     "ProcessingEngine",
@@ -7,5 +20,16 @@ __all__ = [
     "ChunkedPandasEngine",
     "DaskEngine",
     "EngineFactory",
-    "ExecutionEngine"
+    "ExecutionEngine",
+    "FormatDetector",
+    "DatasetFormat",
+    "FormatMetadata",
+    "DatasetIngestionError",
+    "UnsupportedFormatError",
+    "EmptyDatasetError",
+    "LegacyExcelFormatError",
+    "InvalidJSONStructureError",
+    "CorruptWorkbookError",
+    "SecurityValidationError",
+    "ZipBombError"
 ]

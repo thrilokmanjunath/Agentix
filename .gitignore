@@ -4,16 +4,16 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-build/
+/env/
+/build/
 develop-eggs/
-dist/
-downloads/
+/dist/
+/downloads/
 eggs/
 .eggs/
-lib/
-lib64/
-parts/
+/lib/
+/lib64/
+/parts/
 sdist/
 var/
 wheels/
@@ -27,6 +27,10 @@ htmlcov/
 .venv
 venv/
 ENV/
+
+# Never ignore frontend source lib directory
+!frontend/src/lib/
+!frontend/src/lib/**
 
 # Node / Next.js
 node_modules/

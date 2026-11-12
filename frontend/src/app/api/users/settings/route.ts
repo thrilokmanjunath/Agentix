@@ -7,6 +7,8 @@ function maskApiKey(key?: string): string {
   return `${key.slice(0, 7)}...${key.slice(-4)}`;
 }
 
+import { getServerBackendBase } from "@/lib/backendServer";
+
 export async function GET() {
   const session = await auth();
   const userId = session?.user?.id as string | undefined;
@@ -21,12 +23,13 @@ export async function GET() {
     });
 
     const prefs = (user?.preferences as Record<string, any>) || {};
+    const defaultEngineUrl = getServerBackendBase();
     const settings = prefs.settings || {
-      llmProvider: "OpenAI (GPT-4o)",
+      llmProvider: "ollama",
       apiKey: "",
-      engineUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+      engineUrl: defaultEngineUrl,
       webhookEndpoint: "",
-      theme: "Dark Mode",
+      theme: "light",
     };
 
     return NextResponse.json({
@@ -35,6 +38,17 @@ export async function GET() {
       hasKey: Boolean(settings.apiKey),
     });
   } catch (error: any) {
+    if (error?.name === "PrismaClientInitializationError") {
+      return NextResponse.json({
+        llmProvider: "ollama",
+        apiKey: "",
+        hasKey: false,
+        engineUrl: getServerBackendBase(),
+        webhookEndpoint: "",
+        theme: "light",
+        dbUnavailable: true,
+      });
+    }
     return NextResponse.json({ error: error.message || "Failed to read settings" }, { status: 500 });
   }
 }
@@ -59,11 +73,11 @@ export async function POST(request: Request) {
     }
 
     const updatedSettings = {
-      llmProvider: body.llmProvider || currentSettings.llmProvider || "OpenAI (GPT-4o)",
+      llmProvider: body.llmProvider || currentSettings.llmProvider || "ollama",
       apiKey: apiKeyToSave !== undefined ? apiKeyToSave : currentSettings.apiKey || "",
-      engineUrl: body.engineUrl || currentSettings.engineUrl || "http://localhost:8000",
+      engineUrl: body.engineUrl || currentSettings.engineUrl || getServerBackendBase(),
       webhookEndpoint: body.webhookEndpoint ?? currentSettings.webhookEndpoint ?? "",
-      theme: body.theme || currentSettings.theme || "Dark Mode",
+      theme: body.theme || currentSettings.theme || "light",
     };
 
     await prisma.user.update({

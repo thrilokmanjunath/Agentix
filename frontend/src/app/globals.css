@@ -1,9 +1,17 @@
 @import "tailwindcss";
 
-:root {
+@custom-variant dark (&:where(
+  .dark, .dark *,
+  [data-theme="dark"], [data-theme="dark"] *,
+  [data-theme="carbon"], [data-theme="carbon"] *,
+  [data-theme="midnight"], [data-theme="midnight"] *
+));
+
+:root,
+[data-theme="light"] {
   color-scheme: light;
 
-  /* Light Theme — Pearl Teal */
+  /* Light Theme — Pearl Teal (Signature) */
   --background: #F5FAF9;
   --surface-primary: #FFFFFF;
   --surface-secondary: #EAF5F2;
@@ -13,13 +21,19 @@
   --text-muted: #6B9491;
   --accent-primary: #168B83;
   --accent-hover: #106F69;
+  --accent-foreground: #FFFFFF;
   --accent-soft: #BCE8DE;
   --accent-soft-alpha: rgba(22, 139, 131, 0.12);
   --border-subtle: #DCEAE7;
   --border-strong: #BFDCD6;
-  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg: rgba(255, 255, 255, 0.84);
   --glass-border: rgba(220, 234, 231, 0.85);
   --glass-shadow: 0 8px 32px 0 rgba(18, 59, 59, 0.06);
+  --card-shadow: 0 2px 12px -2px rgba(18, 59, 59, 0.05);
+  --card-hover-shadow: 0 8px 24px -4px rgba(22, 139, 131, 0.12);
+  --accent-shadow: 0 2px 10px -2px rgba(22, 139, 131, 0.32);
+  --accent-hover-shadow: 0 4px 16px -2px rgba(22, 139, 131, 0.42);
+  --glow-radial: radial-gradient(circle at 50% 0%, rgba(22, 139, 131, 0.08) 0%, transparent 70%);
 
   --success: #0E836A;
   --warning: #C27803;
@@ -27,10 +41,77 @@
   --info: #0284C7;
 }
 
-.dark {
+[data-theme="alabaster"] {
+  color-scheme: light;
+
+  /* Light Theme — Warm Alabaster (Editorial Minimal) */
+  --background: #FAF8F5;
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #F2EFE9;
+  --surface-hover: #E9E4DC;
+  --text-primary: #1C1917;
+  --text-secondary: #57534E;
+  --text-muted: #78716C;
+  --accent-primary: #292524;
+  --accent-hover: #44403C;
+  --accent-foreground: #FAF8F5;
+  --accent-soft: #E7E5E4;
+  --accent-soft-alpha: rgba(41, 37, 36, 0.08);
+  --border-subtle: #E6E1D8;
+  --border-strong: #D6CFC3;
+  --glass-bg: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(230, 225, 216, 0.9);
+  --glass-shadow: 0 8px 32px 0 rgba(28, 25, 23, 0.05);
+  --card-shadow: 0 2px 10px -2px rgba(28, 25, 23, 0.04);
+  --card-hover-shadow: 0 8px 24px -4px rgba(28, 25, 23, 0.09);
+  --accent-shadow: 0 2px 10px -2px rgba(28, 25, 23, 0.22);
+  --accent-hover-shadow: 0 4px 16px -2px rgba(28, 25, 23, 0.30);
+  --glow-radial: radial-gradient(circle at 50% 0%, rgba(41, 37, 36, 0.05) 0%, transparent 70%);
+
+  --success: #15803D;
+  --warning: #B45309;
+  --danger: #DC2626;
+  --info: #0369A1;
+}
+
+[data-theme="nordic"] {
+  color-scheme: light;
+
+  /* Light Theme — Nordic Frost (Swiss Cool Minimal) */
+  --background: #F8FAFC;
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #F1F5F9;
+  --surface-hover: #E2E8F0;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --accent-primary: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-foreground: #FFFFFF;
+  --accent-soft: #DBEAFE;
+  --accent-soft-alpha: rgba(37, 99, 235, 0.10);
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.9);
+  --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.05);
+  --card-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04);
+  --card-hover-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.12);
+  --accent-shadow: 0 2px 10px -2px rgba(37, 99, 235, 0.28);
+  --accent-hover-shadow: 0 4px 16px -2px rgba(37, 99, 235, 0.38);
+  --glow-radial: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.07) 0%, transparent 70%);
+
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #DC2626;
+  --info: #0284C7;
+}
+
+.dark,
+[data-theme="dark"] {
   color-scheme: dark;
 
-  /* Dark Theme — Obsidian Teal */
+  /* Dark Theme — Obsidian Teal (Signature) */
   --background: #091B1F;
   --surface-primary: #10282D;
   --surface-secondary: #163238;
@@ -40,6 +121,7 @@
   --text-muted: #688F8A;
   --accent-primary: #36B5A7;
   --accent-hover: #66D5C4;
+  --accent-foreground: #041B1E;
   --accent-soft: #204C4C;
   --accent-soft-alpha: rgba(54, 181, 167, 0.15);
   --border-subtle: #29494E;
@@ -47,6 +129,77 @@
   --glass-bg: rgba(16, 40, 45, 0.78);
   --glass-border: rgba(41, 73, 78, 0.75);
   --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.45);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  --card-hover-shadow: 0 8px 30px -4px rgba(54, 181, 167, 0.2);
+  --accent-shadow: 0 2px 12px -2px rgba(54, 181, 167, 0.35);
+  --accent-hover-shadow: 0 4px 18px -2px rgba(54, 181, 167, 0.45);
+  --glow-radial: radial-gradient(circle at 50% 0%, rgba(54, 181, 167, 0.15) 0%, transparent 70%);
+
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F87171;
+  --info: #38BDF8;
+}
+
+[data-theme="carbon"] {
+  color-scheme: dark;
+
+  /* Dark Theme — Carbon Onyx (Pure Monochrome Minimal) */
+  --background: #09090B;
+  --surface-primary: #121215;
+  --surface-secondary: #1B1B20;
+  --surface-hover: #25252C;
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --accent-primary: #F4F4F5;
+  --accent-hover: #FFFFFF;
+  --accent-foreground: #09090B;
+  --accent-soft: #27272A;
+  --accent-soft-alpha: rgba(244, 244, 245, 0.10);
+  --border-subtle: #27272A;
+  --border-strong: #3F3F46;
+  --glass-bg: rgba(18, 18, 21, 0.80);
+  --glass-border: rgba(63, 63, 70, 0.55);
+  --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.55);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --card-hover-shadow: 0 8px 30px -4px rgba(255, 255, 255, 0.08);
+  --accent-shadow: 0 2px 12px -2px rgba(255, 255, 255, 0.15);
+  --accent-hover-shadow: 0 4px 18px -2px rgba(255, 255, 255, 0.25);
+  --glow-radial: radial-gradient(circle at 50% 0%, rgba(244, 244, 245, 0.07) 0%, transparent 70%);
+
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F87171;
+  --info: #38BDF8;
+}
+
+[data-theme="midnight"] {
+  color-scheme: dark;
+
+  /* Dark Theme — Midnight Slate (Architectural Sapphire) */
+  --background: #0B101B;
+  --surface-primary: #121927;
+  --surface-secondary: #1A2336;
+  --surface-hover: #222E46;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-primary: #60A5FA;
+  --accent-hover: #93C5FD;
+  --accent-foreground: #081326;
+  --accent-soft: #1E3A5F;
+  --accent-soft-alpha: rgba(96, 165, 250, 0.14);
+  --border-subtle: #253149;
+  --border-strong: #334363;
+  --glass-bg: rgba(18, 25, 39, 0.80);
+  --glass-border: rgba(51, 67, 99, 0.65);
+  --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+  --card-hover-shadow: 0 8px 30px -4px rgba(96, 165, 250, 0.18);
+  --accent-shadow: 0 2px 12px -2px rgba(96, 165, 250, 0.30);
+  --accent-hover-shadow: 0 4px 18px -2px rgba(96, 165, 250, 0.42);
+  --glow-radial: radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.12) 0%, transparent 70%);
 
   --success: #34D399;
   --warning: #FBBF24;
@@ -90,7 +243,7 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Teal Glass Signature Styling */
+/* Agentix Glass & Minimalist Surface Styling */
 @layer utilities {
   .teal-glass {
     background-color: var(--glass-bg);
@@ -103,23 +256,13 @@ body {
   .teal-glass-card {
     background-color: var(--surface-primary);
     border: 1px solid var(--border-subtle);
-    box-shadow: 0 2px 12px -2px rgba(18, 59, 59, 0.04);
+    box-shadow: var(--card-shadow);
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-  }
-
-  .dark .teal-glass-card {
-    background-color: var(--surface-primary);
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
   }
 
   .teal-glass-card:hover {
     border-color: var(--accent-primary);
-    box-shadow: 0 8px 24px -4px rgba(22, 139, 131, 0.12);
-  }
-
-  .dark .teal-glass-card:hover {
-    box-shadow: 0 8px 30px -4px rgba(54, 181, 167, 0.2);
+    box-shadow: var(--card-hover-shadow);
   }
 
   .teal-pill {
@@ -130,15 +273,15 @@ body {
 
   .teal-button-primary {
     background-color: var(--accent-primary);
-    color: #FFFFFF;
+    color: var(--accent-foreground);
     font-weight: 500;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 2px 10px -2px rgba(22, 139, 131, 0.35);
+    box-shadow: var(--accent-shadow);
   }
 
   .teal-button-primary:hover {
     background-color: var(--accent-hover);
-    box-shadow: 0 4px 16px -2px rgba(22, 139, 131, 0.45);
+    box-shadow: var(--accent-hover-shadow);
     transform: translateY(-1px);
   }
 
@@ -163,7 +306,7 @@ body {
   }
 
   .obsidian-glow {
-    background: radial-gradient(circle at 50% 0%, rgba(54, 181, 167, 0.15) 0%, transparent 70%);
+    background: var(--glow-radial);
   }
 }
 

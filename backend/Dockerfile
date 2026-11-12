@@ -20,8 +20,9 @@ RUN useradd -m -u 1000 appuser \
 USER appuser
 
 ENV PYTHONPATH=/app
-ENV PORT=8000
+ENV PYTHONUNBUFFERED=1
+ENV PORT=7860
 
-EXPOSE 8000
+EXPOSE 7860
 
-CMD uvicorn core.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD uvicorn core.api.main:app --host 0.0.0.0 --port ${PORT:-7860} --workers 1

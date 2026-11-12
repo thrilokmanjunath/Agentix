@@ -1,7 +1,9 @@
 "use client";
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Database, HardDrive, Cpu, Filter, MoreVertical } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function MemoryInspectorPage() {
   const [search, setSearch] = useState('');
@@ -13,66 +15,75 @@ export default function MemoryInspectorPage() {
     { id: 'mem-895', agent: 'DataAnalyzer', type: 'Vector', tokens: '89,100', lastAccessed: '3 hrs ago', status: 'Active' },
   ];
 
+  const filtered = memoryBlocks.filter(
+    (b) =>
+      b.id.toLowerCase().includes(search.toLowerCase()) ||
+      b.agent.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--border-subtle)] pb-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Memory Inspector</h1>
-          <p className="text-slate-500 mt-1">View and manage agent memory contexts and vector embeddings.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+            Memory Inspector
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
+            Inspect tenant-scoped agent memory contexts and vector RAG embeddings.
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="bg-purple-50 p-3 rounded-xl">
-            <Database className="w-6 h-6 text-purple-600" />
+        <div className="teal-glass-card p-5 rounded-2xl flex items-center gap-4">
+          <div className="bg-[var(--accent-soft-alpha)] p-3 rounded-xl">
+            <Database className="w-6 h-6 text-[var(--accent-primary)]" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Vector Storage</p>
-            <p className="text-2xl font-bold text-slate-900">42.5 GB</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">Vector Storage</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)] font-mono">42.5 GB</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="bg-sky-50 p-3 rounded-xl">
-            <HardDrive className="w-6 h-6 text-sky-600" />
+        <div className="teal-glass-card p-5 rounded-2xl flex items-center gap-4">
+          <div className="bg-sky-500/15 p-3 rounded-xl">
+            <HardDrive className="w-6 h-6 text-sky-600 dark:text-sky-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Relational Cache</p>
-            <p className="text-2xl font-bold text-slate-900">12.1 GB</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">Relational Cache</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)] font-mono">12.1 GB</p>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="bg-rose-50 p-3 rounded-xl">
-            <Cpu className="w-6 h-6 text-rose-600" />
+        <div className="teal-glass-card p-5 rounded-2xl flex items-center gap-4">
+          <div className="bg-emerald-500/15 p-3 rounded-xl">
+            <Cpu className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Active Contexts</p>
-            <p className="text-2xl font-bold text-slate-900">1,204</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">Active Contexts</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)] font-mono">1,204</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between gap-4">
+      <div className="teal-glass-card rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row justify-between gap-4 bg-[var(--surface-secondary)]/40">
           <div className="relative max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search memory IDs or agents..." 
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+            <input
+              type="text"
+              placeholder="Search memory IDs or agents..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
             />
           </div>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-            <Filter className="w-4 h-4" />
+          <Button variant="outline" size="sm" leftIcon={<Filter className="w-4 h-4" />}>
             Filter
-          </button>
+          </Button>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
+            <thead className="bg-[var(--surface-secondary)]/60 text-[var(--text-secondary)] font-medium border-b border-[var(--border-subtle)]">
               <tr>
                 <th className="px-6 py-4">Memory ID</th>
                 <th className="px-6 py-4">Agent</th>
@@ -83,30 +94,38 @@ export default function MemoryInspectorPage() {
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {memoryBlocks.map((block, idx) => (
-                <motion.tr 
+            <tbody className="divide-y divide-[var(--border-subtle)]">
+              {filtered.map((block, idx) => (
+                <motion.tr
                   key={block.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                  transition={{ delay: idx * 0.04 }}
+                  className="hover:bg-[var(--surface-secondary)]/50 transition-colors group cursor-pointer"
                 >
-                  <td className="px-6 py-4 font-mono text-indigo-600">{block.id}</td>
-                  <td className="px-6 py-4 font-medium text-slate-900">{block.agent}</td>
-                  <td className="px-6 py-4 text-slate-600">{block.type}</td>
-                  <td className="px-6 py-4 text-slate-600">{block.tokens}</td>
-                  <td className="px-6 py-4 text-slate-500">{block.lastAccessed}</td>
+                  <td className="px-6 py-4 font-mono text-[var(--accent-primary)] font-medium">{block.id}</td>
+                  <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{block.agent}</td>
+                  <td className="px-6 py-4 text-[var(--text-secondary)]">{block.type}</td>
+                  <td className="px-6 py-4 font-mono text-[var(--text-secondary)]">{block.tokens}</td>
+                  <td className="px-6 py-4 text-[var(--text-muted)]">{block.lastAccessed}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                      block.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'
-                    }`}>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        block.status === 'Active'
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)]'
+                      }`}
+                    >
                       {block.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-slate-400 hover:text-slate-900 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreVertical className="w-5 h-5" />
+                    <button
+                      type="button"
+                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Row actions"
+                    >
+                      <MoreVertical className="w-4 h-4" />
                     </button>
                   </td>
                 </motion.tr>
@@ -114,12 +133,12 @@ export default function MemoryInspectorPage() {
             </tbody>
           </table>
         </div>
-        
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
-          <span>Showing 1 to 4 of 4 results</span>
+
+        <div className="p-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-secondary)]">
+          <span>Showing {filtered.length} of {memoryBlocks.length} results</span>
           <div className="flex gap-2">
-            <button className="px-3 py-1 border border-slate-200 rounded-md hover:bg-slate-50 disabled:opacity-50">Prev</button>
-            <button className="px-3 py-1 border border-slate-200 rounded-md hover:bg-slate-50 disabled:opacity-50">Next</button>
+            <Button variant="outline" size="sm" disabled>Prev</Button>
+            <Button variant="outline" size="sm" disabled>Next</Button>
           </div>
         </div>
       </div>

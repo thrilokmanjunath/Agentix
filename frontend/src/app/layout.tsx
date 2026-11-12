@@ -4,6 +4,7 @@ import "./globals.css";
 import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { auth } from "@/auth";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
@@ -13,16 +14,18 @@ export const metadata: Metadata = {
   description: "Secure, customizable AI and Data Science capabilities unified in one enterprise platform.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <body className="antialiased font-sans bg-[var(--background)] text-[var(--text-primary)] min-h-screen w-full overflow-x-hidden selection:bg-[var(--accent-soft)] selection:text-[var(--accent-primary)]">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
+        <ThemeProvider>
+          <AuthProvider session={session}>
             <ReactQueryProvider>
               {children}
             </ReactQueryProvider>

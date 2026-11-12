@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { logoutAction } from '@/app/actions/auth';
+import { backendFetch, clearBackendAuthToken } from '@/lib/backendClient';
 import {
   LayoutDashboard,
   Database,
@@ -24,6 +26,9 @@ import {
   ChevronDown,
   Cpu,
   Lock,
+  LogOut,
+  User as UserIcon,
+  Loader2,
   X
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
@@ -43,16 +48,45 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isRightPanelOpen, setRightPanelOpen] = useState(false);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
 
+  const [isProfileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    clearBackendAuthToken();
+    try {
+      await logoutAction();
+    } catch {
+      window.location.href = '/login';
+    }
+  };
+
   const [systemHealth, setSystemHealth] = useState<{
     online: boolean;
     pingMs: number | null;
     ollamaOnline: boolean;
+    activeProvider?: string;
     activeModel?: string;
+    cloudConfigured?: boolean;
   }>({
     online: false,
     pingMs: null,
     ollamaOnline: false,
-    activeModel: 'researcher-m4:latest'
+    activeProvider: 'ollama',
+    activeModel: 'No model active',
+    cloudConfigured: false,
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
@@ -77,20 +111,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       .catch(() => {});
 
     const checkHealth = () => {
-      const rawBackend = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const backendBase = rawBackend.replace(/\/api\/v1\/?$/, '');
       const start = performance.now();
-      fetch(`${backendBase}/api/v1/platform/ai/status`)
+      backendFetch('/api/v1/platform/ai/status')
         .then(res => res.ok ? res.json() : Promise.reject())
         .then(json => {
           if (!isMounted) return;
           const data = json?.data || {};
           const localModels = data.local_models || [];
+          const cloudProviders = data.cloud_providers || [];
+          const resolvedProv = (data.active_provider || 'ollama').toUpperCase();
+          const resolvedModel =
+            data.active_model ||
+            localModels[0]?.name ||
+            cloudProviders[0]?.default_model ||
+            'No model active';
           setSystemHealth({
             online: true,
             pingMs: Math.round(performance.now() - start),
             ollamaOnline: localModels.length > 0,
-            activeModel: localModels[0]?.name || 'researcher-m4:latest'
+            activeProvider: resolvedProv,
+            activeModel: resolvedModel,
+            cloudConfigured: cloudProviders.length > 0,
           });
         })
         .catch(() => {
@@ -135,8 +176,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
           
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
-              <Compass size={18} className="text-white" />
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-[var(--accent-foreground)] shadow-sm transition-transform group-hover:scale-105">
+              <Compass size={18} />
             </div>
             <div className="flex flex-col">
               <span className="font-bold tracking-tight text-lg text-[var(--text-primary)] flex items-center gap-2">
@@ -149,7 +190,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
           
           <div className="hidden md:flex items-center gap-2 ml-4 px-3 py-1.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)] transition-colors">
-            <div className="w-4 h-4 rounded bg-[var(--accent-primary)] text-white flex items-center justify-center font-bold text-[10px] font-mono">
+            <div className="w-4 h-4 rounded bg-[var(--accent-primary)] text-[var(--accent-foreground)] flex items-center justify-center font-bold text-[10px] font-mono">
               {(workspaceName || 'A')[0]}
             </div>
             <span className="text-xs font-medium text-[var(--text-primary)]">{workspaceName || 'Institutional Workspace'}</span>
@@ -180,7 +221,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Badge>
             <Badge variant="local" size="sm">
               <Cpu size={10} />
-              {systemHealth.ollamaOnline ? `OLLAMA: ${systemHealth.activeModel}` : 'LOCAL AI ACTIVE'}
+              {systemHealth.ollamaOnline
+                ? `OLLAMA: ${systemHealth.activeModel}`
+                : systemHealth.cloudConfigured && systemHealth.activeProvider !== 'OLLAMA'
+                ? `${systemHealth.activeProvider}: ${systemHealth.activeModel}`
+                : systemHealth.cloudConfigured
+                ? 'API KEY READY'
+                : 'LOCAL AI OFFLINE'}
             </Badge>
           </div>
 
@@ -194,13 +241,95 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="absolute top-2 right-2 w-2 h-2 bg-[var(--accent-primary)] rounded-full shadow-sm"></span>
           </button>
           
-          <Link
-            href="/profile"
-            title={session?.user?.email || undefined}
-            className="w-8 h-8 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center font-bold text-xs shadow-md border border-[var(--accent-primary)]/30 ml-1 overflow-hidden hover:scale-105 transition-transform"
-          >
-            {userInitials}
-          </Link>
+          {/* Profile Dropdown */}
+          <div className="relative" ref={profileDropdownRef}>
+            <button
+              onClick={() => setProfileDropdownOpen(!isProfileDropdownOpen)}
+              className="flex items-center gap-1.5 p-1 rounded-full hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group"
+              aria-label="User Account Menu"
+              aria-expanded={isProfileDropdownOpen}
+            >
+              <div className="w-8 h-8 rounded-full bg-[var(--accent-primary)] text-[var(--accent-foreground)] flex items-center justify-center font-bold text-xs shadow-md border border-[var(--accent-primary)]/30 overflow-hidden group-hover:scale-105 transition-transform">
+                {userInitials}
+              </div>
+              <ChevronDown size={12} className={`text-[var(--text-secondary)] transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isProfileDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-64 rounded-2xl bg-[var(--surface-primary)] border border-[var(--border-subtle)] shadow-2xl py-2 z-50 text-left overflow-hidden"
+                >
+                  {/* User Identity Details */}
+                  <div className="px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/40">
+                    <p className="text-xs font-bold text-[var(--text-primary)] truncate">
+                      {session?.user?.name || 'Institutional Operator'}
+                    </p>
+                    <p className="text-[11px] text-[var(--text-secondary)] font-mono truncate mt-0.5">
+                      {session?.user?.email || 'admin@agentix.com'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--accent-soft-alpha)] text-[var(--accent-primary)] border border-[var(--accent-primary)]/20">
+                        {/* @ts-expect-error role is on custom session */}
+                        {session?.user?.role || 'ADMIN'}
+                      </span>
+                      <span className="text-[10px] text-[var(--text-muted)] truncate">
+                        {workspaceName || 'Primary Workspace'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Navigation Links */}
+                  <div className="p-1.5 space-y-0.5">
+                    <Link
+                      href="/profile"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] rounded-xl transition-colors"
+                    >
+                      <UserIcon size={14} className="text-[var(--accent-primary)]" />
+                      <span>Operator Profile</span>
+                    </Link>
+
+                    <Link
+                      href="/settings"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] rounded-xl transition-colors"
+                    >
+                      <Settings size={14} className="text-[var(--accent-primary)]" />
+                      <span>Account & Settings</span>
+                    </Link>
+
+                    <Link
+                      href="/admin/brain-console"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] rounded-xl transition-colors"
+                    >
+                      <Shield size={14} className="text-emerald-600 dark:text-emerald-400" />
+                      <span>Security & Governance</span>
+                    </Link>
+                  </div>
+
+                  {/* Logout Action */}
+                  <div className="p-1.5 border-t border-[var(--border-subtle)]">
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        setShowLogoutModal(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <LogOut size={14} />
+                      <span>Sign Out of Session</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <button 
             className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 ml-1 rounded-lg hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
@@ -342,7 +471,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-[var(--text-secondary)]">Provider</span>
-                  <span className="font-mono text-[var(--text-primary)] font-medium">Ollama (Air-Gapped)</span>
+                  <span className="font-mono text-[var(--text-primary)] font-medium">
+                    {systemHealth.ollamaOnline
+                      ? 'Ollama (Air-Gapped)'
+                      : `${systemHealth.activeProvider || 'API Key'} Engine`}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-[var(--text-secondary)]">Active Model</span>
@@ -350,7 +483,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-[var(--text-secondary)]">Boundary</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Hardware Bound</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                    {systemHealth.ollamaOnline ? 'Hardware Bound' : 'Server-Protected Key'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -404,6 +539,75 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => !isLoggingOut && setShowLogoutModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.15 }}
+              className="relative w-full max-w-md bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl p-6 z-10 space-y-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                  <LogOut size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[var(--text-primary)]">
+                    Sign Out of Agentix
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Confirm session termination
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                Are you sure you want to end your current session? Your authentication credentials will be purged and you will be redirected to the login screen. Running backend pipeline workflows will continue safely on the server.
+              </p>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isLoggingOut}
+                  onClick={() => setShowLogoutModal(false)}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isLoggingOut}
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-xs font-bold rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-60"
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      Terminating Session...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut size={13} />
+                      Sign Out
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

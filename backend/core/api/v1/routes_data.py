@@ -7,6 +7,15 @@ from pydantic import BaseModel
 from fastapi import APIRouter, File, UploadFile, HTTPException, Form, BackgroundTasks
 from core.context import current_user_id
 from core.orchestrator import PipelineOrchestrator, ExecutionDispatcher
+from core.engines.format_detector import (
+    FormatDetector,
+    DatasetIngestionError,
+    SecurityValidationError,
+    LegacyExcelFormatError,
+    InvalidJSONStructureError,
+    CorruptWorkbookError,
+    EmptyDatasetError
+)
 
 logger = logging.getLogger("agentix_v2")
 router = APIRouter()
@@ -14,7 +23,7 @@ router = APIRouter()
 TEMP_UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../data/temp")
 os.makedirs(TEMP_UPLOAD_DIR, exist_ok=True)
 
-ALLOWED_EXTENSIONS = {".csv", ".xlsx", ".json"}
+ALLOWED_EXTENSIONS = {".csv", ".tsv", ".xlsx", ".json", ".jsonl", ".ndjson", ".parquet"}
 MAX_FILE_SIZE_MB = 500
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 MAX_COLUMNS = 500
@@ -154,8 +163,13 @@ def upload_complete(req: UploadCompleteReq, background_tasks: BackgroundTasks):
     
     # Validation Phase
     try:
-        if safe_file_name.lower().endswith('.csv'):
+        format_meta = FormatDetector.validate_and_detect(final_file_path)
+        if format_meta.format in ("csv", "tsv"):
             validate_csv_content(final_file_path)
+    except DatasetIngestionError as die:
+        if os.path.exists(final_file_path):
+            os.remove(final_file_path)
+        raise HTTPException(status_code=400, detail=str(die))
     except ValueError as ve:
         if os.path.exists(final_file_path):
             os.remove(final_file_path)
@@ -163,7 +177,8 @@ def upload_complete(req: UploadCompleteReq, background_tasks: BackgroundTasks):
     except Exception as e:
         if os.path.exists(final_file_path):
             os.remove(final_file_path)
-        raise HTTPException(status_code=500, detail="Internal validation error.")
+        logger.error(f"[Upload] Unexpected validation error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Dataset validation failed: {str(e)}")
     
     # Init workflow in DB
     orchestrator = PipelineOrchestrator()
