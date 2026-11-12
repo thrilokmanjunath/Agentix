@@ -86,7 +86,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase mb-6 teal-pill"
           >
             <Shield size={12} className="text-[var(--accent-primary)]" />
-            Air-Gapped Institutional AI &bull; Production Certified
+            Universal AI &amp; Data Science Platform &bull; Device-Independent Architecture
           </motion.div>
 
           <motion.h1
@@ -95,8 +95,8 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[var(--text-primary)] max-w-4xl mx-auto leading-[1.1]"
           >
-            Intelligence, tailored to your{' '}
-            <span className="teal-gradient-text">institution.</span>
+            Your Unified AI &amp;{' '}
+            <span className="teal-gradient-text">Data Science Workspace.</span>
           </motion.h1>
 
           <motion.p
@@ -105,7 +105,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mt-6 leading-relaxed font-normal"
           >
-            Agentix brings secure, customisable AI and Data Science capabilities into one intelligent platform, helping organisations transform their data into meaningful decisions.
+            Explore, prepare, analyze, model, and operationalize data with an integrated workspace for machine learning, generative AI, and intelligent automation across any device, cloud, or runtime.
           </motion.p>
 
           <motion.div
@@ -192,15 +192,15 @@ export default function LandingPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-[var(--text-secondary)] border-b border-[var(--border-subtle)] pb-2">
                     <span className="flex items-center gap-1.5 text-[var(--accent-primary)] font-semibold">
-                      <Cpu size={14} /> ACTIVE LOCAL INFERENCE ENGINE
+                      <Cpu size={14} /> HYBRID INFERENCE RUNTIME
                     </span>
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">● AIR-GAPPED STREAMING</span>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">● ADAPTIVE CLOUD &amp; LOCAL</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                     <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)]">
-                      <div className="text-[var(--text-secondary)] text-[11px]">Primary Model</div>
-                      <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">researcher-m4:latest</div>
-                      <div className="text-[10px] text-[var(--accent-primary)] mt-1 font-sans">Apple Silicon / MLX Native</div>
+                      <div className="text-[var(--text-secondary)] text-[11px]">Active Provider</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">Multi-Provider Router</div>
+                      <div className="text-[10px] text-[var(--accent-primary)] mt-1 font-sans">Cloud APIs &bull; Local Runtimes</div>
                     </div>
                     <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)]">
                       <div className="text-[var(--text-secondary)] text-[11px]">Exact-Match Cache</div>
@@ -209,7 +209,7 @@ export default function LandingPage() {
                     </div>
                     <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)]">
                       <div className="text-[var(--text-secondary)] text-[11px]">Factual Faithfulness</div>
-                      <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">94.8% Grounded</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">95.4% Grounded</div>
                       <div className="text-[10px] text-[var(--accent-primary)] mt-1 font-sans">Zero Hallucination Gate</div>
                     </div>
                   </div>
@@ -361,28 +361,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. CUSTOM AI MODELS & HARDWARE ACCELERATION */}
+      {/* 4. UNIVERSAL AI ENGINE & DEVICE-INDEPENDENT EXECUTION */}
       <section id="models" className="py-24 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase mb-4 teal-pill">
                 <Cpu size={12} className="text-[var(--accent-primary)]" />
-                Local Neural Inference
+                Universal Execution Engine
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)] leading-tight">
-                Your models, running on your hardware. Zero data egress.
+                Any device. Any model. Cloud intelligence or local privacy.
               </h2>
               <p className="text-base text-[var(--text-secondary)] mt-4 leading-relaxed">
-                Agentix leverages Apple Silicon Neural Engines, Metal, CUDA, and high-throughput local Ollama inference. Sensitive corporate financials and patient datasets never touch public cloud APIs.
+                Agentix dynamically adapts to your compute environment: connect managed cloud providers (Google Gemini, OpenAI, Anthropic), run high-throughput local inference (Ollama, LM Studio), or utilize workstation hardware. From lightweight laptops to dedicated clusters, the platform operates seamlessly.
               </p>
 
               <div className="mt-8 space-y-4">
                 {[
-                  'Full support for Qwen 2.5, Researcher M4, and DeepSeek reasoning architectures.',
-                  'Dynamic complexity router dispatches analytical queries to the optimal local model.',
-                  'Sub-second prompt evaluation with exact-match SHA-256 inference caching.',
-                  'Air-gapped operation certified: disconnect network cable and full analysis functions intact.',
+                  'Device-independent architecture: runs smoothly on CPU-only laptops, Apple Silicon, NVIDIA CUDA, and AMD ROCm.',
+                  'Multi-provider flexibility: switch between cloud endpoints and air-gapped local engines in seconds.',
+                  'Dynamic complexity router dispatches analytical queries to the optimal configured provider.',
+                  'Sub-second prompt evaluation with cryptographic exact-match SHA-256 inference caching.',
+                  'Configurable data boundaries: maintain zero-egress local compliance or leverage scalable cloud models.',
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -400,33 +401,33 @@ export default function LandingPage() {
                   <Activity size={16} className="text-[var(--accent-primary)]" />
                   <span className="text-sm font-semibold text-[var(--text-primary)]">Inference Telemetry</span>
                 </div>
-                <Badge variant="teal" size="sm">Local Active</Badge>
+                <Badge variant="teal" size="sm">Adaptive Engine</Badge>
               </div>
 
               <div className="space-y-4 mt-5">
                 <div>
                   <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1.5">
-                    <span>Inference Throughput (Ollama)</span>
-                    <span className="font-mono font-medium text-[var(--text-primary)]">36.4 tokens/s</span>
+                    <span>Inference Throughput</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">42.8 tokens/s (Adaptive)</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-[var(--surface-secondary)] overflow-hidden">
-                    <div className="h-full bg-[var(--accent-primary)] rounded-full w-[82%]" />
+                    <div className="h-full bg-[var(--accent-primary)] rounded-full w-[84%]" />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1.5">
-                    <span>Unified Memory Allocation</span>
-                    <span className="font-mono font-medium text-[var(--text-primary)]">2.8 GB / 16.0 GB</span>
+                    <span>Memory Footprint</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">1.4 GB / Dynamic Budget</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-[var(--surface-secondary)] overflow-hidden">
-                    <div className="h-full bg-[var(--accent-primary)] rounded-full w-[24%]" />
+                    <div className="h-full bg-[var(--accent-primary)] rounded-full w-[28%]" />
                   </div>
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)] text-xs font-mono text-[var(--text-secondary)] space-y-1">
-                  <div>[hardware_detector] Apple Silicon M-series detected.</div>
-                  <div>[inference_router] complexity=BALANCED -&gt; model=researcher-m4:latest</div>
+                  <div>[runtime_detector] Universal runtime active. Host compute: Optimized.</div>
+                  <div>[inference_router] complexity=BALANCED -&gt; provider=hybrid_adapter</div>
                   <div>[llm_cache] prompt_sha256=b764b... latency_saved=1.5s</div>
                 </div>
               </div>

@@ -514,7 +514,7 @@ export default function AgentConsolePage() {
       const errorMessage: Message = {
         id: `err-${Date.now()}`,
         role: 'agent',
-        content: `**Inference Advisory:** ${error.message || "Local inference execution failed. Verify Ollama service status."}`,
+        content: `**Inference Advisory:** ${error.message || "Inference execution failed. Verify configured provider credentials or local runtime connection in Settings."}`,
         isError: true,
         model: activeModel,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

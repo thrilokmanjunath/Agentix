@@ -192,19 +192,19 @@ export default function WorkspacePage() {
 
           <Card variant="glass" className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Active Local Inference</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Inference Runtime</span>
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <Cpu size={16} />
               </div>
             </div>
             <div className="mt-3">
               <span className="text-sm font-bold font-mono text-[var(--accent-primary)] truncate block">
-                {localModels.length > 0 ? primaryModel : 'researcher-m4:latest'}
+                {localModels.length > 0 ? primaryModel : (aiStatus.connected ? 'Cloud & Local Hybrid' : 'Ready / On-Demand')}
               </span>
             </div>
             <div className="mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Air-Gapped Hardware Bound
+              {aiStatus.connected ? 'Active Inference Connected' : 'Adaptive Compute Ready'}
             </div>
           </Card>
 
@@ -318,11 +318,13 @@ export default function WorkspacePage() {
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center text-xs py-2 border-b border-[var(--border-subtle)]">
                   <span className="text-[var(--text-secondary)]">Primary Provider</span>
-                  <span className="font-semibold text-[var(--text-primary)]">Ollama Local Engine</span>
+                  <span className="font-semibold text-[var(--text-primary)]">
+                    {aiStatus.provider ? aiStatus.provider.toUpperCase() : 'Hybrid Cloud & Local Engine'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-xs py-2 border-b border-[var(--border-subtle)]">
-                  <span className="text-[var(--text-secondary)]">Hardware Acceleration</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Apple Silicon / Local Host</span>
+                  <span className="text-[var(--text-secondary)]">Execution Architecture</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Device-Independent &bull; Cloud &amp; Local</span>
                 </div>
                 <div className="flex justify-between items-center text-xs py-2 border-b border-[var(--border-subtle)]">
                   <span className="text-[var(--text-secondary)]">Tenant Data Boundary</span>
@@ -537,7 +539,7 @@ export default function WorkspacePage() {
                         </span>
                       ))
                     ) : (
-                      <span className="text-[11px] text-[var(--text-secondary)]">researcher-m4:latest (Default)</span>
+                      <span className="text-[11px] text-[var(--text-secondary)]">No local models cached &bull; Cloud providers active</span>
                     )}
                   </div>
                 </div>

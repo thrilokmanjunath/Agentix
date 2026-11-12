@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 
 export default function LLMManagerPage() {
   const providers = [
-    { name: 'Local (Ollama)', model: 'researcher-m4:latest', status: 'Active', latency: '115ms', cost: '$0.00', icon: 'L' },
+    { name: 'Local (Ollama / LM Studio)', model: 'qwen2.5:3b', status: 'Standby', latency: '115ms', cost: '$0.00', icon: 'L' },
     { name: 'OpenAI', model: 'gpt-4o', status: 'Standby', latency: '450ms', cost: '$420.50', icon: 'O' },
     { name: 'Anthropic', model: 'claude-3-opus', status: 'Standby', latency: '620ms', cost: '$180.20', icon: 'A' },
     { name: 'Google', model: 'gemini-1.5-pro', status: 'Offline', latency: '--', cost: '$12.00', icon: 'G' },
@@ -95,7 +95,7 @@ export default function LLMManagerPage() {
         <div>
           <h3 className="text-base font-bold text-[var(--text-primary)]">Smart Air-Gapped Routing Enabled</h3>
           <p className="text-sm text-[var(--text-secondary)] mt-1 max-w-2xl">
-            Agentix enforces zero external egress by default, routing analytics tasks to <strong>Ollama Local Engine</strong> with optional explicit policy fallback.
+            Agentix enforces zero external egress by default, routing analytics tasks to <strong>configured local or private cloud runtimes</strong> with optional explicit policy fallback.
           </p>
           <button
             type="button"

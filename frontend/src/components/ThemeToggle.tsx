@@ -7,10 +7,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { THEME_OPTIONS, getThemeOption, isDarkTheme } from "@/lib/themes";
 
 const PAIRED_MODES: Record<string, string> = {
-  light: "dark",
-  dark: "light",
   alabaster: "carbon",
   carbon: "alabaster",
+  light: "dark",
+  dark: "light",
   nordic: "midnight",
   midnight: "nordic",
 };
@@ -52,10 +52,10 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     );
   }
 
-  const effectiveId = theme === "system" ? resolvedTheme || "light" : theme || resolvedTheme || "light";
+  const effectiveId = theme === "system" ? resolvedTheme || "alabaster" : theme || resolvedTheme || "alabaster";
   const currentOption = getThemeOption(effectiveId);
   const isDark = isDarkTheme(effectiveId);
-  const nextPairedTheme = PAIRED_MODES[effectiveId] || (isDark ? "light" : "dark");
+  const nextPairedTheme = PAIRED_MODES[effectiveId] || (isDark ? "alabaster" : "carbon");
 
   const lightThemes = THEME_OPTIONS.filter((t) => t.mode === "light");
   const darkThemes = THEME_OPTIONS.filter((t) => t.mode === "dark");

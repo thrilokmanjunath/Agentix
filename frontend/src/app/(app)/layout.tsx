@@ -222,12 +222,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Badge variant="local" size="sm">
               <Cpu size={10} />
               {systemHealth.ollamaOnline
-                ? `OLLAMA: ${systemHealth.activeModel}`
+                ? `LOCAL: ${systemHealth.activeModel}`
                 : systemHealth.cloudConfigured && systemHealth.activeProvider !== 'OLLAMA'
                 ? `${systemHealth.activeProvider}: ${systemHealth.activeModel}`
                 : systemHealth.cloudConfigured
-                ? 'API KEY READY'
-                : 'LOCAL AI OFFLINE'}
+                ? 'CLOUD READY'
+                : 'INFERENCE STANDBY'}
             </Badge>
           </div>
 
@@ -464,7 +464,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
                   <Cpu size={14} className="text-[var(--accent-primary)]" />
-                  Local Inference Engine
+                  Inference Runtime &amp; Telemetry
                 </span>
                 <span className={`w-2 h-2 rounded-full ${systemHealth.ollamaOnline ? 'bg-emerald-500 shadow-sm' : 'bg-amber-500'}`}></span>
               </div>

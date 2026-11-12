@@ -20,7 +20,8 @@ import {
   Clock,
   Award,
   Layers,
-  BookOpen
+  BookOpen,
+  Play
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePlatformStore } from '@/store/platformStore';
@@ -44,6 +45,8 @@ export default function AnalysisPage() {
   const [expandedSection, setExpandedSection] = useState<string>('overview');
   const [showRegistry, setShowRegistry] = useState<boolean>(false);
   const [registryFilter, setRegistryFilter] = useState<string>('all');
+  const [isRunningAutoML, setIsRunningAutoML] = useState<boolean>(false);
+  const [autoMLError, setAutoMLError] = useState<string | null>(null);
 
   const { 
     datasetName, 
@@ -62,8 +65,25 @@ export default function AnalysisPage() {
     fetchRecommendations, 
     fetchProfile, 
     fetchAutoML,
+    runAutoML,
     fetchAlgorithms,
   } = usePlatformStore();
+
+  const handleRunAutoML = async () => {
+    if (!datasetName) return;
+    setIsRunningAutoML(true);
+    setAutoMLError(null);
+    try {
+      await runAutoML();
+      await fetchAutoML();
+      await fetchXAI();
+      setExpandedSection('explainability');
+    } catch (err: any) {
+      setAutoMLError(err.message || 'AutoML execution failed. Please verify dataset shape and columns in Data Dock.');
+    } finally {
+      setIsRunningAutoML(false);
+    }
+  };
 
   useEffect(() => {
     fetchAlgorithms();
@@ -429,7 +449,36 @@ export default function AnalysisPage() {
                               )}
                             </>
                           ) : (
-                            <p className="text-[var(--text-secondary)] text-sm">No AutoML model run completed.</p>
+                            <div className="p-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] flex flex-col items-center justify-center text-center space-y-4 shadow-xs">
+                              <div className="w-12 h-12 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 flex items-center justify-center text-[var(--accent-primary)]">
+                                <BrainCircuit size={24} />
+                              </div>
+                              <div className="max-w-md">
+                                <h4 className="text-base font-bold text-[var(--text-primary)]">AutoML Candidate Planning</h4>
+                                <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+                                  Run intelligent multi-candidate model exploration across linear, tree, boosting, and ensemble algorithms.
+                                </p>
+                              </div>
+                              <Button
+                                variant="teal"
+                                size="sm"
+                                onClick={handleRunAutoML}
+                                disabled={isRunningAutoML}
+                                className="cursor-pointer shadow-xs"
+                              >
+                                {isRunningAutoML ? (
+                                  <>
+                                    <Loader2 size={14} className="animate-spin mr-2" />
+                                    Training Algorithmic Candidates...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play size={14} className="mr-2" />
+                                    Run AutoML Exploration
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           )}
                         </div>
                       )}
@@ -626,7 +675,36 @@ export default function AnalysisPage() {
                               )}
                             </>
                           ) : (
-                            <p className="text-[var(--text-secondary)] text-sm">No benchmark leaderboard available for this workflow.</p>
+                            <div className="p-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] flex flex-col items-center justify-center text-center space-y-4 shadow-xs">
+                              <div className="w-12 h-12 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 flex items-center justify-center text-[var(--accent-primary)]">
+                                <Target size={24} />
+                              </div>
+                              <div className="max-w-md">
+                                <h4 className="text-base font-bold text-[var(--text-primary)]">Empirical Model Leaderboard</h4>
+                                <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+                                  Benchmark leaderboard generated once multi-candidate training and cross-validation execute on this dataset.
+                                </p>
+                              </div>
+                              <Button
+                                variant="teal"
+                                size="sm"
+                                onClick={handleRunAutoML}
+                                disabled={isRunningAutoML}
+                                className="cursor-pointer shadow-xs"
+                              >
+                                {isRunningAutoML ? (
+                                  <>
+                                    <Loader2 size={14} className="animate-spin mr-2" />
+                                    Evaluating Model Candidates...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play size={14} className="mr-2" />
+                                    Generate Model Leaderboard
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           )}
                         </div>
                       )}
@@ -643,14 +721,64 @@ export default function AnalysisPage() {
 
                             if (!xaiData || entries.length === 0) {
                               return (
-                                <p className="text-[var(--text-secondary)] text-sm">
-                                  Feature attributions are not available yet. Run the pipeline on this dataset to compute model or permutation-based feature drivers.
-                                </p>
+                                <div className="p-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] flex flex-col items-center justify-center text-center space-y-4 shadow-xs">
+                                  <div className="w-12 h-12 rounded-xl bg-[var(--accent-soft-alpha)] border border-[var(--accent-primary)]/30 flex items-center justify-center text-[var(--accent-primary)]">
+                                    <SearchCode size={24} />
+                                  </div>
+                                  <div className="max-w-md">
+                                    <h4 className="text-base font-bold text-[var(--text-primary)]">Feature Attributions &amp; SHAP Drivers</h4>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+                                      Model feature importances and SHAP attributions are computed when AutoML multi-candidate training runs on this dataset.
+                                    </p>
+                                  </div>
+                                  {autoMLError && (
+                                    <p className="text-xs text-rose-500 font-mono bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 max-w-md">
+                                      {autoMLError}
+                                    </p>
+                                  )}
+                                  <Button
+                                    variant="teal"
+                                    size="sm"
+                                    onClick={handleRunAutoML}
+                                    disabled={isRunningAutoML}
+                                    className="cursor-pointer shadow-xs"
+                                  >
+                                    {isRunningAutoML ? (
+                                      <>
+                                        <Loader2 size={14} className="animate-spin mr-2" />
+                                        Training Candidates &amp; Computing Attributions...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Play size={14} className="mr-2" />
+                                        Run AutoML &amp; Extract Feature Attributions
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
                               );
                             }
 
                             return (
                               <div className="bg-[var(--surface-primary)] p-5 rounded-xl border border-[var(--border-subtle)] shadow-xs space-y-4">
+                                {xaiData.is_preliminary && (
+                                  <div className="p-3.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                    <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                                      <Sparkles size={14} className="text-[var(--accent-primary)] shrink-0" />
+                                      <span>Preliminary statistical correlations shown. Run full AutoML to compute tree-based SHAP and permutation importance.</span>
+                                    </div>
+                                    <Button
+                                      variant="teal"
+                                      size="sm"
+                                      onClick={handleRunAutoML}
+                                      disabled={isRunningAutoML}
+                                      className="shrink-0 text-xs py-1 px-3 cursor-pointer"
+                                    >
+                                      {isRunningAutoML ? <Loader2 size={12} className="animate-spin mr-1" /> : <Play size={12} className="mr-1" />}
+                                      Train Models
+                                    </Button>
+                                  </div>
+                                )}
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                   <h4 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
                                     <SearchCode size={16} className="text-[var(--accent-primary)]" />

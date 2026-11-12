@@ -1,6 +1,7 @@
 import json
 import logging
 import math
+import numpy as np
 import os
 import re
 import shutil
@@ -507,18 +508,64 @@ def _resolve_xai_attribution(
 async def xai_endpoint(dataset_name: str):
     db = SessionLocal()
     try:
-        _, run = _latest_dataset_and_run(db, dataset_name)
+        dataset, run = _latest_dataset_and_run(db, dataset_name)
         run_id = run.id if run else None
         training = _stage_result(db, run_id, "TrainingAgent")
         eda = _stage_result(db, run_id, "EDAAgent")
         ds_info = data_service.get_dataset(dataset_name)
 
-        if training is None and ds_info is None and eda is None:
-            return BaseResponse(status="success", message="No trained model found for this dataset yet.", data=None)
-
         data = _resolve_xai_attribution(training=training, ds_info=ds_info, eda=eda)
+
+        # Fallback: compute preliminary statistical attributions directly from dataset files if not yet trained
+        if data is None and dataset:
+            fpath = getattr(dataset, "parquet_path", None) or getattr(dataset, "filepath", None)
+            if fpath and os.path.exists(fpath):
+                try:
+                    import pandas as pd
+                    df = pd.read_parquet(fpath) if fpath.endswith(".parquet") else pd.read_csv(fpath)
+                    target = getattr(dataset, "target_column", None)
+                    numeric_df = df.select_dtypes(include=[np.number])
+
+                    if target and target in numeric_df.columns:
+                        corrs = numeric_df.corrwith(numeric_df[target]).abs().dropna()
+                        corrs = corrs[corrs.index != target]
+                        if not corrs.empty:
+                            imp = _clean_normalized_importances(corrs.to_dict())
+                            if imp:
+                                top_drivers = list(imp.keys())[:5]
+                                data = {
+                                    "method": "preliminary_correlation",
+                                    "method_label": "Preliminary Feature Correlation (Pre-Training)",
+                                    "model": "Statistical EDA Baseline",
+                                    "best_model": None,
+                                    "target": target,
+                                    "top_drivers": top_drivers,
+                                    "dominant_feature": top_drivers[0],
+                                    "importances": imp,
+                                    "is_preliminary": True,
+                                }
+                    if data is None and not numeric_df.empty:
+                        variances = numeric_df.var().abs().dropna()
+                        if not variances.empty:
+                            imp = _clean_normalized_importances(variances.to_dict())
+                            if imp:
+                                top_drivers = list(imp.keys())[:5]
+                                data = {
+                                    "method": "feature_variance_association",
+                                    "method_label": "Feature Variance Distribution (Pre-Training)",
+                                    "model": "Statistical EDA Baseline",
+                                    "best_model": None,
+                                    "target": target,
+                                    "top_drivers": top_drivers,
+                                    "dominant_feature": top_drivers[0],
+                                    "importances": imp,
+                                    "is_preliminary": True,
+                                }
+                except Exception as ex:
+                    logger.warning(f"Failed to extract statistical feature attributions: {ex}")
+
         if data is None:
-            return BaseResponse(status="success", message="Feature attributions are not available for this dataset yet.", data=None)
+            return BaseResponse(status="success", message="Feature attributions are not available for this dataset yet. Run AutoML to generate model-specific drivers.", data=None)
 
         return BaseResponse(status="success", message="OK", data=data)
     finally:

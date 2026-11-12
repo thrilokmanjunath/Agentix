@@ -53,7 +53,7 @@ const SECURITY_CONTROLS = [
   },
   {
     name: 'Air-Gapped Inference',
-    detail: 'Hardware-bound local Ollama routing with strict zero-leakage egress controls.',
+    detail: 'Cryptographic tenant boundary with hybrid local/cloud routing and strict zero-leakage egress controls.',
     status: 'Verified',
     icon: FileCheck2,
   },

@@ -129,6 +129,7 @@ export interface XAIData {
   leakage_alert?: boolean;
   dominant_feature: string | null;
   importances: Record<string, number>;
+  is_preliminary?: boolean;
   waterfall?: { feature: string; start: number; end: number; impact: number }[];
   base_value?: number;
   final_prediction?: number;
@@ -187,6 +188,7 @@ interface PlatformState {
   fetchDashboardMetrics: () => Promise<void>;
   fetchEDA: () => Promise<void>;
   fetchAutoML: () => Promise<void>;
+  runAutoML: (selectedAlgorithms?: string[], targetColumn?: string) => Promise<any>;
   fetchAlgorithms: () => Promise<void>;
   fetchXAI: () => Promise<void>;
   fetchInsights: () => Promise<void>;
@@ -261,6 +263,27 @@ export const usePlatformStore = create<PlatformState>()(
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       set({ error: msg, isLoading: false });
+    }
+  },
+
+  runAutoML: async (selectedAlgorithms?: string[], targetColumn?: string) => {
+    const ds = get().datasetName;
+    if (!ds) { set({ error: 'No active dataset' }); return null; }
+    set({ isLoading: true, error: null });
+    try {
+      const res = await backendAxios.post(`${PLATFORM_PATH}/automl/run`, {
+        dataset_name: ds,
+        selected_algorithms: selectedAlgorithms,
+        target_column: targetColumn,
+      });
+      await get().fetchAutoML();
+      await get().fetchXAI();
+      set({ isLoading: false });
+      return res.data?.data;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ error: msg, isLoading: false });
+      throw err;
     }
   },
 

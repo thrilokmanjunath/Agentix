@@ -22,7 +22,7 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme="alabaster" className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <body className="antialiased font-sans bg-[var(--background)] text-[var(--text-primary)] min-h-screen w-full overflow-x-hidden selection:bg-[var(--accent-soft)] selection:text-[var(--accent-primary)]">
         <ThemeProvider>
           <AuthProvider session={session}>
