@@ -8,11 +8,12 @@ from sqlalchemy.exc import OperationalError
 logger = logging.getLogger(__name__)
 
 RAW_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agentix.db")
-DATABASE_URL = (
-    "postgresql://" + RAW_DATABASE_URL[len("postgres://"):]
-    if RAW_DATABASE_URL.startswith("postgres://")
-    else RAW_DATABASE_URL
-)
+if RAW_DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = "postgresql+psycopg2://" + RAW_DATABASE_URL[len("postgres://"):]
+elif RAW_DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = "postgresql+psycopg2://" + RAW_DATABASE_URL[len("postgresql://"):]
+else:
+    DATABASE_URL = RAW_DATABASE_URL
 
 # Connection Pooling & Configuration
 if DATABASE_URL.startswith("sqlite"):
@@ -196,6 +197,7 @@ def _migrate_add_missing_columns():
 
 def init_db():
     """Automatic Migration (Creates tables if they do not exist)"""
+    import core.models.models  # noqa: F401 - register all SQLAlchemy models on Base.metadata before create_all
     if wait_for_db():
         Base.metadata.create_all(bind=engine)
         _migrate_add_missing_columns()
