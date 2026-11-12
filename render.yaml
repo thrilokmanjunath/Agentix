@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: agentix-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://agentix-bay.vercel.app,https://agentix.vercel.app
+      - key: ALLOWED_ORIGIN_REGEX
+        value: ^https://agentix(-[a-z0-9-]+)?\.vercel\.app$
+      - key: AI_INFERENCE_MODE
+        value: auto
+      - key: AI_ALLOW_CLOUD_FALLBACK
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false

@@ -21,8 +21,8 @@ USER appuser
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-ENV PORT=7860
+ENV PORT=8000
 
-EXPOSE 7860
+EXPOSE 8000
 
-CMD uvicorn core.api.main:app --host 0.0.0.0 --port ${PORT:-7860} --workers 1
+CMD uvicorn core.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
