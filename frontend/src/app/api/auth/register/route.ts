@@ -72,6 +72,26 @@ export async function POST(req: Request) {
       return user;
     });
 
+    // Mirror registration to FastAPI backend so DB credentials and tenant match immediately
+    try {
+      const backendBase = (
+        process.env.BACKEND_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        (process.env.NODE_ENV !== 'production' ? 'http://127.0.0.1:8000' : 'https://agentix-api-lord.onrender.com')
+      ).replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
+
+      if (backendBase) {
+        await fetch(`${backendBase}/api/v1/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: rawEmail, password }),
+          cache: 'no-store',
+        });
+      }
+    } catch (e) {
+      console.warn('[Register] Backend registration sync deferred to login:', e);
+    }
+
     return NextResponse.json(
       { user: createdUser },
       { status: 201 }

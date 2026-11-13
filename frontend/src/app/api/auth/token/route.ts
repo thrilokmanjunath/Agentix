@@ -10,6 +10,16 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // 1. Prioritize authentic backend token issued by FastAPI
+  const directBackendToken = (session as any)?.backendAccessToken;
+  if (directBackendToken && typeof directBackendToken === 'string') {
+    return NextResponse.json(
+      { token: directBackendToken, expiresIn: 3600 },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
+  }
+
+  // 2. Cryptographic JWT signing fallback
   try {
     const token = signBackendJwt({
       sub: session.user.id,

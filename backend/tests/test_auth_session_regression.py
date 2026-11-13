@@ -86,7 +86,7 @@ def test_browser_full_lifecycle(base_url):
         page.fill("input#email", "unauthorized@agentix.com")
         page.fill("input#password", "invalidpassword")
         page.click("button[type=\"submit\"]")
-        page.wait_for_timeout(2000)
+        page.wait_for_selector("text=Invalid credentials", timeout=25000)
         assert "Invalid credentials" in page.content(), "Missing invalid credentials error banner"
         print("     ✓ Invalid credentials cleanly surfaced without uncaught fetch error.")
         
@@ -95,13 +95,13 @@ def test_browser_full_lifecycle(base_url):
         page.fill("input#email", "admin@agentix.com")
         page.fill("input#password", "admin123")
         page.click("button[type=\"submit\"]")
-        page.wait_for_timeout(3000)
+        page.wait_for_url("**/dashboard", timeout=15000)
         assert f"{base_url}/dashboard" in page.url, f"Failed redirect to /dashboard: {page.url}"
         print(f"     ✓ Authenticated redirect succeeded -> {page.url}")
         
         # 4. Session Persistence Across Hard Reload
         print("  4. Testing session persistence on reload...")
-        page.reload(wait_until="networkidle")
+        page.reload(wait_until="load")
         page.wait_for_timeout(1000)
         assert f"{base_url}/dashboard" in page.url, f"Lost session after reload: {page.url}"
         print("     ✓ Session preserved in cookie jar after page reload.")
@@ -116,7 +116,7 @@ def test_browser_full_lifecycle(base_url):
         
         # 6. Profile Page Access
         print("  6. Navigating to /profile page...")
-        page.goto(f"{base_url}/profile", wait_until="networkidle")
+        page.goto(f"{base_url}/profile", wait_until="load")
         page.wait_for_timeout(1000)
         assert f"{base_url}/profile" in page.url, f"Failed loading profile page: {page.url}"
         assert page.locator("text=\"Active Session\"").first.is_visible(), "Active Session badge missing"

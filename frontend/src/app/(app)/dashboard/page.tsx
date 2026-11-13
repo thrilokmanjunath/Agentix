@@ -199,12 +199,12 @@ export default function WorkspacePage() {
             </div>
             <div className="mt-3">
               <span className="text-sm font-bold font-mono text-[var(--accent-primary)] truncate block">
-                {localModels.length > 0 ? primaryModel : (aiStatus.connected ? 'Cloud & Local Hybrid' : 'Ready / On-Demand')}
+                {localModels.length > 0 ? primaryModel : (aiStatus?.connected ? 'Cloud & Local Hybrid' : 'Ready / On-Demand')}
               </span>
             </div>
             <div className="mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {aiStatus.connected ? 'Active Inference Connected' : 'Adaptive Compute Ready'}
+              {aiStatus?.connected ? 'Active Inference Connected' : 'Adaptive Compute Ready'}
             </div>
           </Card>
 
@@ -319,7 +319,7 @@ export default function WorkspacePage() {
                 <div className="flex justify-between items-center text-xs py-2 border-b border-[var(--border-subtle)]">
                   <span className="text-[var(--text-secondary)]">Primary Provider</span>
                   <span className="font-semibold text-[var(--text-primary)]">
-                    {aiStatus.provider ? aiStatus.provider.toUpperCase() : 'Hybrid Cloud & Local Engine'}
+                    {aiStatus?.provider ? String(aiStatus.provider).toUpperCase() : 'Hybrid Cloud & Local Engine'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs py-2 border-b border-[var(--border-subtle)]">

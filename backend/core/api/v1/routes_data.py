@@ -4,8 +4,10 @@ import uuid
 import logging
 import csv
 from pydantic import BaseModel
-from fastapi import APIRouter, File, UploadFile, HTTPException, Form, BackgroundTasks
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form, BackgroundTasks, Depends
 from core.context import current_user_id
+from core.auth import get_current_user
+from core.models.models import User
 from core.orchestrator import PipelineOrchestrator, ExecutionDispatcher
 from core.engines.format_detector import (
     FormatDetector,
@@ -116,8 +118,12 @@ async def upload_chunk(chunk: UploadFile = File(...), upload_id: str = Form(...)
     return {"status": "success"}
 
 @router.post("/upload/complete")
-def upload_complete(req: UploadCompleteReq, background_tasks: BackgroundTasks):
-    user_id = current_user_id.get() or "guest_user"
+def upload_complete(
+    req: UploadCompleteReq,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+):
+    user_id = current_user.id
     
     if ".." in req.upload_id or "/" in req.upload_id:
         raise HTTPException(status_code=400, detail="Invalid upload ID.")

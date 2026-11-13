@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const rawBackendUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV !== "production" ? "http://127.0.0.1:8000" : "")).trim();
+const rawBackendUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV !== "production" ? "http://127.0.0.1:8000" : "https://agentix-api-lord.onrender.com")).trim();
 const BACKEND_URL = rawBackendUrl.replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {

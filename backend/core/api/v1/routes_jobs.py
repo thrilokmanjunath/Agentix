@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends
 from core.repositories.database import SessionLocal
 from core.models.models import WorkflowRun, PipelineStage, Dataset, User
-from core.context import current_user_id
+from core.auth import get_current_user
 import json
 
 router = APIRouter()
 
 @router.get("/{job_id}")
-async def get_job_status(job_id: str):
+async def get_job_status(job_id: str, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     try:
         run = db.query(WorkflowRun).filter_by(id=job_id).first()
@@ -15,11 +15,9 @@ async def get_job_status(job_id: str):
             raise HTTPException(status_code=404, detail="Job not found")
 
         # Tenant isolation & authorization check
-        user_id = current_user_id.get() or "guest_user"
-        if run.owner_id != user_id:
-            user = db.query(User).filter_by(id=user_id).first()
-            if not user or user.role != "admin":
-                raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to access this job.")
+        user_id = current_user.id
+        if run.owner_id != user_id and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to access this job.")
             
         stages = db.query(PipelineStage).filter_by(run_id=job_id).order_by(PipelineStage.step_order).all()
         

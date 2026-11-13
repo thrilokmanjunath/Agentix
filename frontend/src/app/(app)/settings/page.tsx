@@ -709,14 +709,14 @@ export default function SettingsPage() {
                             Connected to your device via Outbound WebSocket Tunnel
                           </span>
                           <span className="text-[11px] font-mono opacity-80">
-                            Uptime: {connectorStatus.uptime_seconds || 0}s
+                            Uptime: {connectorStatus?.uptime_seconds || 0}s
                           </span>
                         </div>
                         <p className="text-xs opacity-90 leading-relaxed">
                           Your local models are securely bridged to this browser session. Inference requests will execute on your device hardware with zero data storage in the cloud.
                         </p>
                         <div className="text-[11px] font-mono bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">
-                          Discovered Models: {connectorStatus.models?.join(', ') || 'Scanning...'}
+                          Discovered Models: {connectorStatus?.models?.join(', ') || 'Scanning...'}
                         </div>
                       </div>
                     ) : (
