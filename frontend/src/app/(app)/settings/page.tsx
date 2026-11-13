@@ -17,7 +17,11 @@ import {
   Sun,
   Moon,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Terminal,
+  Link2,
+  Play,
+  Copy
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -56,6 +60,25 @@ export default function SettingsPage() {
   });
 
   const [aiStatus, setAiStatus] = useState<any>(null);
+
+  // Local Connector & Remote Local Inference States
+  const [connectorTokenInfo, setConnectorTokenInfo] = useState<{
+    token: string;
+    launch_command_unix: string;
+    launch_command_win: string;
+  } | null>(null);
+  const [connectorStatus, setConnectorStatus] = useState<any>(null);
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+  const [isCheckingConnector, setIsCheckingConnector] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+  const [directLoopbackStatus, setDirectLoopbackStatus] = useState<any>(null);
+  const [isProbingLoopback, setIsProbingLoopback] = useState(false);
+
+  // Real Live Inference Test States
+  const [isTestingInference, setIsTestingInference] = useState(false);
+  const [inferencePrompt, setInferencePrompt] = useState('Explain why cross-validation prevents overfitting in machine learning in one concise sentence.');
+  const [inferenceTestResult, setInferenceTestResult] = useState<any>(null);
+
   const [settings, setSettings] = useState({
     llmProvider: 'ollama',
     activeModel: '',
@@ -81,6 +104,7 @@ export default function SettingsPage() {
     const nextModels: Record<string, string[]> = {
       ollama: localList,
       lm_studio: lmsList,
+      local_connector: [],
       gemini: ['gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-3.8-flash', 'gemini-flash-latest'],
       openai: ['gpt-4o', 'gpt-4o-mini', 'o3-mini', 'gpt-4-turbo'],
       anthropic: ['claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
@@ -109,6 +133,95 @@ export default function SettingsPage() {
     }));
   };
 
+  const fetchConnectorStatus = async () => {
+    setIsCheckingConnector(true);
+    try {
+      const res = await backendFetch('/api/v1/platform/connector/status');
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data || {};
+        setConnectorStatus(data);
+        if (Array.isArray(data.models) && data.models.length > 0) {
+          setProviderModels(prev => ({ ...prev, local_connector: data.models }));
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to check connector status:", e);
+    } finally {
+      setIsCheckingConnector(false);
+    }
+  };
+
+  const handleGenerateConnectorToken = async () => {
+    setIsGeneratingToken(true);
+    try {
+      const res = await backendFetch('/api/v1/platform/connector/token');
+      if (res.ok) {
+        const json = await res.json();
+        setConnectorTokenInfo(json.data);
+      }
+    } catch (e) {
+      console.error("Failed to generate token:", e);
+    } finally {
+      setIsGeneratingToken(false);
+    }
+  };
+
+  const handleProbeDirectLoopback = async () => {
+    setIsProbingLoopback(true);
+    setDirectLoopbackStatus(null);
+    try {
+      const res = await fetch('http://127.0.0.1:11435/status', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDirectLoopbackStatus({ online: true, ...data });
+        if (data.models && data.models.length > 0) {
+          setProviderModels(prev => ({ ...prev, local_connector: data.models }));
+        }
+      } else {
+        setDirectLoopbackStatus({ online: false, error: `HTTP ${res.status}` });
+      }
+    } catch (e: any) {
+      setDirectLoopbackStatus({
+        online: false,
+        error: e.message || 'Cannot reach 127.0.0.1:11435. Please launch the connector companion script.',
+      });
+    } finally {
+      setIsProbingLoopback(false);
+    }
+  };
+
+  const handleRunLiveInference = async () => {
+    setIsTestingInference(true);
+    setInferenceTestResult(null);
+    try {
+      const res = await backendFetch('/api/v1/platform/ai/test-inference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: settings.llmProvider,
+          model: settings.activeModel || undefined,
+          prompt: inferencePrompt,
+        }),
+      });
+      const json = await res.json();
+      setInferenceTestResult(json.data || json);
+    } catch (e: any) {
+      setInferenceTestResult({ status: 'error', error: e.message });
+    } finally {
+      setIsTestingInference(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCmd(id);
+    setTimeout(() => setCopiedCmd(null), 2500);
+  };
+
   useEffect(() => {
     const requestedTab = new URLSearchParams(window.location.search).get('tab');
     if (requestedTab && SETTINGS_TABS.some(t => t.id === requestedTab)) {
@@ -128,6 +241,8 @@ export default function SettingsPage() {
           const aiJson = await aiRes.json();
           hydrateFromBackendStatus(aiJson.data);
         }
+
+        await fetchConnectorStatus();
       } catch (err) {
         console.error("Failed to load settings:", err);
       } finally {
@@ -373,8 +488,11 @@ export default function SettingsPage() {
 
               const ollamaModelNames = providerModels.ollama || [];
               const lmsModelNames = providerModels.lm_studio || [];
+              const connectorModelNames = providerModels.local_connector || connectorStatus?.models || [];
+              const isConnectorReady = Boolean(connectorStatus?.connected);
               const selectedProviderModels = providerModels[settings.llmProvider] || [];
               const allSelectableGroups = [
+                ...(isConnectorReady && connectorModelNames.length > 0 ? [{ group: 'Local Connector (Bridge Online)', provider: 'local_connector', models: connectorModelNames }] : []),
                 ...(ollamaModelNames.length > 0 ? [{ group: aiStatus?.ollama_daemon_online ? 'Local Hardware (Ollama Online)' : 'Local Hardware (Ollama on Disk)', provider: 'ollama', models: ollamaModelNames }] : []),
                 ...(lmsModelNames.length > 0 ? [{ group: 'Local Hardware (LM Studio)', provider: 'lm_studio', models: lmsModelNames }] : []),
                 ...(isGeminiReady ? [{ group: 'Google Gemini (API Key Active)', provider: 'gemini', models: providerModels.gemini || [] }] : []),
@@ -445,7 +563,7 @@ export default function SettingsPage() {
                           onChange={(e) => {
                             const nextProv = e.target.value;
                             const nextList = providerModels[nextProv] || [];
-                            const isCloudProv = !['ollama', 'lm_studio'].includes(nextProv);
+                            const isCloudProv = !['ollama', 'lm_studio', 'local_connector'].includes(nextProv);
                             setSettings(prev => ({
                               ...prev,
                               llmProvider: nextProv,
@@ -457,6 +575,7 @@ export default function SettingsPage() {
                         >
                           <option value="ollama">Ollama Local ({ollamaModelNames.length} available)</option>
                           <option value="lm_studio">LM Studio Local ({lmsModelNames.length} loaded)</option>
+                          <option value="local_connector">Agentix Local Connector {isConnectorReady ? `(Online • ${connectorModelNames.length} models)` : '(Companion Bridge)'}</option>
                           <option value="gemini">Google Gemini {isGeminiReady ? '✓ Key Ready' : '(No Key)'}</option>
                           <option value="openai">OpenAI Platform {isOpenAiReady ? '✓ Key Ready' : '(No Key)'}</option>
                           <option value="anthropic">Anthropic Claude {isAnthropicReady ? '✓ Key Ready' : '(No Key)'}</option>
@@ -477,7 +596,7 @@ export default function SettingsPage() {
                             const val = e.target.value;
                             if (val.includes('::')) {
                               const [p, m] = val.split('::');
-                              const isCloudProv = !['ollama', 'lm_studio'].includes(p);
+                              const isCloudProv = !['ollama', 'lm_studio', 'local_connector'].includes(p);
                               setSettings(prev => ({
                                 ...prev,
                                 llmProvider: p,
@@ -547,6 +666,155 @@ export default function SettingsPage() {
                   </CardContent>
                 </Card>
 
+                {/* Agentix Local Connector Companion (Web-to-Local Bridge) */}
+                <Card variant="elevated" className="border-l-4 border-l-[var(--accent-primary)]">
+                  <CardHeader>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="teal" size="sm">
+                          <Terminal size={11} />
+                          Zero-Config Device Bridge
+                        </Badge>
+                        <Badge variant={connectorStatus?.connected ? 'success' : 'neutral'} size="sm">
+                          {connectorStatus?.connected ? 'Bridge Online' : 'Bridge Offline / Standby'}
+                        </Badge>
+                      </div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Link2 size={16} className="text-[var(--accent-primary)]" />
+                        Agentix Local Connector Companion
+                      </CardTitle>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                        Run local models (Ollama, LM Studio) directly inside this deployed cloud web application without opening ports or exposing secrets.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        isLoading={isCheckingConnector}
+                        onClick={fetchConnectorStatus}
+                        leftIcon={<RefreshCw size={13} />}
+                      >
+                        Refresh Status
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {/* Status Alert */}
+                    {connectorStatus?.connected ? (
+                      <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs flex items-center gap-1.5">
+                            <CheckCircle2 size={15} className="text-emerald-500" />
+                            Connected to your device via Outbound WebSocket Tunnel
+                          </span>
+                          <span className="text-[11px] font-mono opacity-80">
+                            Uptime: {connectorStatus.uptime_seconds || 0}s
+                          </span>
+                        </div>
+                        <p className="text-xs opacity-90 leading-relaxed">
+                          Your local models are securely bridged to this browser session. Inference requests will execute on your device hardware with zero data storage in the cloud.
+                        </p>
+                        <div className="text-[11px] font-mono bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">
+                          Discovered Models: {connectorStatus.models?.join(', ') || 'Scanning...'}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                            <Terminal size={14} className="text-[var(--accent-primary)]" />
+                            Connect Your Laptop / Local Models in 1 Step
+                          </span>
+                          <span className="text-[11px] font-mono text-[var(--text-secondary)]">
+                            Zero Install • Python 3.8+ Standard Library
+                          </span>
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                          Click below to generate a secure 1-hour pairing command. Run it in your terminal to instantly bridge Ollama or LM Studio to this website.
+                        </p>
+                        
+                        {!connectorTokenInfo ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            isLoading={isGeneratingToken}
+                            onClick={handleGenerateConnectorToken}
+                            leftIcon={<Sparkles size={14} />}
+                            className="w-full sm:w-auto"
+                          >
+                            Generate Secure Pairing Command
+                          </Button>
+                        ) : (
+                          <div className="space-y-3 pt-2">
+                            {/* macOS / Linux command */}
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-mono text-[var(--text-secondary)] block">macOS / Linux Terminal:</span>
+                              <div className="flex items-center gap-2 bg-[var(--surface-primary)] p-2.5 rounded-lg border border-[var(--border-subtle)]">
+                                <code className="text-xs font-mono text-[var(--text-primary)] flex-1 overflow-x-auto whitespace-nowrap">
+                                  {connectorTokenInfo.launch_command_unix}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(connectorTokenInfo.launch_command_unix, 'unix')}
+                                  leftIcon={copiedCmd === 'unix' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                                >
+                                  {copiedCmd === 'unix' ? 'Copied' : 'Copy'}
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Windows PowerShell command */}
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-mono text-[var(--text-secondary)] block">Windows PowerShell:</span>
+                              <div className="flex items-center gap-2 bg-[var(--surface-primary)] p-2.5 rounded-lg border border-[var(--border-subtle)]">
+                                <code className="text-xs font-mono text-[var(--text-primary)] flex-1 overflow-x-auto whitespace-nowrap">
+                                  {connectorTokenInfo.launch_command_win}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(connectorTokenInfo.launch_command_win, 'win')}
+                                  leftIcon={copiedCmd === 'win' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                                >
+                                  {copiedCmd === 'win' ? 'Copied' : 'Copy'}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Direct Loopback Check (for local desktop run) */}
+                    <div className="p-3.5 rounded-xl bg-[var(--surface-secondary)]/50 border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="font-semibold text-[var(--text-primary)] block">Direct Loopback Gateway Probe (127.0.0.1:11435)</span>
+                        <span className="text-[var(--text-secondary)]">Test direct browser loopback via Private Network Access (PNA).</span>
+                        {directLoopbackStatus && (
+                          <div className="mt-1 font-mono text-[11px]">
+                            {directLoopbackStatus.online ? (
+                              <span className="text-emerald-600 font-bold">✓ Loopback Gateway detected! Models: {directLoopbackStatus.models?.join(', ') || 'None'}</span>
+                            ) : (
+                              <span className="text-amber-600">Loopback unreachable ({directLoopbackStatus.error})</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        isLoading={isProbingLoopback}
+                        onClick={handleProbeDirectLoopback}
+                        className="shrink-0"
+                      >
+                        Probe Loopback
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Provider Architecture Overview */}
                 <Card variant="elevated">
                   <CardHeader>
@@ -558,15 +826,31 @@ export default function SettingsPage() {
                   <CardContent className="space-y-6">
                     
                     {/* Provider Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {[
                         { 
                           id: 'ollama', 
                           name: 'Ollama (Local Engine)', 
-                          desc: 'Hardware inference executing on dedicated local host. Zero token transmission outside machine boundary.',
+                          desc: 'Hardware inference executing on 127.0.0.1:11434. Zero token transmission outside machine boundary.',
                           isLocal: true,
                           ready: (providerModels.ollama || []).length > 0,
                           models: (providerModels.ollama || []).slice(0, 3).join(', ') || 'No local daemon active'
+                        },
+                        { 
+                          id: 'lm_studio', 
+                          name: 'LM Studio (Local Engine)', 
+                          desc: 'OpenAI-compatible local server executing on 127.0.0.1:1234. Supports custom GGUF and quantized weights.',
+                          isLocal: true,
+                          ready: (providerModels.lm_studio || []).length > 0,
+                          models: (providerModels.lm_studio || []).slice(0, 3).join(', ') || 'No local server active'
+                        },
+                        { 
+                          id: 'local_connector', 
+                          name: 'Local Connector Bridge', 
+                          desc: 'Secure outbound WebSocket tunnel bridging this web app to inference runtimes on your laptop.',
+                          isLocal: true,
+                          ready: isConnectorReady,
+                          models: connectorModelNames.slice(0, 3).join(', ') || 'Companion not paired'
                         },
                         { 
                           id: 'gemini', 
@@ -658,6 +942,69 @@ export default function SettingsPage() {
                       >
                         Probe {settings.llmProvider.toUpperCase()}
                       </Button>
+                    </div>
+
+                    {/* Live Interactive Inference Test */}
+                    <div className="p-4 rounded-xl bg-[var(--surface-secondary)]/70 border border-[var(--border-subtle)] space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                            <Play size={13} className="text-[var(--accent-primary)]" />
+                            Live Inference Execution Test
+                          </span>
+                          <span className="text-xs text-[var(--text-secondary)]">
+                            Execute an actual inference request against {settings.llmProvider.toUpperCase()} ({settings.activeModel || 'default model'}) and verify token generation.
+                          </span>
+                        </div>
+                        <Button
+                          variant="teal"
+                          size="sm"
+                          isLoading={isTestingInference}
+                          onClick={handleRunLiveInference}
+                          leftIcon={<Play size={12} />}
+                          className="shrink-0"
+                        >
+                          Execute Test
+                        </Button>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={inferencePrompt}
+                          onChange={(e) => setInferencePrompt(e.target.value)}
+                          placeholder="Enter prompt for live test..."
+                          className="w-full bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+                        />
+                      </div>
+
+                      {inferenceTestResult && (
+                        <div className={`p-3.5 rounded-lg border text-xs space-y-1.5 ${
+                          inferenceTestResult.status === 'success'
+                            ? 'bg-emerald-500/10 border-emerald-500/25 text-[var(--text-primary)]'
+                            : 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300'
+                        }`}>
+                          <div className="flex items-center justify-between font-mono text-[11px]">
+                            <span className="font-bold flex items-center gap-1">
+                              {inferenceTestResult.status === 'success' ? <CheckCircle2 size={13} className="text-emerald-500" /> : null}
+                              {inferenceTestResult.status === 'success' ? 'Response Verified' : 'Inference Failed'}
+                            </span>
+                            {inferenceTestResult.latency_ms !== undefined && (
+                              <span className="font-bold">Latency: {inferenceTestResult.latency_ms}ms</span>
+                            )}
+                          </div>
+                          {inferenceTestResult.response && (
+                            <div className="p-2.5 rounded bg-[var(--surface-primary)] border border-[var(--border-subtle)] font-mono text-xs whitespace-pre-wrap text-[var(--text-primary)]">
+                              {inferenceTestResult.response}
+                            </div>
+                          )}
+                          {inferenceTestResult.error && (
+                            <div className="font-mono text-xs text-rose-600 dark:text-rose-400">
+                              Error: {inferenceTestResult.error}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Hardware Memory Sizing Guidance */}

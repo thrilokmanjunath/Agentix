@@ -322,6 +322,11 @@ class FormatDetector:
                             if k in data and isinstance(data[k], list):
                                 found_key = k
                                 break
+                        if not found_key:
+                            for k, v in data.items():
+                                if isinstance(v, list) and (len(v) == 0 or isinstance(v[0], dict)):
+                                    found_key = k
+                                    break
                         if found_key:
                             return FormatMetadata(
                                 format=DatasetFormat.JSON,

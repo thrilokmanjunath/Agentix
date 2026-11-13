@@ -135,6 +135,12 @@ class PandasEngine(ProcessingEngine):
                     df = pd.json_normalize(raw_data[key])
                     return sanitize_dataframe_columns(df)
 
+            # Check if any custom key contains a list of record objects
+            for key, val in raw_data.items():
+                if isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
+                    df = pd.json_normalize(val)
+                    return sanitize_dataframe_columns(df)
+
             # Check for columnar structure: {"col1": [1, 2], "col2": [3, 4]}
             if all(isinstance(v, list) for v in raw_data.values()):
                 df = pd.DataFrame(raw_data)

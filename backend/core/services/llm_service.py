@@ -6,7 +6,9 @@ import json
 import time
 from urllib.parse import urlparse
 from typing import Optional, Dict, Any
+import asyncio
 from core.config import settings
+from core.context import current_user_id
 
 logger = logging.getLogger("agentix_v2")
 
@@ -117,6 +119,8 @@ def save_runtime_ai_config(updates: Dict[str, Any]) -> Dict[str, Any]:
             merged["ollama_model"] = active_model
         elif prov == "lm_studio":
             merged["lm_studio_model"] = active_model
+        elif prov in ("local_connector", "connector"):
+            merged["connector_model"] = active_model
 
     _apply_config_to_settings(merged)
 
@@ -143,6 +147,8 @@ def get_active_model_for_provider(provider: Optional[str] = None) -> Optional[st
         return settings.OLLAMA_MODEL
     if prov == "lm_studio":
         return settings.LM_STUDIO_MODEL
+    if prov in ("local_connector", "connector"):
+        return getattr(settings, "CONNECTOR_MODEL", None) or "local-default"
     return None
 
 
@@ -347,6 +353,20 @@ def _generate_anthropic(prompt: str, model: str, timeout: int) -> str:
         raise LLMUnavailableError(f"Anthropic service error: {e}")
 
 
+def _run_coroutine_sync(coro):
+    """Executes an async coroutine synchronously, safely handling running event loops."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    else:
+        return asyncio.run(coro)
+
+
 def generate(
     prompt: str,
     model: Optional[str] = None,
@@ -362,13 +382,23 @@ def generate(
     target_provider = (provider or settings.AI_PROVIDER).lower()
 
     # Rule: If institutional policy is strictly local, reject cloud calls
-    if inference_mode == "local" and target_provider not in ("ollama", "lm_studio"):
+    if inference_mode == "local" and target_provider not in ("ollama", "lm_studio", "local_connector", "connector"):
         raise LLMUnavailableError(
             f"External cloud provider '{target_provider}' is blocked by institutional local-only policy."
         )
 
     try:
-        if target_provider == "ollama":
+        if target_provider in ("local_connector", "connector"):
+            from core.services.connector_service import connector_manager
+            uid = current_user_id.get() or "guest_user"
+            if not connector_manager.is_connected(uid):
+                raise LLMUnavailableError(
+                    "Local connector companion is offline. Please launch the Agentix Local Connector on your device."
+                )
+            chosen_model = model or "default"
+            coro = connector_manager.execute_local_inference(user_id=uid, prompt=prompt, model=chosen_model, timeout=req_timeout)
+            return _run_coroutine_sync(coro)
+        elif target_provider == "ollama":
             chosen_model = model or settings.OLLAMA_MODEL or "qwen2.5:3b"
             return _generate_ollama(prompt, chosen_model, req_timeout)
         elif target_provider == "lm_studio":
@@ -386,7 +416,7 @@ def generate(
         else:
             raise LLMUnavailableError(f"Unsupported AI provider '{target_provider}'.")
     except LLMUnavailableError as err:
-        if inference_mode == "auto" and settings.AI_ALLOW_CLOUD_FALLBACK and target_provider in ("ollama", "lm_studio"):
+        if inference_mode == "auto" and settings.AI_ALLOW_CLOUD_FALLBACK and target_provider in ("ollama", "lm_studio", "local_connector", "connector"):
             logger.info(f"Local inference failed ({err}), attempting permitted cloud fallback...")
             if settings.GEMINI_API_KEY:
                 return _generate_gemini(prompt, settings.GEMINI_MODEL, req_timeout)
@@ -406,22 +436,51 @@ def test_provider_connection(
     start = time.time()
     prov = provider.lower()
     try:
-        if prov == "ollama":
+        if prov in ("local_connector", "connector"):
+            from core.services.connector_service import connector_manager
+            uid = current_user_id.get() or "guest_user"
+            status = connector_manager.get_status(uid)
+            latency_ms = round((time.time() - start) * 1000)
+            if status.get("connected"):
+                return {
+                    "status": "connected",
+                    "latency_ms": latency_ms,
+                    "models": status.get("models", []),
+                    "provider": "local_connector",
+                    "message": "Local connector online via secure WebSocket bridge."
+                }
+            return {
+                "status": "disconnected",
+                "error": "Local connector companion is not paired or offline.",
+                "provider": "local_connector"
+            }
+        elif prov == "ollama":
             url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
             _validate_local_endpoint(url)
-            resp = requests.get(f"{url}/api/tags", timeout=0.5)
+            resp = requests.get(f"{url}/api/tags", timeout=1.5)
             latency_ms = round((time.time() - start) * 1000)
             if resp.status_code == 200:
                 models = [m.get("name") for m in resp.json().get("models", [])]
                 return {"status": "connected", "latency_ms": latency_ms, "models": models, "provider": "ollama"}
+            return {"status": "disconnected", "error": f"Ollama HTTP {resp.status_code}", "provider": "ollama"}
         elif prov == "lm_studio":
             url = (base_url or settings.LM_STUDIO_BASE_URL).rstrip("/")
             _validate_local_endpoint(url)
-            resp = requests.get(f"{url}/models", timeout=0.5)
+            endpoints = [f"{url}/models"] if url.endswith("/v1") else [f"{url}/v1/models", f"{url}/models"]
+            resp = None
+            for ep in endpoints:
+                try:
+                    r = requests.get(ep, timeout=1.5)
+                    if r.status_code == 200:
+                        resp = r
+                        break
+                except Exception:
+                    continue
             latency_ms = round((time.time() - start) * 1000)
-            if resp.status_code == 200:
+            if resp and resp.status_code == 200:
                 models = [m.get("id") for m in resp.json().get("data", [])]
                 return {"status": "connected", "latency_ms": latency_ms, "models": models, "provider": "lm_studio"}
+            return {"status": "disconnected", "error": "LM Studio not reachable on local port 1234", "provider": "lm_studio"}
         elif prov == "gemini":
             key = api_key if (api_key and "..." not in api_key) else settings.GEMINI_API_KEY
             if not key:

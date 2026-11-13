@@ -8,7 +8,7 @@ import shutil
 from datetime import datetime
 from typing import Optional, Any, Dict, List, Tuple
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -1125,6 +1125,14 @@ class ConnectionTestRequest(BaseModel):
     api_key: Optional[str] = None
 
 
+class InferenceTestRequest(BaseModel):
+    provider: str
+    model: Optional[str] = None
+    prompt: Optional[str] = "Hello from Agentix universal AI test. Please respond in one concise sentence."
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+
+
 @router.get("/ai/status", response_model=BaseResponse)
 async def ai_status_endpoint():
     """Retrieve full AI inference subsystem status, detected local models, and API-key cloud models."""
@@ -1243,6 +1251,129 @@ async def ai_test_connection_endpoint(req: ConnectionTestRequest):
     from core.services.llm_service import test_provider_connection
     result = test_provider_connection(req.provider, req.base_url, req.api_key)
     return BaseResponse(status="success", message="OK", data=result)
+
+
+@router.post("/ai/test-inference", response_model=BaseResponse)
+async def ai_test_inference_endpoint(req: InferenceTestRequest):
+    """Execute a real test inference request against any provider and measure latency."""
+    from core.services.llm_service import generate
+    import time
+    start = time.time()
+    try:
+        res = generate(
+            prompt=req.prompt or "Hello from Agentix universal AI test. Please respond in one concise sentence.",
+            model=req.model,
+            provider=req.provider,
+            timeout=10,
+        )
+        latency_ms = round((time.time() - start) * 1000)
+        return BaseResponse(
+            status="success",
+            message="Inference test succeeded",
+            data={
+                "provider": req.provider,
+                "model": req.model,
+                "response": res,
+                "latency_ms": latency_ms,
+                "status": "success",
+            },
+        )
+    except Exception as e:
+        latency_ms = round((time.time() - start) * 1000)
+        return BaseResponse(
+            status="error",
+            message=f"Inference test failed: {e}",
+            data={
+                "provider": req.provider,
+                "model": req.model,
+                "latency_ms": latency_ms,
+                "status": "error",
+                "error": str(e),
+            },
+        )
+
+
+@router.get("/connector/token", response_model=BaseResponse)
+async def get_connector_token_endpoint():
+    """Generates a secure, scoped pairing token for the user's local connector companion."""
+    from core.services.connector_service import generate_pairing_token
+    uid = current_user_id.get() or "guest_user"
+    token = generate_pairing_token(uid)
+    return BaseResponse(
+        status="success",
+        message="Connector pairing token generated",
+        data={
+            "token": token,
+            "user_id": uid,
+            "expiry_minutes": 60,
+            "launch_command_unix": f"curl -sSL https://agentix-bay.vercel.app/connector.py | python3 - --token {token}",
+            "launch_command_win": f'powershell -c "irm https://agentix-bay.vercel.app/connector.py | python - --token {token}"',
+        },
+    )
+
+
+@router.get("/connector/status", response_model=BaseResponse)
+async def get_connector_status_endpoint():
+    """Inspects whether a local connector companion is actively paired and online for this user."""
+    from core.services.connector_service import connector_manager
+    uid = current_user_id.get() or "guest_user"
+    status = connector_manager.get_status(uid)
+    return BaseResponse(status="success", message="OK", data=status)
+
+
+@router.websocket("/connector/ws")
+async def connector_websocket_endpoint(websocket: WebSocket, token: Optional[str] = None):
+    """
+    Secure outbound WebSocket bridge for the Agentix Local Connector.
+    Allows local inference on user's device without exposing ports or triggering browser mixed-content blocks.
+    """
+    from core.services.connector_service import connector_manager, verify_pairing_token
+
+    if not token:
+        await websocket.close(code=4401, reason="Missing pairing token")
+        return
+
+    user_id = verify_pairing_token(token)
+    if not user_id:
+        await websocket.close(code=4403, reason="Invalid or expired pairing token")
+        return
+
+    await websocket.accept()
+    logger.info(f"WebSocket accepted for user '{user_id}' local connector.")
+
+    try:
+        # Await initial handshake with capabilities
+        init_raw = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
+        init_data = json.loads(init_raw)
+        connector_manager.register(user_id, websocket, init_data)
+
+        # Send acknowledgment
+        await websocket.send_text(json.dumps({
+            "type": "handshake_ack",
+            "status": "connected",
+            "message": "Local connector paired successfully with Agentix Cloud.",
+            "server_time": time.time(),
+        }))
+
+        # Listen for heartbeats and task completion responses
+        while True:
+            msg_raw = await websocket.receive_text()
+            msg = json.loads(msg_raw)
+            msg_type = msg.get("type")
+
+            if msg_type == "heartbeat":
+                connector_manager.update_heartbeat(user_id, msg.get("meta"))
+                await websocket.send_text(json.dumps({"type": "heartbeat_ack", "timestamp": time.time()}))
+            elif msg_type == "inference_response":
+                task_id = msg.get("task_id")
+                if task_id:
+                    connector_manager.resolve_task(task_id, msg_raw)
+    except WebSocketDisconnect:
+        logger.info(f"Local connector disconnected for user '{user_id}'.")
+    except Exception as e:
+        logger.warning(f"Connector WebSocket error for user '{user_id}': {e}")
+    finally:
+        connector_manager.unregister(user_id)
 
 
 @router.get("/mlops", response_model=BaseResponse)
