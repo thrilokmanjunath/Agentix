@@ -5,7 +5,7 @@ import { auth } from "@/auth"
 // Prisma adapter, which needs Node APIs.
 export const runtime = "nodejs"
 
-const PUBLIC_PATHS = new Set(["/", "/login"])
+const PUBLIC_PATHS = new Set(["/", "/login", "/connector.py"])
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
@@ -45,5 +45,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|connector.py).*)"],
 }
