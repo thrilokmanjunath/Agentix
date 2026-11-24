@@ -1,0 +1,56 @@
+graph TD
+    subgraph L1["Layer 1: API Governance & Ingress Protection"]
+        T1["Tenant Token-Bucket Rate Limiter (1000 req/min)"]
+        T2["Strict Security Headers (CSP, HSTS, X-Frame-Options: DENY)"]
+        T3["Payload Size & JSON Content-Type Constraints"]
+    end
+
+    subgraph L2["Layer 2: System Prompt Management & Enclaves"]
+        P1["Versioned Prompt Template Registry (core/prompts/registry.py)"]
+        P2["Cryptographic SHA-256 Template Integrity Check"]
+        P3["Structural Delimiter Enclaves (<dataset_context>, <untrusted_user_query>)"]
+    end
+
+    subgraph L3["Layer 3: Retrieval-Augmented Generation (RAG) Security"]
+        R1["Tenant-Partitioned Vector Indexing (Zero Cross-Tenant Retrieval)"]
+        R2["Cosine Similarity Relevance Thresholding (Filter Irrelevant Chunks)"]
+        R3["Deterministic Local Token Embeddings (Zero Cloud Data Egress)"]
+    end
+
+    subgraph L4["Layer 4: MCP Tool Governance & Sandboxing"]
+        M1["Formal JSON-RPC 2.0 Input Schema Validation"]
+        M2["Three-Tier Risk Categorization (READ_ONLY, MUTATING, DESTRUCTIVE)"]
+        M3["Granular Tool Execution Audit Logs (Timestamp, User, Duration)"]
+    end
+
+    subgraph L5["Layer 5: Granular RBAC & OAuth 2.0 / OIDC"]
+        A1["Role Matrix: Admin, Data Scientist, Analyst, Viewer"]
+        A2["RFC 7662 Token Introspection Endpoint (/oauth/introspect)"]
+        A3["Mass-Assignment Protection on Registration (Strict User Role Lock)"]
+    end
+
+    subgraph L6["Layer 6: AI Guardrails & Dual-Stage Sanitization"]
+        G1["Adversarial Jailbreak Neutralization (Regex, Leetspeak, Base64 Obfuscation)"]
+        G2["Bidirectional PII Redaction (SSN, Credit Cards, Emails, API Keys)"]
+        G3["Output Leakage Prevention (Blocks System Prompt & Secret Dumps)"]
+    end
+
+    subgraph L7["Layer 7: Intelligent Model Routing & Caching"]
+        C1["Thread-Safe Exact-Match Cache (SHA-256 Key: Tenant:Model:Template:Prompt)"]
+        C2["Sub-5ms Cache Response (100% Compute & Energy Elimination)"]
+        C3["Dynamic Complexity Router (LIGHTWEIGHT, BALANCED, REASONING)"]
+    end
+
+    subgraph L8["Layer 8: Observability & Automated Evaluations"]
+        O1["Automated Factual Faithfulness Scoring (0.0 - 1.0 Against Context)"]
+        O2["Relevancy & Context Recall Metrics"]
+        O3["OpenTelemetry Semantic Spans (Latency, Tokens, Hardware Usage)"]
+    end
+
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+    L4 --> L5
+    L5 --> L6
+    L6 --> L7
+    L7 --> L8

@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    actor User as Institutional Analyst
+    participant Frontend as Next.js 15 Client
+    participant SecMW as Security Middleware (L1)
+    participant DataAPI as FastAPI Dataset API
+    participant DataSvc as DataService (Engine)
+    participant Agents as 9-Stage Pipeline Agents
+    participant LLM as Local LLM & RAG Engine
+
+    User->>Frontend: Select CSV Dataset & Click Upload
+    Frontend->>SecMW: POST /api/v1/dataset/upload/init (Chunk Hash & Size)
+    SecMW->>DataAPI: Validate Ingress Quota & Tenant Context
+    DataAPI-->>Frontend: Ready for Chunks (Session UUID)
+
+    loop For each chunk (2MB)
+        Frontend->>DataAPI: POST /api/v1/dataset/upload/chunk
+    end
+
+    Frontend->>DataAPI: POST /api/v1/dataset/upload/complete
+    DataAPI->>DataSvc: Merge Chunks & Verify SHA-256 Checksum
+    DataSvc->>Agents: Trigger ParserAgent (CSV -> Parquet)
+    Agents->>DataSvc: Persist target_column & parquet_path
+    DataAPI-->>Frontend: Upload Complete (Rows, Columns, Lineage)
+
+    User->>Frontend: Trigger "Start Analytical Workflow"
+    Frontend->>DataAPI: POST /api/v1/platform/start-workflow
+    DataAPI->>Agents: Execute ProfilingAgent -> CleaningAgent
+    Note over Agents: Calculate skewness; impute via median (skew > 0.5) or mean
+    Agents->>Agents: Execute EDAAgent (Correlations & Metrics)
+    Agents->>Agents: Execute FeatureEngineeringAgent (Low vs High Cardinality Encoding)
+    Agents->>Agents: Execute TrainingAgent (StandardScaler + SGDRegressor/Classifier)
+    Agents->>Agents: Execute EvaluationAgent (Held-out Test Metrics: R2, MAE, F1)
+    Agents->>DataSvc: Store Model Metrics & Feature Importances
+    DataAPI-->>Frontend: Workflow Complete (Metrics, SHAP Importances, Clean Data)
+
+    User->>Frontend: Ask Natural Language Question in Agent Console
+    Frontend->>SecMW: POST /api/v1/platform/chat (Prompt, Dataset Name)
+    SecMW->>LLM: Pass through 8-Layer AI Security Stack
+    LLM-->>Frontend: Grounded Response + Latency + Token Telemetry + Guardrail Audit

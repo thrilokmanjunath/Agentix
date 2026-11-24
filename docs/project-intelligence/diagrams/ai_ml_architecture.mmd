@@ -1,0 +1,68 @@
+graph TD
+    subgraph IngressQuery["Incoming User Query"]
+        RawPrompt["Raw User Query (e.g. 'Explain risk outliers in Q3')"]
+        TenantContext["Tenant Context & Role (e.g. Tenant: 'Acme-Corp', Role: 'Analyst')"]
+    end
+
+    subgraph Layer6Guardrails["Layer 6: Guardrails & Ingress Sanitization"]
+        JailbreakScan["Adversarial Jailbreak Detection (Regex + Leetspeak + Base64)"]
+        PIIRedaction["Bidirectional PII Redaction (SSN, Cards, Emails, API Keys)"]
+        SanitizedPrompt["Sanitized & Filtered Prompt"]
+        JailbreakScan --> PIIRedaction --> SanitizedPrompt
+    end
+
+    subgraph Layer7CacheRouting["Layer 7: Exact-Match Cache & Complexity Routing"]
+        ExactCache{"Exact SHA-256 Cache Check (tenant + model + template + prompt)"}
+        CacheHit["Cache Hit (<5ms) - Zero GPU/CPU Invocations"]
+        ComplexityRouter["DynamicModelRouter (LIGHTWEIGHT vs BALANCED vs REASONING)"]
+        ModelSelected["Optimal Model Selected (researcher-m4 or qwen2.5)"]
+        
+        ExactCache -->|HIT| CacheHit
+        ExactCache -->|MISS| ComplexityRouter --> ModelSelected
+    end
+
+    subgraph Layer2And3Enclave["Layers 2 & 3: Prompt Enclave & Partitioned RAG"]
+        VectorStore["Tenant-Partitioned Vector Store (128-dim Cosine Similarity)"]
+        RetrievedPassages["Retrieved Verified Passages (Top-K Semantic Match)"]
+        PromptRegistry["PromptRegistry (Versioned Template & Delimiter Enclave)"]
+        HydratedPrompt["Hydrated Safe Context Prompt"]
+        
+        VectorStore --> RetrievedPassages
+        RetrievedPassages --> PromptRegistry
+        PromptRegistry --> HydratedPrompt
+    end
+
+    subgraph Layer4MCP["Layer 4: Governed MCP Tool Calling"]
+        MCPRegistry["MCP Registry (JSON-RPC 2.0 Schemas)"]
+        ToolAuth{"RBAC & Risk Tier Check (READ_ONLY, MUTATING, DESTRUCTIVE)"}
+        ToolExec["Execute Tool Function"]
+        ToolAudit["Audit Execution Log"]
+        
+        MCPRegistry --> ToolAuth
+        ToolAuth -->|Authorized| ToolExec --> ToolAudit
+    end
+
+    subgraph InferenceExecution["Hardware Inference Execution"]
+        OllamaLocal["Ollama Local Daemon (Apple Silicon / CUDA / Metal)"]
+        ModelRun["Execute Model on Unified Memory (Zero Cloud Egress)"]
+        RawOutput["Raw Model Analytical Output"]
+        
+        OllamaLocal --> ModelRun --> RawOutput
+    end
+
+    subgraph Layer8Evals["Layer 8: Observability & Automated Evaluations"]
+        OutputScan["Output Safety Scan (Check for Credential / Prompt Leaks)"]
+        FaithfulnessEval["AIEvaluator: Faithfulness Score (Grounded in Context)"]
+        TelemetryTrace["OpenTelemetry Semantic Spans (Latency, Tokens, Cost)"]
+        FinalDelivery["Final Verified Response Delivered to Frontend"]
+        
+        RawOutput --> OutputScan --> FaithfulnessEval --> TelemetryTrace --> FinalDelivery
+    end
+
+    RawPrompt --> Layer6Guardrails
+    TenantContext --> Layer6Guardrails
+    SanitizedPrompt --> Layer7CacheRouting
+    ModelSelected --> Layer2And3Enclave
+    HydratedPrompt --> InferenceExecution
+    HydratedPrompt -.-> Layer4MCP
+    ToolExec -.-> HydratedPrompt

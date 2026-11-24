@@ -1,0 +1,60 @@
+graph TD
+    subgraph Routing["Next.js 15 App Router Architecture"]
+        RootLayout["app/layout.tsx (ThemeProvider, SessionProvider)"]
+        PublicGroup["Public Routes"]
+        AppGroup["Protected Institutional Workspace (app)"]
+        AdminGroup["Admin Console Routes (admin)"]
+        APIGroup["Route Handlers (api)"]
+
+        RootLayout --> PublicGroup
+        RootLayout --> AppGroup
+        RootLayout --> AdminGroup
+        RootLayout --> APIGroup
+    end
+
+    subgraph PublicViews["Public Views"]
+        Landing["app/page.tsx (Interactive Hero, Telemetry Widget)"]
+        Login["app/login/page.tsx (Credentials & Google SSO)"]
+        PublicGroup --> Landing
+        PublicGroup --> Login
+    end
+
+    subgraph AppViews["Application Modules (app)"]
+        AppLayout["app/(app)/layout.tsx (Sidebar, Header, SystemHealth)"]
+        Dashboard["/dashboard (Executive Metrics & Stage Progress)"]
+        AgentConsole["/agent-console (Conversational AI Workspace)"]
+        DataDock["/data-dock (Chunked Upload & Lineage)"]
+        Reports["/intelligence-reports (Analytical Briefings)"]
+        Insights["/insights (Automated Drivers & KPIs)"]
+        KnowledgeGraph["/knowledge-graph (Entity & Domain Graph)"]
+        History["/history (Workflow & Audit Log Streams)"]
+        Settings["/settings (User, AI Hardware, & Theme)"]
+        Profile["/profile (User Account & Security)"]
+
+        AppGroup --> AppLayout
+        AppLayout --> Dashboard
+        AppLayout --> AgentConsole
+        AppLayout --> DataDock
+        AppLayout --> Reports
+        AppLayout --> Insights
+        AppLayout --> KnowledgeGraph
+        AppLayout --> History
+        AppLayout --> Settings
+        AppLayout --> Profile
+    end
+
+    subgraph StateManagement["Client State & Utilities"]
+        Zustand["platformStore.ts (Active Dataset, Workflow, Messages)"]
+        ThemeStore["ThemeToggle.tsx (Pearl Teal / Obsidian Teal)"]
+        AuthHook["useSession (Auth.js v5 Client Session)"]
+    end
+
+    subgraph DesignSystem["Teal Glass Design System"]
+        TailwindCSS["Tailwind CSS 3.4.1 (Semantic Color Variables)"]
+        LucideIcons["Lucide React 0.468 (Vector Iconography)"]
+        FramerMotion["Framer Motion 11.13 (Micro-Interactions)"]
+        MarkdownRenderer["react-markdown + remark-gfm (Safe Chat Formatting)"]
+    end
+
+    AppViews --> StateManagement
+    AppViews --> DesignSystem

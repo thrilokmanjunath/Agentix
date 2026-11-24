@@ -1,0 +1,55 @@
+graph TD
+    subgraph Ingress["FastAPI Application Ingress (main.py)"]
+        ASGIApp["FastAPI 0.115 Core Application"]
+        CORSMiddleware["CORSMiddleware (Configured Origins)"]
+        SecMiddleware["SecurityMiddleware (Rate Limiting, Ingress Quotas)"]
+        ProfMiddleware["ProfilingMiddleware (Request Duration & Memory)"]
+        
+        ASGIApp --> CORSMiddleware
+        CORSMiddleware --> SecMiddleware
+        SecMiddleware --> ProfMiddleware
+    end
+
+    subgraph Routers["API Routers (core/api/v1/)"]
+        SystemRouter["routes_system.py (/system/health, /liveness, /readiness)"]
+        AuthRouter["routes_auth.py (/auth/login, /register, /me, /oauth/introspect)"]
+        DataRouter["routes_data.py (/dataset/upload/init, /chunk, /complete)"]
+        JobsRouter["routes_jobs.py (/jobs/{id} with Tenant IDOR checks)"]
+        PlatformRouter["routes_platform.py (/platform/profile, /clean, /automl, /chat)"]
+        
+        ProfMiddleware --> SystemRouter
+        ProfMiddleware --> AuthRouter
+        ProfMiddleware --> DataRouter
+        ProfMiddleware --> JobsRouter
+        ProfMiddleware --> PlatformRouter
+    end
+
+    subgraph Agents["9-Stage Analytical Pipeline Agents (core/agents/)"]
+        UploadAgent["1. UploadAgent"]
+        ParserAgent["2. ParserAgent (Parquet Conversion, Target Lock)"]
+        ProfilingAgent["3. ProfilingAgent (Distribution & Skew)"]
+        CleaningAgent["4. CleaningAgent (Median/Mean & Mode Imputation)"]
+        EDAAgent["5. EDAAgent (Correlations & Metrics)"]
+        FEAgent["6. FeatureEngineeringAgent (One-Hot & Frequency Encoding)"]
+        TrainingAgent["7. TrainingAgent (SGD Regressor / Classifier)"]
+        EvalAgent["8. EvaluationAgent (MAE, RMSE, R2, Accuracy, F1)"]
+        ReportAgent["9. ReportAgent (Summary JSON Generation)"]
+
+        UploadAgent --> ParserAgent --> ProfilingAgent --> CleaningAgent
+        CleaningAgent --> EDAAgent --> FEAgent --> TrainingAgent --> EvalAgent --> ReportAgent
+    end
+
+    subgraph CoreServices["Business & AI Services (core/services/)"]
+        DataService["DataService (Parquet Lifecycle & Session Hydration)"]
+        LLMService["LLMService (Local Ollama Integration)"]
+        ModelRouter["DynamicModelRouter (Query Complexity Classification)"]
+        Evaluator["AIEvaluator (Faithfulness, Relevancy, Grounding)"]
+        GuardrailEngine["GuardrailEngine (Jailbreak Detection, PII Redaction)"]
+        TenantLimiter["TenantTokenBucketLimiter (Tenant Quota Enforcement)"]
+        PromptRegistry["PromptRegistry (Cryptographic Template Enclave)"]
+        MCPRegistry["MCPRegistry (JSON-RPC Governed Tool Execution)"]
+    end
+
+    PlatformRouter --> CoreServices
+    PlatformRouter --> Agents
+    Agents <--> DataService

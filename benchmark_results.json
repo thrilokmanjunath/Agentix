@@ -1,0 +1,617 @@
+{
+  "clinical_oncology": {
+    "task": "classification",
+    "rows": 569,
+    "cols": 30,
+    "best_model": "Logistic Regression",
+    "best_score": 0.9825,
+    "primary_metric": "f1_score",
+    "exec_time": 0.71,
+    "leaderboard": [
+      {
+        "model": "LightGBM Classifier",
+        "tier": "boosting",
+        "score": 0.956,
+        "fit_time": 0.2377,
+        "metrics": {
+          "accuracy": 0.9561,
+          "precision": 0.9561,
+          "precision_weighted": 0.9561,
+          "precision_macro": 0.9551,
+          "recall": 0.9561,
+          "recall_weighted": 0.9561,
+          "recall_macro": 0.9504,
+          "f1_score": 0.956,
+          "f1_macro": 0.9526,
+          "n_classes": 2,
+          "n_samples": 114,
+          "confusion_matrix": [
+            [
+              39,
+              3
+            ],
+            [
+              2,
+              70
+            ]
+          ],
+          "class_labels": [
+            "0",
+            "1"
+          ],
+          "roc_auc": 0.9911,
+          "pr_auc": 0.9945
+        }
+      },
+      {
+        "model": "HistGradientBoosting",
+        "tier": "boosting",
+        "score": 0.9558,
+        "fit_time": 0.2416,
+        "metrics": {
+          "accuracy": 0.9561,
+          "precision": 0.9569,
+          "precision_weighted": 0.9569,
+          "precision_macro": 0.9605,
+          "recall": 0.9561,
+          "recall_weighted": 0.9561,
+          "recall_macro": 0.9454,
+          "f1_score": 0.9558,
+          "f1_macro": 0.9521,
+          "n_classes": 2,
+          "n_samples": 114,
+          "confusion_matrix": [
+            [
+              38,
+              4
+            ],
+            [
+              1,
+              71
+            ]
+          ],
+          "class_labels": [
+            "0",
+            "1"
+          ],
+          "roc_auc": 0.9921,
+          "pr_auc": 0.9952
+        }
+      },
+      {
+        "model": "Logistic Regression",
+        "tier": "linear",
+        "score": 0.9825,
+        "fit_time": 0.0025,
+        "metrics": {
+          "accuracy": 0.9825,
+          "precision": 0.9825,
+          "precision_weighted": 0.9825,
+          "precision_macro": 0.9812,
+          "recall": 0.9825,
+          "recall_weighted": 0.9825,
+          "recall_macro": 0.9812,
+          "f1_score": 0.9825,
+          "f1_macro": 0.9812,
+          "n_classes": 2,
+          "n_samples": 114,
+          "confusion_matrix": [
+            [
+              41,
+              1
+            ],
+            [
+              1,
+              71
+            ]
+          ],
+          "class_labels": [
+            "0",
+            "1"
+          ],
+          "roc_auc": 0.9954,
+          "pr_auc": 0.9971
+        }
+      },
+      {
+        "model": "Random Forest",
+        "tier": "ensemble",
+        "score": 0.956,
+        "fit_time": 0.0469,
+        "metrics": {
+          "accuracy": 0.9561,
+          "precision": 0.9561,
+          "precision_weighted": 0.9561,
+          "precision_macro": 0.9551,
+          "recall": 0.9561,
+          "recall_weighted": 0.9561,
+          "recall_macro": 0.9504,
+          "f1_score": 0.956,
+          "f1_macro": 0.9526,
+          "n_classes": 2,
+          "n_samples": 114,
+          "confusion_matrix": [
+            [
+              39,
+              3
+            ],
+            [
+              2,
+              70
+            ]
+          ],
+          "class_labels": [
+            "0",
+            "1"
+          ],
+          "roc_auc": 0.9939,
+          "pr_auc": 0.9964
+        }
+      },
+      {
+        "model": "Extra Trees",
+        "tier": "ensemble",
+        "score": 0.9649,
+        "fit_time": 0.0321,
+        "metrics": {
+          "accuracy": 0.9649,
+          "precision": 0.9649,
+          "precision_weighted": 0.9649,
+          "precision_macro": 0.9623,
+          "recall": 0.9649,
+          "recall_weighted": 0.9649,
+          "recall_macro": 0.9623,
+          "f1_score": 0.9649,
+          "f1_macro": 0.9623,
+          "n_classes": 2,
+          "n_samples": 114,
+          "confusion_matrix": [
+            [
+              40,
+              2
+            ],
+            [
+              2,
+              70
+            ]
+          ],
+          "class_labels": [
+            "0",
+            "1"
+          ],
+          "roc_auc": 0.9927,
+          "pr_auc": 0.9956
+        }
+      }
+    ]
+  },
+  "healthcare_insurance": {
+    "task": "regression",
+    "rows": 1338,
+    "cols": 6,
+    "best_model": "Ridge Regression (L2)",
+    "best_score": 0.1548,
+    "primary_metric": "r2",
+    "exec_time": 0.48,
+    "leaderboard": [
+      {
+        "model": "HistGradientBoosting Regressor",
+        "tier": "boosting",
+        "score": 0.0584,
+        "fit_time": 0.2633,
+        "metrics": {
+          "r2": 0.0584,
+          "mae": 9302.8019,
+          "mse": 146178215.9033,
+          "rmse": 12090.4184,
+          "n_samples": 268,
+          "mape": 127.8513
+        }
+      },
+      {
+        "model": "Ridge Regression (L2)",
+        "tier": "linear",
+        "score": 0.1548,
+        "fit_time": 0.0031,
+        "metrics": {
+          "r2": 0.1548,
+          "mae": 9181.617,
+          "mse": 131208941.891,
+          "rmse": 11454.6472,
+          "n_samples": 268,
+          "mape": 127.5119
+        }
+      },
+      {
+        "model": "Random Forest Regressor",
+        "tier": "ensemble",
+        "score": -0.0057,
+        "fit_time": 0.0445,
+        "metrics": {
+          "r2": -0.0057,
+          "mae": 9255.1568,
+          "mse": 156136412.307,
+          "rmse": 12495.4557,
+          "n_samples": 268,
+          "mape": 126.5588
+        }
+      },
+      {
+        "model": "Extra Trees Regressor",
+        "tier": "ensemble",
+        "score": -0.1509,
+        "fit_time": 0.0324,
+        "metrics": {
+          "r2": -0.1509,
+          "mae": 9202.3757,
+          "mse": 178677461.219,
+          "rmse": 13367.0289,
+          "n_samples": 268,
+          "mape": 120.6445
+        }
+      },
+      {
+        "model": "Gradient Boosting Regressor",
+        "tier": "boosting",
+        "score": 0.0246,
+        "fit_time": 0.0429,
+        "metrics": {
+          "r2": 0.0246,
+          "mae": 9507.2524,
+          "mse": 151427433.7401,
+          "rmse": 12305.5855,
+          "n_samples": 268,
+          "mape": 131.734
+        }
+      }
+    ]
+  },
+  "clinical_diabetes": {
+    "task": "regression",
+    "rows": 442,
+    "cols": 10,
+    "best_model": "Extra Trees Regressor",
+    "best_score": 0.4801,
+    "primary_metric": "r2",
+    "exec_time": 0.54,
+    "leaderboard": [
+      {
+        "model": "HistGradientBoosting Regressor",
+        "tier": "boosting",
+        "score": 0.3869,
+        "fit_time": 0.2935,
+        "metrics": {
+          "r2": 0.3869,
+          "mae": 44.8092,
+          "mse": 3248.2755,
+          "rmse": 56.9936,
+          "n_samples": 89,
+          "mape": 38.4936
+        }
+      },
+      {
+        "model": "Ridge Regression (L2)",
+        "tier": "linear",
+        "score": 0.4541,
+        "fit_time": 0.0017,
+        "metrics": {
+          "r2": 0.4541,
+          "mae": 42.812,
+          "mse": 2892.0146,
+          "rmse": 53.7775,
+          "n_samples": 89,
+          "mape": 37.4482
+        }
+      },
+      {
+        "model": "Random Forest Regressor",
+        "tier": "ensemble",
+        "score": 0.4496,
+        "fit_time": 0.0452,
+        "metrics": {
+          "r2": 0.4496,
+          "mae": 43.8391,
+          "mse": 2916.024,
+          "rmse": 54.0002,
+          "n_samples": 89,
+          "mape": 39.7723
+        }
+      },
+      {
+        "model": "Extra Trees Regressor",
+        "tier": "ensemble",
+        "score": 0.4801,
+        "fit_time": 0.0334,
+        "metrics": {
+          "r2": 0.4801,
+          "mae": 43.5105,
+          "mse": 2754.7629,
+          "rmse": 52.4858,
+          "n_samples": 89,
+          "mape": 38.6686
+        }
+      },
+      {
+        "model": "Gradient Boosting Regressor",
+        "tier": "boosting",
+        "score": 0.409,
+        "fit_time": 0.0685,
+        "metrics": {
+          "r2": 0.409,
+          "mae": 46.2681,
+          "mse": 3131.2286,
+          "rmse": 55.9574,
+          "n_samples": 89,
+          "mape": 40.3584
+        }
+      }
+    ]
+  },
+  "saas_churn": {
+    "task": "classification",
+    "rows": 7043,
+    "cols": 20,
+    "best_model": "LightGBM Classifier",
+    "best_score": 0.7795,
+    "primary_metric": "f1_score",
+    "exec_time": 1.12,
+    "leaderboard": [
+      {
+        "model": "LightGBM Classifier",
+        "tier": "boosting",
+        "score": 0.7795,
+        "fit_time": 0.5082,
+        "metrics": {
+          "accuracy": 0.7921,
+          "precision": 0.7788,
+          "precision_weighted": 0.7788,
+          "precision_macro": 0.7386,
+          "recall": 0.7921,
+          "recall_weighted": 0.7921,
+          "recall_macro": 0.6868,
+          "f1_score": 0.7795,
+          "f1_macro": 0.7035,
+          "n_classes": 2,
+          "n_samples": 1409,
+          "confusion_matrix": [
+            [
+              943,
+              92
+            ],
+            [
+              201,
+              173
+            ]
+          ],
+          "class_labels": [
+            "No",
+            "Yes"
+          ],
+          "roc_auc": 0.8219,
+          "pr_auc": 0.6211
+        }
+      },
+      {
+        "model": "HistGradientBoosting",
+        "tier": "boosting",
+        "score": 0.7726,
+        "fit_time": 0.3131,
+        "metrics": {
+          "accuracy": 0.7857,
+          "precision": 0.7713,
+          "precision_weighted": 0.7713,
+          "precision_macro": 0.7282,
+          "recall": 0.7857,
+          "recall_weighted": 0.7857,
+          "recall_macro": 0.6782,
+          "f1_score": 0.7726,
+          "f1_macro": 0.6941,
+          "n_classes": 2,
+          "n_samples": 1409,
+          "confusion_matrix": [
+            [
+              939,
+              96
+            ],
+            [
+              206,
+              168
+            ]
+          ],
+          "class_labels": [
+            "No",
+            "Yes"
+          ],
+          "roc_auc": 0.8139,
+          "pr_auc": 0.605
+        }
+      },
+      {
+        "model": "Logistic Regression",
+        "tier": "linear",
+        "score": 0.7729,
+        "fit_time": 0.0015,
+        "metrics": {
+          "accuracy": 0.7864,
+          "precision": 0.772,
+          "precision_weighted": 0.772,
+          "precision_macro": 0.7298,
+          "recall": 0.7864,
+          "recall_weighted": 0.7864,
+          "recall_macro": 0.6779,
+          "f1_score": 0.7729,
+          "f1_macro": 0.6941,
+          "n_classes": 2,
+          "n_samples": 1409,
+          "confusion_matrix": [
+            [
+              941,
+              94
+            ],
+            [
+              207,
+              167
+            ]
+          ],
+          "class_labels": [
+            "No",
+            "Yes"
+          ],
+          "roc_auc": 0.8181,
+          "pr_auc": 0.5901
+        }
+      },
+      {
+        "model": "Random Forest",
+        "tier": "ensemble",
+        "score": 0.7546,
+        "fit_time": 0.0795,
+        "metrics": {
+          "accuracy": 0.7644,
+          "precision": 0.7505,
+          "precision_weighted": 0.7505,
+          "precision_macro": 0.6933,
+          "recall": 0.7644,
+          "recall_weighted": 0.7644,
+          "recall_macro": 0.6637,
+          "f1_score": 0.7546,
+          "f1_macro": 0.6743,
+          "n_classes": 2,
+          "n_samples": 1409,
+          "confusion_matrix": [
+            [
+              909,
+              126
+            ],
+            [
+              206,
+              168
+            ]
+          ],
+          "class_labels": [
+            "No",
+            "Yes"
+          ],
+          "roc_auc": 0.7733,
+          "pr_auc": 0.5535
+        }
+      },
+      {
+        "model": "Extra Trees",
+        "tier": "ensemble",
+        "score": 0.7585,
+        "fit_time": 0.0554,
+        "metrics": {
+          "accuracy": 0.7693,
+          "precision": 0.7548,
+          "precision_weighted": 0.7548,
+          "precision_macro": 0.7009,
+          "recall": 0.7693,
+          "recall_weighted": 0.7693,
+          "recall_macro": 0.6663,
+          "f1_score": 0.7585,
+          "f1_macro": 0.6781,
+          "n_classes": 2,
+          "n_samples": 1409,
+          "confusion_matrix": [
+            [
+              917,
+              118
+            ],
+            [
+              207,
+              167
+            ]
+          ],
+          "class_labels": [
+            "No",
+            "Yes"
+          ],
+          "roc_auc": 0.7949,
+          "pr_auc": 0.5772
+        }
+      }
+    ]
+  },
+  "california_valuation": {
+    "task": "regression",
+    "rows": 20640,
+    "cols": 9,
+    "best_model": "HistGradientBoosting Regressor",
+    "best_score": 0.8201,
+    "primary_metric": "r2",
+    "exec_time": 3.5,
+    "leaderboard": [
+      {
+        "model": "HistGradientBoosting Regressor",
+        "tier": "boosting",
+        "score": 0.8201,
+        "fit_time": 0.3971,
+        "metrics": {
+          "r2": 0.8201,
+          "mae": 32742.8225,
+          "mse": 2357869859.5606,
+          "rmse": 48557.9021,
+          "n_samples": 4128,
+          "mape": 18.6645
+        }
+      },
+      {
+        "model": "Ridge Regression (L2)",
+        "tier": "linear",
+        "score": 0.6139,
+        "fit_time": 0.0005,
+        "metrics": {
+          "r2": 0.6139,
+          "mae": 51808.1339,
+          "mse": 5059149866.2962,
+          "rmse": 71127.7011,
+          "n_samples": 4128,
+          "mape": 30.9747
+        }
+      },
+      {
+        "model": "Random Forest Regressor",
+        "tier": "ensemble",
+        "score": 0.8077,
+        "fit_time": 0.6081,
+        "metrics": {
+          "r2": 0.8077,
+          "mae": 32713.9481,
+          "mse": 2519645579.838,
+          "rmse": 50196.0714,
+          "n_samples": 4128,
+          "mape": 18.3365
+        }
+      },
+      {
+        "model": "Extra Trees Regressor",
+        "tier": "ensemble",
+        "score": 0.7345,
+        "fit_time": 0.1549,
+        "metrics": {
+          "r2": 0.7345,
+          "mae": 40046.3559,
+          "mse": 3478743960.4391,
+          "rmse": 58980.8779,
+          "n_samples": 4128,
+          "mape": 22.5346
+        }
+      },
+      {
+        "model": "Gradient Boosting Regressor",
+        "tier": "boosting",
+        "score": 0.7894,
+        "fit_time": 2.2411,
+        "metrics": {
+          "r2": 0.7894,
+          "mae": 35714.3439,
+          "mse": 2759073231.6633,
+          "rmse": 52526.881,
+          "n_samples": 4128,
+          "mape": 20.4861
+        }
+      }
+    ]
+  }
+}

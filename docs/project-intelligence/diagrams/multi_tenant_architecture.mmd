@@ -1,0 +1,49 @@
+graph TD
+    subgraph MultiTenantSaaS["Shared Multi-Tenant SaaS Infrastructure"]
+        HostServer["Agentix Host Cluster (FastAPI Core Application)"]
+        IngressLimiter["TenantTokenBucketLimiter (Partitioned Memory Buckets)"]
+        SharedDB["PostgreSQL / SQLite Storage Engine"]
+    end
+
+    subgraph TenantA["Tenant Alpha (e.g. University Hospital)"]
+        TenantA_ID["Tenant ID: 'tenant-alpha'"]
+        TenantA_Users["Users: Doctors, Researchers, Admins"]
+        TenantA_Buckets["Rate Limit Bucket: 1000 req/min (Independent)"]
+        TenantA_Vectors["Vector Index Partition: 'tenant-alpha'"]
+        TenantA_Data["Datasets: clinical_trials.parquet, patient_cohorts.parquet"]
+        TenantA_Cache["LLM Cache Keys: SHA-256(tenant-alpha:...)"]
+
+        TenantA_ID --> TenantA_Users
+        TenantA_ID --> TenantA_Buckets
+        TenantA_ID --> TenantA_Vectors
+        TenantA_ID --> TenantA_Data
+        TenantA_ID --> TenantA_Cache
+    end
+
+    subgraph TenantB["Tenant Beta (e.g. Financial Asset Management)"]
+        TenantB_ID["Tenant ID: 'tenant-beta'"]
+        TenantB_Users["Users: Portfolio Managers, Quants, Compliance"]
+        TenantB_Buckets["Rate Limit Bucket: 1000 req/min (Independent)"]
+        TenantB_Vectors["Vector Index Partition: 'tenant-beta'"]
+        TenantB_Data["Datasets: trade_execution.parquet, credit_risk.parquet"]
+        TenantB_Cache["LLM Cache Keys: SHA-256(tenant-beta:...)"]
+
+        TenantB_ID --> TenantB_Users
+        TenantB_ID --> TenantB_Buckets
+        TenantB_ID --> TenantB_Vectors
+        TenantB_ID --> TenantB_Data
+        TenantB_ID --> TenantB_Cache
+    end
+
+    subgraph IsolationGuarantees["Strict Isolation Guarantees"]
+        G1["Zero Cross-Tenant RAG: Vector queries filter by tenant_id exclusively"]
+        G2["Zero Cache Leakage: SHA-256 keys prefixed with tenant identifier"]
+        G3["IDOR Prevention: All job and dataset lookups join with current_user_id & tenant_id"]
+        G4["Quota Shielding: High activity in Tenant A cannot exhaust Tenant B's rate tokens"]
+    end
+
+    HostServer --> IngressLimiter
+    IngressLimiter --> TenantA_Buckets
+    IngressLimiter --> TenantB_Buckets
+    SharedDB --> TenantA_Data
+    SharedDB --> TenantB_Data

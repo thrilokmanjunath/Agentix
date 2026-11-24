@@ -65,8 +65,18 @@ reasoning_engine_logs.json
 # Benchmark Data (Large files)
 benchmark_dataset.csv
 data/
+test_data/
 *.csv
+*.parquet
+*.xlsx
+*15MB.json
 *.db
 *.db-shm
 *.db-wal
 audit_screenshots/
+src-tauri/target/
+desktop/src-tauri/target/
+packaging/dist/
+packaging/build/
+dist/
+build/

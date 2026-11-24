@@ -1,0 +1,41 @@
+graph TD
+    subgraph LocalDevelopment["Local Air-Gapped Workstation (Apple Silicon / Linux / Windows)"]
+        LocalHost["Developer Machine (macOS Sonoma / Linux)"]
+        LocalNext["Next.js 15 Frontend (http://localhost:3000)"]
+        LocalFastAPI["FastAPI Backend (http://127.0.0.1:8000)"]
+        LocalOllama["Ollama Local AI Daemon (http://127.0.0.1:11434)"]
+        LocalData["Local File Lake (/backend/data/temp/*.parquet)"]
+        LocalDB["SQLite / Local PostgreSQL Database"]
+
+        LocalHost --> LocalNext
+        LocalHost --> LocalFastAPI
+        LocalHost --> LocalOllama
+        LocalFastAPI --> LocalData
+        LocalFastAPI --> LocalDB
+        LocalFastAPI --> LocalOllama
+        LocalNext --> LocalFastAPI
+    end
+
+    subgraph GitHubRepo["Source Control (GitHub)"]
+        GHMain["github.com/thrilokmanjunath/Agentix (Branch: main)"]
+        GHProdBranch["Branch: product-transformation"]
+        GHSecBranch["Branch: security-audit-remediation"]
+        GHMain --- GHProdBranch
+        GHMain --- GHSecBranch
+    end
+
+    subgraph ProductionCloud["Production Edge Cloud (Vercel Platform)"]
+        VercelCDN["Vercel Global Edge Network (Anycast CDN)"]
+        VercelFrontend["Next.js Serverless SSR & Static Assets"]
+        VercelEdge["Edge Middleware & Route Handlers"]
+        ProdPostgres["Neon Managed PostgreSQL (Postgres Connection Pooling)"]
+        ProdAPI["Containerized FastAPI Microservice / VM Cluster"]
+
+        VercelCDN --> VercelFrontend
+        VercelFrontend --> VercelEdge
+        VercelFrontend --> ProdPostgres
+        VercelFrontend --> ProdAPI
+    end
+
+    LocalHost -.->|Git Push (Manual Review Only)| GHMain
+    GHMain -.->|Automated Deploy Trigger| VercelFrontend

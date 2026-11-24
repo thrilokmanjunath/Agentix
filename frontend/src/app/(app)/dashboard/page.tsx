@@ -388,7 +388,11 @@ export default function WorkspacePage() {
                   { id: "explainability", name: "7. Explainable AI", agent: "XAIAgent", desc: "Computes SHAP feature importance & risk drivers" },
                   { id: "reporting", name: "8. Executive Reporting", agent: "ReportAgent", desc: "Generates auditable PDF & markdown intelligence briefs" }
                 ].map((stage, idx) => {
-                  const nodeMatch = workflowNodes.find(n => n.id === stage.id || n.label?.toLowerCase().includes(stage.agent.toLowerCase().replace('agent', '')));
+                  const nodeMatch = workflowNodes.find(n => 
+                    n.id === stage.id || 
+                    n.label?.toLowerCase().includes(stage.agent.toLowerCase().replace('agent', '')) ||
+                    (stage.id === 'explainability' && (n.label?.toLowerCase().includes('evaluation') || n.label?.toLowerCase().includes('training')))
+                  );
                   const status = nodeMatch?.status || (idx === 0 ? "Completed" : idx === 1 ? "Completed" : "Pending");
                   const isCompleted = status === "Completed";
                   const isInProgress = status === "In Progress";

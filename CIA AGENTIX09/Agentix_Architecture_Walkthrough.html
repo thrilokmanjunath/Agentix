@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENTIX — Interactive Architecture Walkthrough & Multi-Agent Intelligence</title>
+  <style>
+    /* -------------------------------------------------------------
+       CHRIST UNIVERSITY & AGENTIX COLOR SYSTEM & TYPOGRAPHY
+       ------------------------------------------------------------- */
+    :root {
+      --bg-dark: #0A0F1D;
+      --bg-surface: #111827;
+      --bg-surface-elevated: #1F2937;
+      --bg-card: #1E293B;
+      --border-color: #334155;
+      --border-focus: #CAA65E;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-faint: #64748B;
+      --cu-blue: #14538E;
+      --cu-blue-light: #2563EB;
+      --cu-gold: #CAA65E;
+      --cu-gold-hover: #D8B56F;
+      --agentix-emerald: #10B981;
+      --agentix-amber: #F59E0B;
+      --agentix-sky: #38BDF8;
+      --agentix-crimson: #EF4444;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* -------------------------------------------------------------
+       HEADER & INSTITUTIONAL BRANDING
+       ------------------------------------------------------------- */
+    header {
+      background: linear-gradient(180deg, #101827 0%, #0B1120 100%);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .crest-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--cu-blue) 0%, #0D3259 100%);
+      border: 2px solid var(--cu-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--cu-gold);
+      letter-spacing: 1px;
+      box-shadow: 0 0 12px rgba(202, 166, 94, 0.25);
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-text h1 span.pill {
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(202, 166, 94, 0.15);
+      color: var(--cu-gold);
+      border: 1px solid var(--cu-gold);
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .meta-badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .meta-tag {
+      font-size: 11px;
+      padding: 5px 10px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+    }
+
+    .meta-tag strong {
+      color: var(--text-main);
+    }
+
+    .meta-tag.highlight {
+      border-color: var(--cu-gold);
+      color: var(--cu-gold);
+      background: rgba(202, 166, 94, 0.08);
+    }
+
+    /* -------------------------------------------------------------
+       TOOLBAR & LAYER SELECTOR
+       ------------------------------------------------------------- */
+    .control-ribbon {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .tour-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-surface-elevated);
+      border-color: var(--text-muted);
+    }
+
+    .btn-gold {
+      background: var(--cu-gold);
+      color: #0F172A;
+      border-color: var(--cu-gold);
+    }
+
+    .btn-gold:hover {
+      background: var(--cu-gold-hover);
+      border-color: var(--cu-gold-hover);
+      box-shadow: 0 0 12px rgba(202, 166, 94, 0.35);
+    }
+
+    .btn-blue {
+      background: var(--cu-blue);
+      color: #FFFFFF;
+      border-color: var(--cu-blue);
+    }
+
+    .btn-blue:hover {
+      background: #1E6DB7;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box input {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px 6px 30px;
+      font-size: 12px;
+      color: var(--text-main);
+      outline: none;
+      width: 220px;
+      transition: width 0.3s ease, border-color 0.2s ease;
+    }
+
+    .search-box input:focus {
+      border-color: var(--cu-gold);
+      width: 280px;
+      box-shadow: 0 0 10px rgba(202, 166, 94, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      color: var(--text-faint);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .layer-selector-bar {
+      background: #0E1626;
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .layer-pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .layer-pill:hover {
+      color: var(--text-main);
+      border-color: var(--text-faint);
+    }
+
+    .layer-pill.active {
+      background: var(--cu-blue);
+      color: #FFFFFF;
+      border-color: var(--cu-gold);
+      box-shadow: 0 0 10px rgba(20, 83, 142, 0.5);
+    }
+
+    /* -------------------------------------------------------------
+       MAIN WORKSPACE (SPLIT DIAGRAM & INSPECTOR)
+       ------------------------------------------------------------- */
+    .main-workspace {
+      display: grid;
+      grid-template-columns: 1fr 480px;
+      flex: 1;
+      height: calc(100vh - 160px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 1150px) {
+      .main-workspace {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    /* Diagram Pane */
+    .diagram-pane {
+      position: relative;
+      background: #090D1A;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .canvas-viewport {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: grab;
+      position: relative;
+    }
+
+    .canvas-viewport:active {
+      cursor: grabbing;
+    }
+
+    .canvas-viewport svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.2s ease;
+      filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6));
+    }
+
+    .diagram-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      gap: 6px;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      z-index: 10;
+    }
+
+    .stepper-indicator {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(17, 24, 39, 0.9);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--cu-gold);
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--cu-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 10;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--agentix-emerald);
+      box-shadow: 0 0 8px var(--agentix-emerald);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    /* -------------------------------------------------------------
+       INSPECTOR & DOSSIER PANE
+       ------------------------------------------------------------- */
+    .inspector-pane {
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .inspector-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: #0E1626;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .inspector-tab {
+      flex: 1;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .inspector-tab:hover {
+      color: var(--text-main);
+    }
+
+    .inspector-tab.active {
+      color: var(--cu-gold);
+      border-bottom-color: var(--cu-gold);
+      background: rgba(202, 166, 94, 0.05);
+    }
+
+    .inspector-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Selected Item Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 10px;
+    }
+
+    .card-title h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .card-title span.tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--cu-gold);
+      background: rgba(202, 166, 94, 0.12);
+      border: 1px solid rgba(202, 166, 94, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .info-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+
+    .code-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      background: #090D16;
+      border: 1px solid #1E293B;
+      color: #38BDF8;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      word-break: break-all;
+    }
+
+    /* Accordion & Deep Dive Styling */
+    .agent-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .agent-item:hover {
+      border-color: var(--cu-gold);
+    }
+
+    .agent-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: #182234;
+      user-select: none;
+    }
+
+    .agent-header h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .agent-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--cu-blue);
+      color: #FFF;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .agent-body {
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Metric Callout Grid */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric-card {
+      background: #0E1626;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-num {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--cu-gold);
+      letter-spacing: -0.5px;
+    }
+
+    .metric-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .metric-footnote {
+      font-size: 10px;
+      color: var(--text-faint);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* Callout Box */
+    .callout {
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .callout-gold {
+      background: rgba(202, 166, 94, 0.08);
+      border: 1px solid var(--cu-gold);
+      color: #F8FAFC;
+    }
+
+    .callout-blue {
+      background: rgba(20, 83, 142, 0.15);
+      border: 1px solid var(--cu-blue);
+      color: #F8FAFC;
+    }
+
+    .callout-amber {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid var(--agentix-amber);
+      color: #F8FAFC;
+    }
+
+    /* -------------------------------------------------------------
+       SVG HIGHLIGHT & ANIMATION STYLING
+       ------------------------------------------------------------- */
+    #architectureSvg polyline.edge {
+      stroke-dasharray: 6, 6;
+      animation: edgeFlow 30s linear infinite;
+      transition: stroke 0.3s ease, stroke-width 0.3s ease;
+    }
+
+    @keyframes edgeFlow {
+      from { stroke-dashoffset: 300; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    #architectureSvg g.subgraph {
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #architectureSvg g.subgraph:hover rect:first-child {
+      stroke: var(--cu-gold) !important;
+      stroke-width: 2px !important;
+    }
+
+    /* Highlighting active layer */
+    #architectureSvg.has-active-layer g.subgraph:not(.active-layer) {
+      opacity: 0.28;
+    }
+
+    #architectureSvg.has-active-layer g.node:not(.in-active-layer):not(.active-node) {
+      opacity: 0.28;
+    }
+
+    #architectureSvg.has-active-layer polyline.edge:not(.active-edge) {
+      opacity: 0.18;
+    }
+
+    #architectureSvg g.subgraph.active-layer rect:first-child {
+      stroke: var(--cu-gold) !important;
+      stroke-width: 3.5px !important;
+      filter: drop-shadow(0 0 16px rgba(202, 166, 94, 0.45));
+    }
+
+    #architectureSvg g.subgraph.active-layer rect:nth-child(2) {
+      fill: var(--cu-blue) !important;
+    }
+
+    #architectureSvg g.subgraph.active-layer text {
+      fill: #FFFFFF !important;
+      font-weight: 700 !important;
+    }
+
+    /* Node interaction */
+    #architectureSvg g.node {
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    #architectureSvg g.node:hover rect,
+    #architectureSvg g.node:hover ellipse {
+      stroke: var(--agentix-sky) !important;
+      stroke-width: 2px !important;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+    }
+
+    #architectureSvg g.node.active-node rect,
+    #architectureSvg g.node.active-node ellipse {
+      stroke: var(--agentix-amber) !important;
+      stroke-width: 2.5px !important;
+      fill: rgba(245, 158, 11, 0.25) !important;
+      filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.7));
+    }
+
+    #architectureSvg polyline.edge.active-edge {
+      stroke: var(--cu-gold) !important;
+      stroke-width: 2.5px !important;
+      stroke-dasharray: 8, 4;
+      animation: fastEdgeFlow 8s linear infinite;
+    }
+
+    @keyframes fastEdgeFlow {
+      from { stroke-dashoffset: 200; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* -------------------------------------------------------------
+       FOOTER
+       ------------------------------------------------------------- */
+    footer {
+      background: #080D1A;
+      border-top: 1px solid var(--border-color);
+      padding: 10px 24px;
+      font-size: 11px;
+      color: var(--text-faint);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    footer a {
+      color: var(--cu-gold);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand-section">
+      <div class="crest-badge">CU</div>
+      <div class="brand-text">
+        <h1>AGENTIX <span class="pill">CIA Master Walkthrough</span></h1>
+        <p>CHRIST (Deemed to be University) • School of Sciences • Department of Computer Science • M.Sc. Data Science</p>
+      </div>
+    </div>
+    <div class="meta-badges">
+      <div class="meta-tag highlight"><strong>Team No.:</strong> 09</div>
+      <div class="meta-tag"><strong>Presenter:</strong> Thrilok M (2548430)</div>
+      <div class="meta-tag"><strong>Co-Author:</strong> Piush Kole (2548421)</div>
+      <div class="meta-tag"><strong>Faculty Guide:</strong> Dr. Gobinath R</div>
+      <div class="meta-tag"><strong>Evaluation:</strong> CIA 2026 (30 Marks)</div>
+    </div>
+  </header>
+
+  <!-- TOOLBAR -->
+  <div class="control-ribbon">
+    <div class="tour-controls">
+      <button class="btn btn-gold" id="btnTourToggle" title="Start Automated Layer-by-Layer Tour">
+        <span id="tourIcon">▶</span> <span id="tourLabel">Play Tour</span>
+      </button>
+      <button class="btn" id="btnPrevLayer" title="Previous Layer">⏮ Prev</button>
+      <button class="btn" id="btnNextLayer" title="Next Layer">Next ⏭</button>
+      <button class="btn" id="btnResetView" title="Reset Highlights to Full Architecture">↺ Reset</button>
+    </div>
+
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchFilter" placeholder="Search component (SHAP, BFF, Neon...)" />
+    </div>
+
+    <div class="meta-tag">
+      <span style="color: var(--cu-gold); font-weight:700;">32</span> ML Algorithms • 
+      <span style="color: var(--cu-gold); font-weight:700;">9</span> Agents • 
+      <span style="color: var(--cu-gold); font-weight:700;">3-Tier</span> XAI
+    </div>
+  </div>
+
+  <!-- LAYER SELECTOR BAR -->
+  <div class="layer-selector-bar">
+    <div class="layer-pill active" data-layer="ALL">All Layers (Overview)</div>
+    <div class="layer-pill" data-layer="ClientLayer">1. Client Layer</div>
+    <div class="layer-pill" data-layer="EdgeProxy">2. Edge Proxy & BFF</div>
+    <div class="layer-pill" data-layer="BackendAPI">3. Backend Service Engine</div>
+    <div class="layer-pill" data-layer="PipelineEngine">4. Multi-Agent Pipeline</div>
+    <div class="layer-pill" data-layer="AutoMLEngine">5. AutoML & XAI</div>
+    <div class="layer-pill" data-layer="AISecurity">6. AI Governance & Inference</div>
+    <div class="layer-pill" data-layer="Persistence">7. Dual-Engine Persistence</div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="main-workspace">
+
+    <!-- DIAGRAM PANE -->
+    <div class="diagram-pane">
+      <div class="stepper-indicator" id="stepperIndicator">
+        <div class="pulse-dot"></div>
+        <span id="stepperText">System Overview: All 7 Subsystems Active</span>
+      </div>
+
+      <div class="canvas-viewport" id="canvasViewport">
+        <svg id="architectureSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2044.4019166666662 2393.6" width="2044.4019166666662" height="2393.6" style="--bg:#18181B;--fg:#F4F4F5;--line:#71717A;--muted:#A1A1AA;--surface:#27272A;--border:#3F3F46;background:var(--bg)">
+<style>
+  /* Offline System Font Override */
+  text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<g class="subgraph" data-id="ClientLayer" data-label="1. Client Layer (Browser)">
+  <rect x="662.9680000000001" y="40" width="379.98299999999983" height="266.70000000000005" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="662.9680000000001" y="40" width="379.98299999999983" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="674.9680000000001" y="54" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">1. Client Layer (Browser)</text>
+</g>
+<g class="subgraph" data-id="EdgeProxy" data-label="2. Edge Proxy &amp; Serverless Boundary (Vercel)">
+  <rect x="534.627" y="354.70000000000005" width="636.665" height="266.70000000000005" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="534.627" y="354.70000000000005" width="636.665" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="546.627" y="368.70000000000005" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">2. Edge Proxy &amp; Serverless Boundary (Vercel)</text>
+</g>
+<g class="subgraph" data-id="BackendAPI" data-label="3. Backend Service Engine (Render / Local)">
+  <rect x="605.1584999999999" y="669.4000000000001" width="828.3389999999998" height="436.5" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="605.1584999999999" y="669.4000000000001" width="828.3389999999998" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="617.1584999999999" y="683.4000000000001" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">3. Backend Service Engine (Render / Local)</text>
+</g>
+<g class="subgraph" data-id="PipelineEngine" data-label="4. Multi-Agent Autonomous Pipeline (core/agents/)">
+  <rect x="897.6209999999999" y="1165.9" width="340.59891666666664" height="860.9999999999999" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="897.6209999999999" y="1165.9" width="340.59891666666664" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="909.6209999999999" y="1179.9" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">4. Multi-Agent Autonomous Pipeline (core/agents/)</text>
+</g>
+<g class="subgraph" data-id="AutoMLEngine" data-label="5. AutoML &amp; XAI Subsystem (core/automl/)">
+  <rect x="494.02441666666664" y="2086.8999999999996" width="1143.8049999999998" height="266.70000000000005" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="494.02441666666664" y="2086.8999999999996" width="1143.8049999999998" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="506.02441666666664" y="2100.8999999999996" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">5. AutoML &amp; XAI Subsystem (core/automl/)</text>
+</g>
+<g class="subgraph" data-id="AISecurity" data-label="6. 8-Layer AI Governance &amp; Local Inference">
+  <rect x="1266.2199166666664" y="1681.2999999999997" width="738.1819999999998" height="351.6" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="1266.2199166666664" y="1681.2999999999997" width="738.1819999999998" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1278.2199166666664" y="1695.2999999999997" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">6. 8-Layer AI Governance &amp; Local Inference</text>
+</g>
+<g class="subgraph" data-id="Persistence" data-label="7. Dual-Engine Persistence">
+  <rect x="40" y="1823.1" width="829.6209999999999" height="209.8" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="1823.1" width="829.6209999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="52" y="1837.1" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">7. Dual-Engine Persistence</text>
+<g class="subgraph" data-id="PipelineEngine" data-label="4. Multi-Agent Autonomous Pipeline (core/agents/)">
+  <rect x="639.0179999999999" y="1881.1" width="130.87" height="36.900000000000006" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="639.0179999999999" y="1881.1" width="130.87" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="651.0179999999999" y="1895.1" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">4. Multi-Agent Autonomous Pipeline (core/agents/)</text>
+</g>
+</g>
+<polyline class="edge" data-from="ClientLayer" data-to="EdgeProxy" data-style="solid" data-arrow-start="true" data-arrow-end="true" points="852.9594999999999,306.70000000000005 852.9594999999999,354.70000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" marker-start="url(#arrowhead-start)" />
+<polyline class="edge" data-from="EdgeProxy" data-to="BackendAPI" data-style="solid" data-arrow-start="true" data-arrow-end="true" points="852.9594999999999,621.4000000000001 852.9594999999999,669.4000000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" marker-start="url(#arrowhead-start)" />
+<polyline class="edge" data-from="A7" data-to="Selector" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1844.1 1057.9724999999999,1862.6 665.8614166666666,1862.6 665.8614166666666,2130.8999999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A7" data-to="Preprocessor" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1844.1 1057.9724999999999,1862.6 1028.1359166666666,1862.6 1028.1359166666666,2130.8999999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A8" data-to="XAI" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1129.6824166666665,1918 1129.6824166666665,1945.5 1428.2014166666663,1945.5 1428.2014166666663,2130.8999999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="RouterPlatform" data-to="Guardrails" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1075.3734999999997,1089.9 1075.3734999999997,1147.9 1665.3214166666662,1147.9 1665.3214166666662,1722.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FastAPIApp" data-to="NeonDB" data-style="solid" data-arrow-start="true" data-arrow-end="true" points="768.8444999999998,920.1 768.8444999999998,944.1000000000001 463.70249999999993,944.1000000000001 463.70249999999993,1881.1" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" marker-start="url(#arrowhead-start)" />
+<polyline class="edge" data-from="FastAPIApp" data-to="SQLiteDB" data-style="solid" data-arrow-start="true" data-arrow-end="true" points="768.8444999999998,920.1 768.8444999999998,944.1000000000001 172.19349999999997,944.1000000000001 172.19349999999997,1881.1" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" marker-start="url(#arrowhead-start)" />
+<polyline class="edge" data-from="RouterData" data-to="Orchestrator" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="820.1734999999999,1089.9 820.1734999999999,1147.9 1057.9724999999999,1147.9 1057.9724999999999,1209.9" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="UI" data-to="Store" data-style="solid" data-arrow-start="true" data-arrow-end="true" points="852.9594999999999,120.9 852.9594999999999,168.9" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" marker-start="url(#arrowhead-start)" />
+<polyline class="edge" data-from="Store" data-to="TokenClient" data-style="solid" data-arrow-start="true" data-arrow-end="true" points="852.9594999999999,205.8 852.9594999999999,253.8" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" marker-start="url(#arrowhead-start)" />
+<polyline class="edge" data-from="Middleware" data-to="NextAuth" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1020.5734999999999,435.6 1020.5734999999999,483.6" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="NextAuth" data-to="TokenRoute" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1020.5734999999999,520.5 1020.5734999999999,568.5" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="ASGI" data-to="SecMiddleware" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="768.8444999999998,750.3000000000001 768.8444999999998,798.3000000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="SecMiddleware" data-to="FastAPIApp" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="768.8444999999998,835.2 768.8444999999998,883.2" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FastAPIApp" data-to="AuthDep" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="768.8444999999998,920.1 768.8444999999998,944.1000000000001 1075.3735,944.1000000000001 1075.3735,968.1000000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="AuthDep" data-to="RouterData" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1075.3735,1005.0000000000001 1075.3735,1029 820.1734999999999,1029 820.1734999999999,1053" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="AuthDep" data-to="RouterPlatform" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1075.3735,1005.0000000000001 1075.3735,1029 1075.3734999999997,1029 1075.3734999999997,1053" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="AuthDep" data-to="RouterJobs" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1075.3735,1005.0000000000001 1075.3735,1029 1320.1995,1029 1320.1995,1053" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A1" data-to="A2" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1331.7 1057.9724999999999,1379.7" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A2" data-to="A3" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1416.6000000000001 1057.9724999999999,1464.6000000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A3" data-to="A4" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1501.5 1057.9724999999999,1549.5" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A4" data-to="A5" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1586.4 1057.9724999999999,1634.4" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A5" data-to="A6" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1671.3000000000002 1057.9724999999999,1722.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A6" data-to="A7" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1759.1999999999998 1057.9724999999999,1807.1999999999998" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A7" data-to="A8" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1844.1 1057.9724999999999,1862.6 1129.6824166666665,1862.6 1129.6824166666665,1881.1" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="A8" data-to="A9" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1129.6824166666665,1918 1129.6824166666665,1945.5 1164.1949166666666,1945.5 1164.1949166666666,1973" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Orchestrator" data-to="A1" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1057.9724999999999,1246.8000000000002 1057.9724999999999,1294.8000000000002" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Selector" data-to="Reg" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="665.8614166666666,2167.7999999999997 665.8614166666666,2215.7999999999997" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Preprocessor" data-to="Trainer" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1028.1359166666664,2167.7999999999997 1028.1359166666666,2215.7999999999997" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Trainer" data-to="Evaluator" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1028.1359166666666,2252.7 1028.1359166666664,2300.7" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Guardrails" data-to="Cache" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1665.3214166666662,1759.2 1665.3214166666662,1807.1999999999998" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Cache" data-to="Router" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1665.3214166666662,1844.0999999999997 1665.3214166666662,1881.1" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Router" data-to="Ollama" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1602.0137499999996,1918 1602.0137499999996,1943.9999999999998 1481.7759166666665,1943.9999999999998 1481.7759166666665,1973" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="Router" data-to="CloudAI" data-style="dotted" data-arrow-start="false" data-arrow-end="true" points="1728.629083333333,1918 1728.629083333333,1943.9999999999998 1848.8669166666664,1943.9999999999998 1848.8669166666664,1973" fill="none" stroke="var(--_line)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PipelineEngine" data-to="ParquetLake" data-style="solid" data-arrow-start="true" data-arrow-end="true" points="704.453,1918 704.453,1973" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" marker-start="url(#arrowhead-start)" />
+<g class="node" data-id="UI" data-label="Next.js 15 Web Application (Warm Alabaster / React 19)" data-shape="rectangle">
+  <rect x="678.9680000000001" y="84" width="347.98299999999983" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="852.9594999999999" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Next.js 15 Web Application (Warm Alabaster / React 19)</text>
+</g>
+<g class="node" data-id="Store" data-label="Zustand Reactive Store (platformStore.ts)" data-shape="rectangle">
+  <rect x="712.313" y="168.9" width="281.29299999999995" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="852.9594999999999" y="187.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Zustand Reactive Store (platformStore.ts)</text>
+</g>
+<g class="node" data-id="TokenClient" data-label="Client Token Interceptor (backendClient.ts)" data-shape="rectangle">
+  <rect x="707.867" y="253.8" width="290.18499999999995" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="852.9594999999999" y="272.25" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Client Token Interceptor (backendClient.ts)</text>
+</g>
+<g class="node" data-id="Middleware" data-label="Next.js Edge Middleware (Route Gating)" data-shape="rectangle">
+  <rect x="885.8549999999999" y="398.70000000000005" width="269.43699999999995" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1020.5734999999999" y="417.15000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Next.js Edge Middleware (Route Gating)</text>
+</g>
+<g class="node" data-id="NextAuth" data-label="Auth.js v5 (Credentials Provider)" data-shape="rectangle">
+  <rect x="904.3799999999999" y="483.6" width="232.38699999999994" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1020.5734999999999" y="502.05" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Auth.js v5 (Credentials Provider)</text>
+</g>
+<g class="node" data-id="TokenRoute" data-label="/api/auth/token (BFF Token Relay)" data-shape="rectangle">
+  <rect x="899.5634999999999" y="568.5" width="242.01999999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1020.5734999999999" y="586.95" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">/api/auth/token (BFF Token Relay)</text>
+</g>
+<g class="node" data-id="Rewrites" data-label="Next.js API Rewrite Proxy (/api/v1/* -&gt; Render)" data-shape="rectangle">
+  <rect x="550.627" y="398.70000000000005" width="307.22799999999995" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="704.241" y="417.15000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Next.js API Rewrite Proxy (/api/v1/* -&gt; Render)</text>
+</g>
+<g class="node" data-id="ASGI" data-label="Uvicorn ASGI Server" data-shape="rectangle">
+  <rect x="685.6254999999999" y="713.4000000000001" width="166.438" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="768.8444999999999" y="731.8500000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Uvicorn ASGI Server</text>
+</g>
+<g class="node" data-id="SecMiddleware" data-label="SecurityMiddleware (Token Bucket Limiter)" data-shape="rectangle">
+  <rect x="621.1584999999999" y="798.3000000000001" width="295.37199999999984" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="768.8444999999998" y="816.7500000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">SecurityMiddleware (Token Bucket Limiter)</text>
+</g>
+<g class="node" data-id="FastAPIApp" data-label="FastAPI REST Application (core/main.py)" data-shape="rectangle">
+  <rect x="628.5684999999999" y="883.2" width="280.5519999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="768.8444999999998" y="901.6500000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">FastAPI REST Application (core/main.py)</text>
+</g>
+<g class="node" data-id="AuthDep" data-label="Dependency Injection: Depends(get_current_user)" data-shape="rectangle">
+  <rect x="905.4574999999999" y="968.1000000000001" width="339.83199999999994" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1075.3735" y="986.5500000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Dependency Injection: Depends(get_current_user)</text>
+</g>
+<g class="node" data-id="RouterData" data-label="Data Routes (/api/v1/dataset/*)" data-shape="rectangle">
+  <rect x="712.5014999999999" y="1053" width="215.34399999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="820.1734999999999" y="1071.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Data Routes (/api/v1/dataset/*)</text>
+</g>
+<g class="node" data-id="RouterPlatform" data-label="Platform Routes (/api/v1/platform/*)" data-shape="rectangle">
+  <rect x="955.8454999999998" y="1053" width="239.05599999999995" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1075.3734999999997" y="1071.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Platform Routes (/api/v1/platform/*)</text>
+</g>
+<g class="node" data-id="RouterJobs" data-label="Job Routes (/api/v1/jobs/*)" data-shape="rectangle">
+  <rect x="1222.9015" y="1053" width="194.59599999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1320.1995" y="1071.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Job Routes (/api/v1/jobs/*)</text>
+</g>
+<g class="node" data-id="Orchestrator" data-label="PipelineOrchestrator (BackgroundTasks)" data-shape="rectangle">
+  <rect x="913.6209999999999" y="1209.9" width="288.703" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1228.3500000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">PipelineOrchestrator (BackgroundTasks)</text>
+</g>
+<g class="node" data-id="A1" data-label="UploadAgent" data-shape="rectangle">
+  <rect x="999.2064999999999" y="1294.8000000000002" width="117.53200000000001" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1313.2500000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">UploadAgent</text>
+</g>
+<g class="node" data-id="A2" data-label="ParserAgent" data-shape="rectangle">
+  <rect x="998.4654999999998" y="1379.7" width="119.01400000000001" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1398.15" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">ParserAgent</text>
+</g>
+<g class="node" data-id="A3" data-label="ProfilingAgent" data-shape="rectangle">
+  <rect x="995.5014999999999" y="1464.6000000000001" width="124.94200000000001" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1483.0500000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">ProfilingAgent</text>
+</g>
+<g class="node" data-id="A4" data-label="CleaningAgent" data-shape="rectangle">
+  <rect x="994.0194999999999" y="1549.5" width="127.90599999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1567.95" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">CleaningAgent</text>
+</g>
+<g class="node" data-id="A5" data-label="EDAAgent" data-shape="rectangle">
+  <rect x="1006.6164999999999" y="1634.4" width="102.71199999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1652.8500000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">EDAAgent</text>
+</g>
+<g class="node" data-id="A6" data-label="FeatureEngineeringAgent" data-shape="rectangle">
+  <rect x="959.9334999999999" y="1722.3" width="196.078" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1740.75" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">FeatureEngineeringAgent</text>
+</g>
+<g class="node" data-id="A7" data-label="TrainingAgent" data-shape="rectangle">
+  <rect x="994.7604999999999" y="1807.1999999999998" width="126.424" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1057.9724999999999" y="1825.6499999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">TrainingAgent</text>
+</g>
+<g class="node" data-id="A8" data-label="EvaluationAgent" data-shape="rectangle">
+  <rect x="1060.5424166666664" y="1881.1" width="138.28" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1129.6824166666665" y="1899.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">EvaluationAgent</text>
+</g>
+<g class="node" data-id="A9" data-label="ReportAgent" data-shape="rectangle">
+  <rect x="1106.1699166666665" y="1973" width="116.05000000000001" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1164.1949166666666" y="1991.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">ReportAgent</text>
+</g>
+<g class="node" data-id="Reg" data-label="AlgorithmRegistry (32 Algorithms)" data-shape="rectangle">
+  <rect x="547.8154166666667" y="2215.7999999999997" width="236.09199999999996" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="665.8614166666666" y="2234.2499999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">AlgorithmRegistry (32 Algorithms)</text>
+</g>
+<g class="node" data-id="Selector" data-label="CandidateSelector (Task Inference &amp; Ranking)" data-shape="rectangle">
+  <rect x="510.02441666666664" y="2130.8999999999996" width="311.674" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="665.8614166666666" y="2149.3499999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">CandidateSelector (Task Inference &amp; Ranking)</text>
+</g>
+<g class="node" data-id="Preprocessor" data-label="LeakFreePreprocessor (Imputer + Scaler + Encoder)" data-shape="rectangle">
+  <rect x="849.6984166666666" y="2130.8999999999996" width="356.87499999999983" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1028.1359166666666" y="2149.3499999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">LeakFreePreprocessor (Imputer + Scaler + Encoder)</text>
+</g>
+<g class="node" data-id="Trainer" data-label="Model Trainer &amp; Cross-Validator" data-shape="rectangle">
+  <rect x="911.9424166666665" y="2215.7999999999997" width="232.38699999999994" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1028.1359166666666" y="2234.2499999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Model Trainer &amp; Cross-Validator</text>
+</g>
+<g class="node" data-id="Evaluator" data-label="Metrics Evaluator (Accuracy, F1, ROC-AUC, R2, RMSE)" data-shape="rectangle">
+  <rect x="848.2164166666664" y="2300.7" width="359.839" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1028.1359166666664" y="2319.1499999999996" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Metrics Evaluator (Accuracy, F1, ROC-AUC, R2, RMSE)</text>
+</g>
+<g class="node" data-id="XAI" data-label="3-Tier XAI Attribution Engine (SHAP / Tree Surrogate / EDA)" data-shape="rectangle">
+  <rect x="1234.5734166666664" y="2130.8999999999996" width="387.256" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1428.2014166666663" y="2149.3499999999995" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">3-Tier XAI Attribution Engine (SHAP / Tree Surrogate / EDA)</text>
+</g>
+<g class="node" data-id="Guardrails" data-label="Layer 6: GuardrailEngine (Jailbreak Scan &amp; PII Redact)" data-shape="rectangle">
+  <rect x="1483.9199166666665" y="1722.3" width="362.8029999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1665.3214166666664" y="1740.75" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Layer 6: GuardrailEngine (Jailbreak Scan &amp; PII Redact)</text>
+</g>
+<g class="node" data-id="Router" data-label="Layer 7: DynamicModelRouter (Reasoning vs Lightweight)" data-shape="rectangle">
+  <rect x="1475.3984166666664" y="1881.1" width="379.8459999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1665.3214166666664" y="1899.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Layer 7: DynamicModelRouter (Reasoning vs Lightweight)</text>
+</g>
+<g class="node" data-id="Cache" data-label="Layer 7: LLMCache (SHA-256 Exact-Match, &lt;5ms)" data-shape="rectangle">
+  <rect x="1497.2579166666665" y="1807.1999999999998" width="336.1269999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1665.3214166666664" y="1825.6499999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Layer 7: LLMCache (SHA-256 Exact-Match, &lt;5ms)</text>
+</g>
+<g class="node" data-id="Ollama" data-label="Local Hardware Inference (Ollama / researcher-m4 / qwen2.5)" data-shape="rectangle">
+  <rect x="1282.2199166666664" y="1973" width="399.1119999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1481.7759166666665" y="1991.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Local Hardware Inference (Ollama / researcher-m4 / qwen2.5)</text>
+</g>
+<g class="node" data-id="CloudAI" data-label="Cloud Fallback (Gemini / OpenAI / Claude)" data-shape="rectangle">
+  <rect x="1709.3319166666663" y="1973" width="279.06999999999994" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1848.8669166666664" y="1991.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Cloud Fallback (Gemini / OpenAI / Claude)</text>
+</g>
+<g class="node" data-id="NeonDB" data-label="Neon Serverless PostgreSQL (Production)" data-shape="cylinder">
+  <rect x="316.38699999999994" y="1888.1" width="294.631" height="36.900000000000006" fill="var(--_node-fill)" stroke="none" />
+  <line x1="316.38699999999994" y1="1888.1" x2="316.38699999999994" y2="1925" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="611.0179999999999" y1="1888.1" x2="611.0179999999999" y2="1925" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="463.70249999999993" cy="1925" rx="147.3155" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="463.70249999999993" cy="1888.1" rx="147.3155" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="463.70249999999993" y="1906.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Neon Serverless PostgreSQL (Production)</text>
+</g>
+<g class="node" data-id="SQLiteDB" data-label="SQLite Local Engine (agentix.db)" data-shape="cylinder">
+  <rect x="56" y="1888.1" width="232.38699999999994" height="36.900000000000006" fill="var(--_node-fill)" stroke="none" />
+  <line x1="56" y1="1888.1" x2="56" y2="1925" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="288.38699999999994" y1="1888.1" x2="288.38699999999994" y2="1925" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="172.19349999999997" cy="1925" rx="116.19349999999997" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="172.19349999999997" cy="1888.1" rx="116.19349999999997" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="172.19349999999997" y="1906.55" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">SQLite Local Engine (agentix.db)</text>
+</g>
+<g class="node" data-id="ParquetLake" data-label="Apache Parquet Columnar Lake (data/temp/)" data-shape="cylinder">
+  <rect x="555.285" y="1980" width="298.33599999999996" height="36.900000000000006" fill="var(--_node-fill)" stroke="none" />
+  <line x1="555.285" y1="1980" x2="555.285" y2="2016.9" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="853.6209999999999" y1="1980" x2="853.6209999999999" y2="2016.9" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="704.453" cy="2016.9" rx="149.16799999999998" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="704.453" cy="1980" rx="149.16799999999998" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="704.453" y="1998.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Apache Parquet Columnar Lake (data/temp/)</text>
+</g>
+</svg>
+      </div>
+
+      <div class="diagram-controls">
+        <button class="btn" id="btnZoomIn" title="Zoom In">+</button>
+        <button class="btn" id="btnZoomOut" title="Zoom Out">−</button>
+        <button class="btn" id="btnZoomFit" title="Fit to Screen">Fit</button>
+      </div>
+    </div>
+
+    <!-- INSPECTOR PANE -->
+    <div class="inspector-pane">
+      <div class="inspector-tabs">
+        <div class="inspector-tab active" data-tab="tab-selected">Selected Component</div>
+        <div class="inspector-tab" data-tab="tab-agents">9 Agents</div>
+        <div class="inspector-tab" data-tab="tab-viva">3 Viva Answers</div>
+        <div class="inspector-tab" data-tab="tab-benchmarks">Benchmarks</div>
+        <div class="inspector-tab" data-tab="tab-governance">Governance</div>
+      </div>
+
+      <div class="inspector-body">
+
+        <!-- TAB 1: SELECTED COMPONENT -->
+        <div class="tab-content active" id="tab-selected">
+          <div class="card" id="detailCard">
+            <div class="card-header">
+              <div class="card-title">
+                <h3 id="cardTitle">Agentix Universal Architecture</h3>
+                <span class="tag" id="cardCategory">GLOBAL OVERVIEW</span>
+              </div>
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">Architectural Role & Description</span>
+              <p class="info-value" id="cardDesc">
+                Agentix is an AI-powered agentic data intelligence platform designed to eliminate the barrier between raw tabular data and actionable, explainable insights. It couples deterministic Python/scikit-learn processing with grounded local and cloud LLM synthesis across 7 decoupled architectural tiers.
+              </p>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Core Engineering Principle</span>
+              <div class="callout callout-gold">
+                <strong>Deterministic Math, Grounded Narrative:</strong> All statistical summaries, missing value treatments, 5-fold cross-validation, and metrics are calculated strictly by deterministic Python algorithms. LLMs are never permitted to generate or guess numerical data.
+              </div>
+            </div>
+
+            <div class="info-row" id="cardTechRow">
+              <span class="info-label">Technical Stack & Protocols</span>
+              <span class="info-value" id="cardTech">Next.js 15, FastAPI 0.115, scikit-learn, XGBoost, LightGBM, SHAP, Ollama, Neon PostgreSQL, Apache Parquet</span>
+            </div>
+
+            <div class="info-row" id="cardFilesRow">
+              <span class="info-label">Source Implementation Paths</span>
+              <span class="code-pill" id="cardFiles">frontend/src/* • backend/core/*</span>
+            </div>
+
+            <div class="info-row" id="cardSecurityRow">
+              <span class="info-label">Security & Architectural Boundaries</span>
+              <p class="info-value" id="cardSecurity">
+                Multi-tenant isolation verified with FastAPI dependency injection; BFF token relay prevents client secret exposure; Layer 6 GuardrailEngine sanitizes PII and jailbreak patterns.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: 9 AGENTS DEEP DIVE -->
+        <div class="tab-content" id="tab-agents">
+          <div style="font-size:12px; color:var(--text-muted);">
+            Each autonomous agent owns a strictly bounded data science responsibility within <code class="code-pill">backend/core/agents/</code>, executed sequentially in background threads with zero cross-agent state pollution.
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A1</span> UploadAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Chunked Intake</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Multi-format chunked ingestion for CSV, XLSX, JSON, and Parquet formats.<br>
+              <strong>Safety Guard:</strong> Magic-number byte validation, MIME-type checks, and strict filename sanitization against directory traversal attacks.<br>
+              <span class="code-pill">backend/core/agents/upload_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A2</span> ParserAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Schema & Encoding</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Delimiter sniffing (comma, semicolon, tab, pipe), character encoding resolution (UTF-8, Latin-1, CP1252), and schema type inference.<br>
+              <strong>Safety Guard:</strong> Converts irregular strings to robust Apache Arrow / Polars memory formats without schema distortion.<br>
+              <span class="code-pill">backend/core/agents/parser_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A3</span> ProfilingAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Zero-RAM Stats</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Computes cardinality ratios, missingness matrices, and column statistics in a single streaming pass.<br>
+              <strong>Benchmark:</strong> Operates with under 2.8 MB peak RAM delta via chunked streaming iterator.<br>
+              <span class="code-pill">backend/core/agents/profiling_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A4</span> CleaningAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Hygiene & Imputation</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Deterministic missing value imputation (median for skewed numerics, mean for normal, mode for categorical), IQR outlier truncation, whitespace stripping.<br>
+              <strong>Integrity:</strong> Logs all transformations in an immutable JSON audit log.<br>
+              <span class="code-pill">backend/core/agents/cleaning_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A5</span> EDAAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Correlation & VIF</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Pearson and Spearman correlation matrices, distribution skewness and kurtosis scoring, and Variance Inflation Factor (VIF) collinearity detection.<br>
+              <span class="code-pill">backend/core/agents/eda_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A6</span> FeatureEngineeringAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Transformation</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Decomposes timestamps into day/month/hour/cyclical features, target and frequency encoding for high-cardinality nominals, robust scaling.<br>
+              <span class="code-pill">backend/core/agents/feature_engineering_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A7</span> TrainingAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">AutoML Dispatch</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Dispatches candidate model evaluation across 32 algorithms in the AlgorithmRegistry with 5-fold stratified cross-validation.<br>
+              <span class="code-pill">backend/core/agents/training_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A8</span> EvaluationAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Holdout Metrics</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Generates out-of-sample performance matrices (ROC-AUC, PR-AUC, F1, Log-Loss for classification; RMSE, MAE, R² for regression) and residual diagnostic charts.<br>
+              <span class="code-pill">backend/core/agents/evaluation_agent.py</span>
+            </div>
+          </div>
+
+          <div class="agent-item">
+            <div class="agent-header">
+              <h4><span class="agent-badge">A9</span> ReportAgent</h4>
+              <span style="font-size:11px; color:var(--cu-gold);">Grounded Synthesis</span>
+            </div>
+            <div class="agent-body">
+              <strong>Role:</strong> Gathers verified numeric metrics from A1–A8 and prompts the local/cloud LLM to produce an executive briefing.<br>
+              <strong>Zero-Hallucination:</strong> The LLM is restricted to narrative synthesis grounded strictly in verified JSON data.<br>
+              <span class="code-pill">backend/core/agents/report_agent.py</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: 3 CORE VIVA CONCEPTS -->
+        <div class="tab-content" id="tab-viva">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <h3>1. Deterministic Analytics vs. LLM</h3>
+                <span class="tag">MATHEMATICAL RELIABILITY</span>
+              </div>
+            </div>
+            <p class="info-value">
+              <strong>The Problem:</strong> When LLMs calculate averages, standard deviations, or correlation matrices directly from prompt text, they exhibit high rates of floating-point hallucination and non-reproducibility.<br><br>
+              <strong>The Agentix Solution:</strong> Strict division of labor:
+              <br>• <em>Deterministic Python Engine:</em> Polars, NumPy, and scikit-learn compute mathematical transformations, model metrics, and statistical tests.
+              <br>• <em>LLM Synthesis Engine:</em> The LLM acts solely as a linguistic translator, generating human-readable narrative explanations grounded in verified numeric inputs.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <h3>2. Backend-for-Frontend (BFF) Token Relay</h3>
+                <span class="tag">ZERO-XSS SECURITY BOUNDARY</span>
+              </div>
+            </div>
+            <p class="info-value">
+              <strong>The Problem:</strong> Storing JWT bearer tokens or API secrets in browser <code class="code-pill">localStorage</code> leaves the application vulnerable to cross-site scripting (XSS) credential exfiltration.<br><br>
+              <strong>The Agentix Solution:</strong>
+              <br>1. Client signs in via Auth.js v5; session credentials stored in an encrypted, <code class="code-pill">HttpOnly</code>, <code class="code-pill">SameSite=Lax</code> cookie.
+              <br>2. Outgoing backend calls are intercepted by <code class="code-pill">/api/auth/token</code> (BFF route handler running server-side on Vercel).
+              <br>3. The BFF verifies the cookie server-side, attaches the backend secret, and transparently proxies the request to FastAPI. Browser JavaScript never touches backend credentials.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <h3>3. 3-Tier Explainable AI (XAI) Fallback</h3>
+                <span class="tag">FAULT-TOLERANT EXPLAINABILITY</span>
+              </div>
+            </div>
+            <p class="info-value">
+              <strong>The Problem:</strong> SHAP computations on large datasets or complex ensembles can cause memory exhaustion or API timeouts.<br><br>
+              <strong>The Agentix Solution (3 Tiers):</strong>
+              <br>• <strong>Tier 1 (Exact):</strong> TreeSHAP / KernelSHAP computes exact Shapley values. A strict 15-second timeout watchdog monitors execution.
+              <br>• <strong>Tier 2 (Surrogate):</strong> If Tier 1 times out or fails, an interpretable surrogate Decision Tree is fitted to the ensemble's predictions to extract feature importance and decision rules.
+              <br>• <strong>Tier 3 (Statistical):</strong> If surrogate fitting fails, the system falls back to Pearson and Spearman correlation coefficients from EDAAgent. Zero unexplainable predictions.
+            </p>
+          </div>
+        </div>
+
+        <!-- TAB 4: BENCHMARKS MATRIX -->
+        <div class="tab-content" id="tab-benchmarks">
+          <div class="callout callout-amber">
+            <strong>Mandatory Scientific Qualification:</strong> All benchmark metrics below are <em>project-reported / pending independent reproduction</em> under standardized lab environments.
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric-card">
+              <span class="metric-num">1.50 s</span>
+              <span class="metric-title">500 MB CSV Parse Time</span>
+              <span class="metric-footnote">Chunked Arrow streaming engine</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">332 MB/s</span>
+              <span class="metric-title">Ingestion Throughput</span>
+              <span class="metric-footnote">Linear streaming throughput</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">&lt; 2.8 MB</span>
+              <span class="metric-title">Peak RAM Delta</span>
+              <span class="metric-footnote">Constant memory streaming</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">99.1%</span>
+              <span class="metric-title">Storage Reduction</span>
+              <span class="metric-footnote">Parquet Snappy compression</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <h3>Sub-5ms LLMCache Efficiency</h3>
+                <span class="tag">LAYER 7 PERFORMANCE</span>
+              </div>
+            </div>
+            <p class="info-value">
+              By computing cryptographic SHA-256 hashes over normalized prompt payloads and temperature parameters, Layer 7's <code class="code-pill">LLMCache</code> intercepts identical requests and delivers cached responses in under 5 milliseconds with zero cloud egress cost and zero token consumption.
+            </p>
+          </div>
+        </div>
+
+        <!-- TAB 5: GOVERNANCE, PRIVACY & CAVEATS -->
+        <div class="tab-content" id="tab-governance">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <h3>Hardware Inference & Privacy Caveat</h3>
+                <span class="tag">CRITICAL COMPLIANCE NOTICE</span>
+              </div>
+            </div>
+            <p class="info-value">
+              <strong>Local Inference Support:</strong> Agentix supports on-device local execution via Ollama (<code class="code-pill">qwen2.5-coder</code>, <code class="code-pill">mistral</code>, <code class="code-pill">llama3</code>) accelerated by Apple Silicon Metal or NVIDIA CUDA.<br><br>
+              <strong>Configurable Cloud Fallback:</strong> The platform also supports configurable fallback to cloud LLM APIs (Google Gemini, OpenAI, Anthropic Claude). On publicly hosted deployments (Vercel frontend and Render backend), cloud egress is enabled.
+              <br><br>
+              <em>Therefore, Agentix must not be described as unconditionally "air-gapped" unless deployed on dedicated on-premise hardware with cloud fallback explicitly disabled.</em>
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <h3>Disclosed Engineering Limitations</h3>
+                <span class="tag">TRANSPARENT STATUS</span>
+              </div>
+            </div>
+            <p class="info-value">
+              • <strong>Binary PDF Generation:</strong> Currently, direct binary PDF report downloads return structured JSON (<code class="code-pill">pdf_available: false</code>). Full WeasyPrint binary PDF rendering is staged for subsequent release.<br>
+              • <strong>Delta Lake Rollback:</strong> Time-travel rollback is architected on the roadmap; current production utilizes Snappy-compressed Apache Parquet snapshots.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <strong>AGENTIX Platform</strong> • M.Sc. Data Science CIA 2026 • CHRIST (Deemed to be University)
+    </div>
+    <div>
+      Designed & Authored by <strong>Thrilok M</strong> (2548430) & <strong>Piush Kole</strong> (2548421) • Guided by <strong>Dr. Gobinath R</strong>
+    </div>
+  </footer>
+
+  <!-- INTERACTIVE JAVASCRIPT CONTROLLER -->
+  <script>
+    (function() {
+      const svg = document.getElementById('architectureSvg');
+      const layersData = [{"id": "ClientLayer", "num": "01", "title": "Client Layer (Browser)", "tech": "Next.js 15, React 19, Zustand, Tailwind CSS, TypeScript", "files": "frontend/src/app/*, frontend/src/store/platformStore.ts, frontend/src/lib/backendClient.ts", "description": "The user-facing presentation tier implemented with Next.js 15 and React 19 using the Warm Alabaster design system. Manages reactive user state, dataset ingestion forms, dynamic visualization dashboards, and real-time job tracking via Server-Sent Events (SSE).", "security": "Enforces a strict zero-localStorage policy for security credentials. Authentication tokens are managed exclusively through HttpOnly cookie relays via the BFF proxy, eliminating XSS token theft vectors.", "nodes": ["UI", "Store", "TokenClient"], "inputs": "User uploaded raw tabular files (CSV, XLSX, JSON), target variable selections, analytical queries.", "outputs": "Interactive EDA charts, model leaderboards, feature importance graphs, plain-language audit reports."}, {"id": "EdgeProxy", "num": "02", "title": "Edge Proxy & Serverless Boundary (Vercel)", "tech": "Next.js Edge Middleware, Auth.js v5, Serverless Route Handlers", "files": "frontend/src/middleware.ts, frontend/src/app/api/auth/[...nextauth]/route.ts, frontend/src/app/api/auth/token/route.ts, frontend/next.config.ts", "description": "A serverless edge boundary that acts as an intelligent Backend-for-Frontend (BFF). It intercepts incoming client requests, verifies cryptographic session cookies, and transparently proxies authorized calls to the backend via Next.js API rewrites.", "security": "The /api/auth/token BFF endpoint bridges Auth.js v5 session cookies to the Python backend by injecting the server-side backend secret into an ephemeral bearer token without ever exposing backend API keys to browser JavaScript.", "nodes": ["Middleware", "NextAuth", "TokenRoute", "Rewrites"], "inputs": "Browser requests carrying session cookies, Next.js page navigations, REST API invocations.", "outputs": "Signed JWT bearer tokens, proxied backend payloads, edge-level redirect responses for unauthenticated sessions."}, {"id": "BackendAPI", "num": "03", "title": "Backend Service Engine (Render / Local)", "tech": "Python 3.11, FastAPI 0.115, Uvicorn ASGI Server, Pydantic v2", "files": "backend/core/main.py, backend/core/middleware.py, backend/core/routes_*.py", "description": "High-throughput asynchronous REST application powered by FastAPI and Uvicorn. Implements layered security middleware, multi-tenant route protection, and asynchronous task dispatching for long-running machine learning workloads.", "security": "Enforces token-bucket rate limiting (60 req/min per IP), path traversal sanitization, and strict tenant isolation via FastAPI's Depends(get_current_user) dependency injection.", "nodes": ["ASGI", "SecMiddleware", "FastAPIApp", "AuthDep", "RouterData", "RouterPlatform", "RouterJobs"], "inputs": "Authenticated REST requests, multi-part file uploads, asynchronous background job queries.", "outputs": "Structured JSON responses, task UUID tokens, dataset profiling metadata, pipeline completion notifications."}, {"id": "PipelineEngine", "num": "04", "title": "Multi-Agent Autonomous Pipeline (core/agents/)", "tech": "Python 3.11, Polars, Pandas, Scipy, NumPy, BackgroundTasks", "files": "backend/core/agents/*.py, backend/core/pipeline_orchestrator.py", "description": "A decoupled, 9-stage autonomous agent pipeline orchestrated asynchronously. Each agent owns a strictly bounded data science responsibility, transforming raw inputs into validated statistical representations with zero cross-agent state contamination.", "security": "Deterministic Python and scikit-learn code executes all numerical profiling, data cleaning, feature engineering, and statistical tests. LLMs are never permitted to generate or guess numerical metrics.", "nodes": ["Orchestrator", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9"], "inputs": "Raw tabular dataset bytes, target variable definition, task specification (Classification / Regression).", "outputs": "Cleaned dataset parquet reference, comprehensive EDA summary, trained model artifacts, verified report."}, {"id": "AutoMLEngine", "num": "05", "title": "AutoML & XAI Subsystem (core/automl/)", "tech": "scikit-learn, XGBoost, LightGBM, SHAP, Scipy, Joblib", "files": "backend/core/automl/*.py, backend/core/automl/algorithm_registry.py, backend/core/automl/xai_engine.py", "description": "Production-grade automated machine learning engine supporting 32 algorithms across classification and regression. Includes leak-free preprocessing, 5-fold stratified cross-validation, automated metric ranking, and a 3-tier explainable AI (XAI) fallback system.", "security": "Preprocessors are strictly fit only on training folds and applied to test folds, preventing data leakage. XAI features graceful degradation: Tier 1 TreeSHAP/KernelSHAP -> Tier 2 Surrogate Decision Tree -> Tier 3 Correlation Coefficients.", "nodes": ["Reg", "Selector", "Preprocessor", "Trainer", "Evaluator", "XAI"], "inputs": "Cleaned feature matrix, encoded target vector, task configuration, resource limits.", "outputs": "Serialized model artifacts (.joblib), out-of-fold performance metrics (ROC-AUC, F1, RMSE, R\u00b2), SHAP summary matrices."}, {"id": "AISecurity", "num": "06", "title": "8-Layer AI Governance & Local Inference", "tech": "Ollama (Apple Silicon Metal / CUDA), SHA-256 Exact-Match Cache, Cloud Fallback", "files": "backend/core/guardrails.py, backend/core/llm_router.py, backend/core/llm_cache.py", "description": "Comprehensive AI safety, caching, and model routing subsystem. Provides Layer 6 GuardrailEngine (PII scrubbing, prompt injection scanning), Layer 7 DynamicModelRouter with sub-5ms exact-match LLMCache, and hybrid execution between local Ollama runtimes and cloud LLM APIs.", "security": "All outgoing LLM prompts are scanned for regex PII and adversarial jailbreaks. The system supports local on-device inference via Ollama; cloud fallback (Gemini/OpenAI/Claude) is configurable and enabled on hosted cloud deployments.", "nodes": ["Guardrails", "Router", "Cache", "Ollama", "CloudAI"], "inputs": "Grounded pipeline summary dictionaries, user conversational prompts, model preference settings.", "outputs": "Sanitized natural-language analytical narratives, executive takeaways, sub-5ms cached completions."}, {"id": "Persistence", "num": "07", "title": "Dual-Engine Persistence", "tech": "Neon PostgreSQL (Serverless), SQLite Local Engine, Apache Parquet (Snappy)", "files": "backend/core/database.py, backend/data/temp/*.parquet, agentix.db", "description": "Hybrid storage architecture optimizing both relational transactional integrity and high-throughput columnar analytics. Combines serverless cloud PostgreSQL (Neon) or local SQLite with an Apache Parquet columnar data lake.", "security": "Tenant-isolated database schema with cryptographic password hashing (bcrypt), foreign key cascade constraints, and read-only Parquet file handles during analytical processing.", "nodes": ["NeonDB", "SQLiteDB", "ParquetLake"], "inputs": "User account records, dataset upload metadata, job status logs, raw streaming table chunks.", "outputs": "ACID transactional updates, 99.1% compressed columnar files, instant analytical slice-and-dice scans."}];
+      const nodesData = {"UI": {"name": "Next.js 15 Web Application", "layer": "ClientLayer", "role": "User Interface & Visualization", "file": "frontend/src/app/page.tsx", "desc": "Next.js 15 / React 19 single-page application built on the Warm Alabaster design system. Provides zero-flicker reactive updates and accessibility compliance."}, "Store": {"name": "Zustand Reactive Store", "layer": "ClientLayer", "role": "Client State Management", "file": "frontend/src/store/platformStore.ts", "desc": "Lightweight client-side state store maintaining active dataset metadata, current pipeline progress, hardware capability flags, and theme state."}, "TokenClient": {"name": "Client Token Interceptor", "layer": "ClientLayer", "role": "Secure API Communication", "file": "frontend/src/lib/backendClient.ts", "desc": "Axios/Fetch wrapper that automatically queries the local BFF token relay endpoint to inject bearer authorization headers into outgoing requests."}, "Middleware": {"name": "Next.js Edge Middleware", "layer": "EdgeProxy", "role": "Route Protection & Session Gating", "file": "frontend/src/middleware.ts", "desc": "Executes at the Vercel edge to inspect incoming cookies, redirect unauthenticated users to /auth/signin, and block unauthorized route access."}, "NextAuth": {"name": "Auth.js v5 (Credentials Provider)", "layer": "EdgeProxy", "role": "Authentication Provider", "file": "frontend/src/app/api/auth/[...nextauth]/route.ts", "desc": "Handles password verification, session issuance, and encrypted JWT cookie management with HttpOnly, SameSite=Lax flags."}, "TokenRoute": {"name": "/api/auth/token (BFF Token Relay)", "layer": "EdgeProxy", "role": "BFF Secret Injection", "file": "frontend/src/app/api/auth/token/route.ts", "desc": "Crucial security bridge. Verifies the browser session cookie server-side and issues an ephemeral bearer token signed with the backend secret, keeping keys off the browser."}, "Rewrites": {"name": "Next.js API Rewrite Proxy", "layer": "EdgeProxy", "role": "CORS-Free Backend Routing", "file": "frontend/next.config.ts", "desc": "Edge rewrite rule forwarding /api/v1/* calls directly to the Render backend service, eliminating browser CORS preflight overhead."}, "ASGI": {"name": "Uvicorn ASGI Server", "layer": "BackendAPI", "role": "High-Throughput ASGI Host", "file": "backend/run.py", "desc": "Production ASGI web server running Python asynchronous event loops capable of managing concurrent streaming file uploads and long-lived SSE connections."}, "SecMiddleware": {"name": "SecurityMiddleware (Rate Limiter)", "layer": "BackendAPI", "role": "DDoS & Abuse Defense", "file": "backend/core/middleware.py", "desc": "In-memory token bucket rate limiter restricting client IPs to 60 requests/minute, paired with header sanitization and path traversal prevention."}, "FastAPIApp": {"name": "FastAPI REST Application", "layer": "BackendAPI", "role": "Core API Framework", "file": "backend/core/main.py", "desc": "Root FastAPI application mounting modular API routers, exception handlers, OpenAPI documentation, and asynchronous lifespan events."}, "AuthDep": {"name": "Dependency: Depends(get_current_user)", "layer": "BackendAPI", "role": "Tenant Isolation & Auth Gating", "file": "backend/core/security.py", "desc": "FastAPI dependency injected into all protected routes to decode JWT tokens, verify tenant identity, and reject expired credentials."}, "RouterData": {"name": "Data Routes (/api/v1/dataset/*)", "layer": "BackendAPI", "role": "Ingestion & Metadata Endpoints", "file": "backend/core/routes_dataset.py", "desc": "Handles multi-part chunked dataset uploads, column dtype overrides, missing value policies, and tabular preview queries."}, "RouterPlatform": {"name": "Platform Routes (/api/v1/platform/*)", "layer": "BackendAPI", "role": "Hardware & Health Discovery", "file": "backend/core/routes_platform.py", "desc": "Discovers local compute capabilities (Apple Silicon M-series Metal, NVIDIA CUDA, CPU cores) and probes local Ollama runtime availability."}, "RouterJobs": {"name": "Job Routes (/api/v1/jobs/*)", "layer": "BackendAPI", "role": "Asynchronous Task Tracking", "file": "backend/core/routes_jobs.py", "desc": "Returns status, execution logs, progress percentage, and final artifacts for running background pipeline tasks with strict tenant isolation."}, "Orchestrator": {"name": "PipelineOrchestrator", "layer": "PipelineEngine", "role": "Asynchronous Workflow Conductor", "file": "backend/core/pipeline_orchestrator.py", "desc": "Coordinates the 9-stage agent execution sequence inside FastAPI BackgroundTasks, recording stage transitions and handling errors cleanly."}, "A1": {"name": "UploadAgent", "layer": "PipelineEngine", "role": "Multi-Format Ingestion & Validation", "file": "backend/core/agents/upload_agent.py", "desc": "Accepts CSV, XLSX, JSON, and Parquet files, verifies MIME magic numbers, validates file size thresholds, and writes raw bytes to staging."}, "A2": {"name": "ParserAgent", "layer": "PipelineEngine", "role": "Encoding & Dialect Resolution", "file": "backend/core/agents/parser_agent.py", "desc": "Sniffs delimiter dialects (comma, semicolon, tab) and character encodings (UTF-8, Latin-1, CP1252), converting raw streams into typed Arrow tables."}, "A3": {"name": "ProfilingAgent", "layer": "PipelineEngine", "role": "Streaming Statistical Summaries", "file": "backend/core/agents/profiling_agent.py", "desc": "Computes null rates, distinct cardinalities, memory footprints, and initial distributions in a single pass with sub-3MB memory delta."}, "A4": {"name": "CleaningAgent", "layer": "PipelineEngine", "role": "Deterministic Data Hygiene", "file": "backend/core/agents/cleaning_agent.py", "desc": "Imputes missing values using median/mode strategies, truncates extreme IQR outliers, and standardizes dirty column naming headers."}, "A5": {"name": "EDAAgent", "layer": "PipelineEngine", "role": "Exploratory Correlation & Skewness", "file": "backend/core/agents/eda_agent.py", "desc": "Calculates Pearson and Spearman correlation matrices, identifies multi-collinearity flags, and evaluates skewness and kurtosis across numerical features."}, "A6": {"name": "FeatureEngineeringAgent", "layer": "PipelineEngine", "role": "Automated Feature Generation", "file": "backend/core/agents/feature_engineering_agent.py", "desc": "Decomposes temporal timestamps into cyclical features, encodes categorical variables via target/frequency encoding, and normalizes numeric ranges."}, "A7": {"name": "TrainingAgent", "layer": "PipelineEngine", "role": "Model Dispatch & Optimization", "file": "backend/core/agents/training_agent.py", "desc": "Interfaces with the AutoML subsystem to trigger candidate ranking, 5-fold cross-validation, and parallel hyperparameter optimization."}, "A8": {"name": "EvaluationAgent", "layer": "PipelineEngine", "role": "Holdout Metric Verification", "file": "backend/core/agents/evaluation_agent.py", "desc": "Computes rigorous out-of-sample metrics (Accuracy, F1, ROC-AUC, PR-AUC, Log-Loss, RMSE, MAE, R\u00b2) and generates residual diagnostics."}, "A9": {"name": "ReportAgent", "layer": "PipelineEngine", "role": "Grounded Narrative Synthesis", "file": "backend/core/agents/report_agent.py", "desc": "Compiles verified numerical pipeline outputs into a structured prompt for the LLM, producing human-readable executive insights with zero mathematical hallucinations."}, "Reg": {"name": "AlgorithmRegistry (32 Algorithms)", "layer": "AutoMLEngine", "role": "Comprehensive Model Catalog", "file": "backend/core/automl/algorithm_registry.py", "desc": "Maintains 32 scikit-learn, XGBoost, and LightGBM model definitions spanning linear models, tree ensembles, boosting, and probabilistic classifiers."}, "Selector": {"name": "CandidateSelector", "layer": "AutoMLEngine", "role": "Task & Dimension Matching", "file": "backend/core/automl/candidate_selector.py", "desc": "Examines dataset cardinality, feature-to-sample ratio, and target distribution to filter and rank the top 5 model candidates for training."}, "Preprocessor": {"name": "LeakFreePreprocessor", "layer": "AutoMLEngine", "role": "Data Leakage Guard", "file": "backend/core/automl/preprocessor.py", "desc": "Strictly fits scalers, imputers, and encoders solely on training folds, applying the frozen transformations to test folds to guarantee evaluation validity."}, "Trainer": {"name": "Model Trainer & Cross-Validator", "layer": "AutoMLEngine", "role": "Stratified K-Fold Training", "file": "backend/core/automl/trainer.py", "desc": "Executes 5-fold cross-validation with parallel worker threads, collecting fold-level metric variance and out-of-fold predictions."}, "Evaluator": {"name": "Metrics Evaluator", "layer": "AutoMLEngine", "role": "Multi-Metric Benchmarking", "file": "backend/core/automl/evaluator.py", "desc": "Deterministic evaluation harness computing classification confusion matrices and regression residual plots across all candidate models."}, "XAI": {"name": "3-Tier XAI Attribution Engine", "layer": "AutoMLEngine", "role": "Multi-Tiered Explainability", "file": "backend/core/automl/xai_engine.py", "desc": "Tier 1: TreeSHAP / KernelSHAP (<15s) -> Tier 2: Interpretable Surrogate Decision Tree -> Tier 3: Pearson/Spearman statistical correlation coefficients."}, "Guardrails": {"name": "Layer 6: GuardrailEngine", "layer": "AISecurity", "role": "Input Sanitization & PII Filter", "file": "backend/core/guardrails.py", "desc": "Scans prompts for prompt injection attacks and redacts emails, phone numbers, and SSNs via compiled regex patterns prior to LLM dispatch."}, "Router": {"name": "Layer 7: DynamicModelRouter", "layer": "AISecurity", "role": "Inference Complexity Dispatcher", "file": "backend/core/llm_router.py", "desc": "Directs simple summary tasks to local quantized models (qwen2.5-coder) and complex analytical queries to high-parameter cloud reasoning models."}, "Cache": {"name": "Layer 7: LLMCache", "layer": "AISecurity", "role": "Sub-5ms Exact-Match Cache", "file": "backend/core/llm_cache.py", "desc": "Calculates SHA-256 hashes of prompt context to return instant cached responses for repeated analytical queries, achieving sub-5ms response latency."}, "Ollama": {"name": "Local Hardware Inference", "layer": "AISecurity", "role": "Private On-Device LLM Host", "file": "backend/core/ollama_client.py", "desc": "Connects to local Ollama inference server, utilizing Apple Silicon Metal Unified Memory or NVIDIA CUDA GPUs for local execution."}, "CloudAI": {"name": "Cloud Fallback (Gemini / OpenAI / Claude)", "layer": "AISecurity", "role": "Resilient API Egress", "file": "backend/core/cloud_ai.py", "desc": "Configurable fallback to Google Gemini, OpenAI, or Anthropic Claude when local Ollama is offline or higher reasoning capacity is required."}, "NeonDB": {"name": "Neon Serverless PostgreSQL", "layer": "Persistence", "role": "Production Relational Database", "file": "backend/core/database.py", "desc": "Auto-scaling serverless PostgreSQL database hosted on Neon, storing tenant records, dataset metadata, and pipeline execution logs."}, "SQLiteDB": {"name": "SQLite Local Engine", "layer": "Persistence", "role": "Zero-Configuration Local Database", "file": "backend/core/database.py", "desc": "Embedded file-based relational database (agentix.db) enabling fully functional standalone desktop and offline developer execution."}, "ParquetLake": {"name": "Apache Parquet Columnar Lake", "layer": "Persistence", "role": "High-Speed Columnar Storage", "file": "backend/core/storage.py", "desc": "Local columnar data lake (data/temp/) storing ingested datasets with Snappy compression, achieving 99.1% storage reduction and microsecond column scans."}};
+
+      let currentLayerIndex = -1; // -1 = ALL
+      let tourInterval = null;
+      let isTourPlaying = false;
+      let zoomLevel = 1.0;
+
+      // DOM Elements
+      const stepperIndicator = document.getElementById('stepperIndicator');
+      const stepperText = document.getElementById('stepperText');
+      const btnTourToggle = document.getElementById('btnTourToggle');
+      const tourIcon = document.getElementById('tourIcon');
+      const tourLabel = document.getElementById('tourLabel');
+      const btnPrevLayer = document.getElementById('btnPrevLayer');
+      const btnNextLayer = document.getElementById('btnNextLayer');
+      const btnResetView = document.getElementById('btnResetView');
+      const searchFilter = document.getElementById('searchFilter');
+      const canvasViewport = document.getElementById('canvasViewport');
+
+      // Inspector Elements
+      const cardTitle = document.getElementById('cardTitle');
+      const cardCategory = document.getElementById('cardCategory');
+      const cardDesc = document.getElementById('cardDesc');
+      const cardTech = document.getElementById('cardTech');
+      const cardFiles = document.getElementById('cardFiles');
+      const cardSecurity = document.getElementById('cardSecurity');
+
+      // Tabs
+      const tabs = document.querySelectorAll('.inspector-tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tabContents.forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          const target = document.getElementById(tab.getAttribute('data-tab'));
+          if (target) target.classList.add('active');
+        });
+      });
+
+      function showTab(tabId) {
+        tabs.forEach(t => {
+          if (t.getAttribute('data-tab') === tabId) t.classList.add('active');
+          else t.classList.remove('active');
+        });
+        tabContents.forEach(c => {
+          if (c.id === tabId) c.classList.add('active');
+          else c.classList.remove('active');
+        });
+      }
+
+      // Layer Selection Logic
+      function selectLayer(layerId) {
+        // Reset classes
+        svg.querySelectorAll('.subgraph').forEach(g => g.classList.remove('active-layer'));
+        svg.querySelectorAll('.node').forEach(n => {
+          n.classList.remove('active-node');
+          n.classList.remove('in-active-layer');
+        });
+        svg.querySelectorAll('polyline.edge').forEach(e => e.classList.remove('active-edge'));
+        document.querySelectorAll('.layer-pill').forEach(p => p.classList.remove('active'));
+
+        if (!layerId || layerId === 'ALL') {
+          currentLayerIndex = -1;
+          svg.classList.remove('has-active-layer');
+          const allPill = document.querySelector('.layer-pill[data-layer="ALL"]');
+          if (allPill) allPill.classList.add('active');
+          stepperText.textContent = 'System Overview: All 7 Subsystems Active';
+          
+          cardTitle.textContent = 'Agentix Universal Architecture';
+          cardCategory.textContent = 'GLOBAL OVERVIEW';
+          cardDesc.textContent = 'Agentix is an AI-powered agentic data intelligence platform designed to eliminate the barrier between raw tabular data and actionable, explainable insights. It couples deterministic Python/scikit-learn processing with grounded local and cloud LLM synthesis across 7 decoupled architectural tiers.';
+          cardTech.textContent = 'Next.js 15, FastAPI 0.115, scikit-learn, XGBoost, LightGBM, SHAP, Ollama, Neon PostgreSQL, Apache Parquet';
+          cardFiles.textContent = 'frontend/src/* • backend/core/*';
+          cardSecurity.textContent = 'Multi-tenant isolation verified with FastAPI dependency injection; BFF token relay prevents client secret exposure; Layer 6 GuardrailEngine sanitizes PII and jailbreak patterns.';
+          showTab('tab-selected');
+          return;
+        }
+
+        const layerObj = layersData.find(l => l.id === layerId);
+        if (!layerObj) return;
+
+        currentLayerIndex = layersData.indexOf(layerObj);
+        svg.classList.add('has-active-layer');
+
+        // Highlight matching subgraphs (handles duplicates)
+        svg.querySelectorAll(`.subgraph[data-id="${layerId}"]`).forEach(g => {
+          g.classList.add('active-layer');
+        });
+
+        // Highlight nodes belonging to this layer
+        if (layerObj.nodes) {
+          layerObj.nodes.forEach(nid => {
+            const nodeElem = svg.querySelector(`.node[data-id="${nid}"]`);
+            if (nodeElem) nodeElem.classList.add('in-active-layer');
+          });
+        }
+
+        // Highlight internal and adjacent edges
+        svg.querySelectorAll('polyline.edge').forEach(edge => {
+          const from = edge.getAttribute('data-from');
+          const to = edge.getAttribute('data-to');
+          if (from === layerId || to === layerId || 
+              (layerObj.nodes && (layerObj.nodes.includes(from) || layerObj.nodes.includes(to)))) {
+            edge.classList.add('active-edge');
+          }
+        });
+
+        // Highlight pill
+        const pill = document.querySelector(`.layer-pill[data-layer="${layerId}"]`);
+        if (pill) pill.classList.add('active');
+
+        // Update Stepper text
+        stepperText.textContent = `Layer ${layerObj.num} of 07: ${layerObj.title}`;
+
+        // Update Inspector Card
+        cardTitle.textContent = layerObj.title;
+        cardCategory.textContent = `LAYER ${layerObj.num} ARCHITECTURE`;
+        cardDesc.textContent = layerObj.description;
+        cardTech.textContent = layerObj.tech;
+        cardFiles.textContent = layerObj.files;
+        cardSecurity.textContent = layerObj.security;
+        showTab('tab-selected');
+
+        // Smooth scroll canvas to layer element
+        const targetGroup = svg.querySelector(`.subgraph[data-id="${layerId}"]`);
+        if (targetGroup) {
+          const bbox = targetGroup.getBBox();
+          const svgBox = svg.viewBox.baseVal;
+          const targetY = (bbox.y / svgBox.height) * svg.clientHeight;
+          canvasViewport.scrollTo({
+            top: targetY - 100,
+            behavior: 'smooth'
+          });
+        }
+      }
+
+      // Node Selection Logic
+      function selectNode(nodeId) {
+        const nodeInfo = nodesData[nodeId];
+        if (!nodeInfo) return;
+
+        svg.querySelectorAll('.node').forEach(n => n.classList.remove('active-node'));
+        const nodeElem = svg.querySelector(`.node[data-id="${nodeId}"]`);
+        if (nodeElem) {
+          nodeElem.classList.add('active-node');
+          svg.classList.add('has-active-layer');
+        }
+
+        cardTitle.textContent = nodeInfo.name;
+        cardCategory.textContent = `COMPONENT: ${nodeId}`;
+        cardDesc.textContent = nodeInfo.desc;
+        cardTech.textContent = `Role: ${nodeInfo.role}`;
+        cardFiles.textContent = nodeInfo.file;
+        cardSecurity.textContent = `Assigned to Architecture Layer: ${nodeInfo.layer}`;
+        stepperText.textContent = `Inspecting Component: ${nodeInfo.name}`;
+        showTab('tab-selected');
+      }
+
+      // Attach Click Listeners to SVG Subgraphs & Nodes
+      svg.querySelectorAll('.subgraph').forEach(g => {
+        g.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const layerId = g.getAttribute('data-id');
+          selectLayer(layerId);
+        });
+      });
+
+      svg.querySelectorAll('.node').forEach(n => {
+        n.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const nodeId = n.getAttribute('data-id');
+          selectNode(nodeId);
+        });
+      });
+
+      // Layer Pills Click
+      document.querySelectorAll('.layer-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          const layerId = pill.getAttribute('data-layer');
+          selectLayer(layerId);
+        });
+      });
+
+      // Tour Stepper Controls
+      function nextStep() {
+        currentLayerIndex = (currentLayerIndex + 1) % layersData.length;
+        selectLayer(layersData[currentLayerIndex].id);
+      }
+
+      function prevStep() {
+        currentLayerIndex = (currentLayerIndex - 1 + layersData.length) % layersData.length;
+        selectLayer(layersData[currentLayerIndex].id);
+      }
+
+      function toggleTour() {
+        if (isTourPlaying) {
+          clearInterval(tourInterval);
+          isTourPlaying = false;
+          tourIcon.textContent = '▶';
+          tourLabel.textContent = 'Play Tour';
+          btnTourToggle.classList.remove('btn-blue');
+          btnTourToggle.classList.add('btn-gold');
+        } else {
+          isTourPlaying = true;
+          tourIcon.textContent = '⏸';
+          tourLabel.textContent = 'Pause Tour';
+          btnTourToggle.classList.remove('btn-gold');
+          btnTourToggle.classList.add('btn-blue');
+          nextStep();
+          tourInterval = setInterval(nextStep, 4500);
+        }
+      }
+
+      btnTourToggle.addEventListener('click', toggleTour);
+      btnNextLayer.addEventListener('click', () => {
+        if (isTourPlaying) toggleTour();
+        nextStep();
+      });
+      btnPrevLayer.addEventListener('click', () => {
+        if (isTourPlaying) toggleTour();
+        prevStep();
+      });
+      btnResetView.addEventListener('click', () => {
+        if (isTourPlaying) toggleTour();
+        selectLayer('ALL');
+      });
+
+      // Search & Component Filter
+      searchFilter.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        if (!query) {
+          selectLayer('ALL');
+          return;
+        }
+
+        // Check node names, roles, and files
+        let matchedNodeId = null;
+        for (const [nid, info] of Object.entries(nodesData)) {
+          if (nid.toLowerCase().includes(query) ||
+              info.name.toLowerCase().includes(query) ||
+              info.desc.toLowerCase().includes(query) ||
+              info.file.toLowerCase().includes(query)) {
+            matchedNodeId = nid;
+            break;
+          }
+        }
+
+        if (matchedNodeId) {
+          selectNode(matchedNodeId);
+        } else {
+          // Check layers
+          const matchedLayer = layersData.find(l => 
+            l.title.toLowerCase().includes(query) ||
+            l.description.toLowerCase().includes(query) ||
+            l.tech.toLowerCase().includes(query)
+          );
+          if (matchedLayer) {
+            selectLayer(matchedLayer.id);
+          }
+        }
+      });
+
+      // Zoom Controls
+      document.getElementById('btnZoomIn').addEventListener('click', () => {
+        zoomLevel = Math.min(zoomLevel + 0.15, 2.5);
+        svg.style.transform = `scale(${zoomLevel})`;
+      });
+
+      document.getElementById('btnZoomOut').addEventListener('click', () => {
+        zoomLevel = Math.max(zoomLevel - 0.15, 0.4);
+        svg.style.transform = `scale(${zoomLevel})`;
+      });
+
+      document.getElementById('btnZoomFit').addEventListener('click', () => {
+        zoomLevel = 1.0;
+        svg.style.transform = 'scale(1.0)';
+        canvasViewport.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      });
+
+    })();
+  </script>
+</body>
+</html>

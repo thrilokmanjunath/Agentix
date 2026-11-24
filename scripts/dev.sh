@@ -137,19 +137,21 @@ if [ -f "$ROOT_DIR/.run/frontend.pid" ]; then
     rm -f "$ROOT_DIR/.run/frontend.pid"
 fi
 
-# Kill any orphaned processes on ports 8000 & 3000
-lsof -ti :8000 2>/dev/null | xargs kill -9 2>/dev/null || true
+BACKEND_PORT="${AGENTIX_PORT:-8001}"
+
+# Kill any orphaned processes on ports $BACKEND_PORT & 3000
+lsof -ti :"$BACKEND_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
 lsof -ti :3000 2>/dev/null | xargs kill -9 2>/dev/null || true
 
 # 9. Launch Backend Service
-log_info "Starting Agentix Core Backend on port 8000..."
-BACKEND_PID=$(python3 -c "import subprocess; p = subprocess.Popen(['python3', '-m', 'uvicorn', 'core.main:app', '--host', '127.0.0.1', '--port', '8000'], cwd='$ROOT_DIR/backend', stdin=subprocess.DEVNULL, stdout=open('$ROOT_DIR/logs/backend.log', 'w'), stderr=subprocess.STDOUT, start_new_session=True); print(p.pid)")
+log_info "Starting Agentix Core Backend on port $BACKEND_PORT..."
+BACKEND_PID=$(python3 -c "import os, subprocess; p = subprocess.Popen(['python3', '-m', 'uvicorn', 'core.main:app', '--host', '127.0.0.1', '--port', '$BACKEND_PORT'], cwd='$ROOT_DIR/backend', stdin=subprocess.DEVNULL, stdout=open('$ROOT_DIR/logs/backend.log', 'w'), stderr=subprocess.STDOUT, start_new_session=True); print(p.pid)")
 echo "$BACKEND_PID" > "$ROOT_DIR/.run/backend.pid"
 
 # Wait for backend health check
 BACKEND_ONLINE=false
 for i in {1..30}; do
-    if curl -s http://127.0.0.1:8000/health | grep -q "status"; then
+    if curl -s "http://127.0.0.1:$BACKEND_PORT/health" | grep -q "status"; then
         BACKEND_ONLINE=true
         break
     fi
@@ -195,8 +197,8 @@ echo -e " ${C_BOLD}XAI & Neural Diagnostics:${C_RESET}${C_CYAN}http://localhost:
 echo -e " ${C_BOLD}Executive Reports:${C_RESET}       ${C_CYAN}http://localhost:3000/intelligence-reports${C_RESET}"
 echo -e " ${C_BOLD}Institutional Settings:${C_RESET}  ${C_CYAN}http://localhost:3000/settings${C_RESET}"
 echo -e " ----------------------------------------------------------------------"
-echo -e " ${C_BOLD}FastAPI Backend Docs:${C_RESET}    ${C_CYAN}http://127.0.0.1:8000/docs${C_RESET}"
-echo -e " ${C_BOLD}Backend Health API:${C_RESET}      ${C_CYAN}http://127.0.0.1:8000/health${C_RESET}"
+echo -e " ${C_BOLD}FastAPI Backend Docs:${C_RESET}    ${C_CYAN}http://127.0.0.1:$BACKEND_PORT/docs${C_RESET}"
+echo -e " ${C_BOLD}Backend Health API:${C_RESET}      ${C_CYAN}http://127.0.0.1:$BACKEND_PORT/health${C_RESET}"
 echo -e " ${C_BOLD}AI Inference Provider:${C_RESET}   ${C_EMERALD}Ollama ($OLLAMA_STATUS)${C_RESET}"
 echo -e " ----------------------------------------------------------------------"
 echo -e " ${C_SLATE}Backend Logs:${C_RESET}  tail -f logs/backend.log"

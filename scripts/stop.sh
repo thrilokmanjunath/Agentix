@@ -55,11 +55,13 @@ if [ -f "$ROOT_DIR/.run/frontend.pid" ]; then
     rm -f "$ROOT_DIR/.run/frontend.pid"
 fi
 
-# Clean up port 8000 and 3000 if orphaned processes remain
-ORPHAN_8000=$(lsof -ti :8000 2>/dev/null || true)
-if [ -n "$ORPHAN_8000" ]; then
-    echo "$ORPHAN_8000" | xargs kill -9 2>/dev/null || true
-    log_info "Cleared orphaned listeners on port 8000."
+BACKEND_PORT="${AGENTIX_PORT:-8001}"
+
+# Clean up port $BACKEND_PORT and 3000 if orphaned processes remain
+ORPHAN_BACKEND=$(lsof -ti :"$BACKEND_PORT" 2>/dev/null || true)
+if [ -n "$ORPHAN_BACKEND" ]; then
+    echo "$ORPHAN_BACKEND" | xargs kill -9 2>/dev/null || true
+    log_info "Cleared orphaned listeners on port $BACKEND_PORT."
 fi
 
 ORPHAN_3000=$(lsof -ti :3000 2>/dev/null || true)

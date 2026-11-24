@@ -1,0 +1,39 @@
+sequenceDiagram
+    autonumber
+    actor Client as Analyst Browser
+    participant Ingress as Security Middleware (L1)
+    participant Auth as RBAC & Auth Guard (L5)
+    participant Router as FastRouter / Platform API
+    participant Cache as SHA-256 Exact Cache (L7)
+    participant Guard as Guardrails & PII Sanitizer (L6)
+    participant RAG as Vector Index & Prompt Enclave (L2 & L3)
+    participant Model as Local LLM Inference (researcher-m4)
+    participant Eval as Faithfulness Evaluator (L8)
+
+    Client->>Ingress: POST /api/v1/platform/chat { query, dataset_name }
+    Ingress->>Ingress: Check Rate Limiter (Token Bucket: 1000 req/min)
+    Ingress->>Ingress: Validate Security Headers & Content-Type
+
+    Ingress->>Auth: Verify JWT Bearer Token & Extract Permissions
+    Auth->>Auth: Validate Role has DATASET_READ permission
+    Auth->>Router: Forward Validated Request
+
+    Router->>Guard: Scan Ingress Prompt for Adversarial Jailbreaks & PII
+    Guard->>Guard: Replace PII with [REDACTED_TYPE], Neutralize Jailbreaks
+    Guard-->>Router: Sanitized Prompt
+
+    Router->>Cache: Query Exact-Match Cache (SHA-256 Key)
+    alt Cache Hit (<5ms)
+        Cache-->>Router: Return Cached Response (Zero Compute)
+    else Cache Miss
+        Router->>RAG: Retrieve Top-K Context Passages (Tenant-Partitioned)
+        RAG->>RAG: Inject into Versioned Delimited Template (<dataset_context>)
+        Router->>Model: Execute Streamed Local Inference (researcher-m4:latest)
+        Model-->>Router: Raw Generated Analytical Response
+        Router->>Guard: Scan Output for Accidental Prompt / Credential Leaks
+        Router->>Eval: Evaluate Groundedness & Faithfulness Score
+        Eval-->>Router: Faithfulness: 0.948, Relevancy: 0.920
+        Router->>Cache: Store Response in Exact-Match Cache with TTL
+    end
+
+    Router-->>Client: Final Response + Telemetry (Model, Latency ms, Tokens, Faithfulness)

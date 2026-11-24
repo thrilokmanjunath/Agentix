@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -61,6 +61,18 @@ const SECURITY_CONTROLS = [
 
 export default function BrainConsolePage() {
   const [agents, setAgents] = useState<GovernanceAgent[]>(INITIAL_AGENTS);
+  const [cpuPercent, setCpuPercent] = useState<number>(11.5);
+  const [ramPercent, setRamPercent] = useState<number>(66.9);
+
+  useEffect(() => {
+    fetch('/api/v1/platform/system-health')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.data?.cpu?.usage_percent !== undefined) setCpuPercent(d.data.cpu.usage_percent);
+        if (d?.data?.ram?.usage_percent !== undefined) setRamPercent(d.data.ram.usage_percent);
+      })
+      .catch(() => {});
+  }, []);
 
   const toggleAgentStatus = (name: string) => {
     setAgents((prev) =>
@@ -256,20 +268,26 @@ export default function BrainConsolePage() {
             <CardContent className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1.5 text-[var(--text-secondary)]">
-                  <span>Swarm CPU Load</span>
-                  <span className="font-mono font-semibold text-[var(--text-primary)]">78%</span>
+                  <span>Host CPU Load</span>
+                  <span className="font-mono font-semibold text-[var(--text-primary)]">{cpuPercent}%</span>
                 </div>
                 <div className="w-full bg-[var(--surface-secondary)] rounded-full h-2 overflow-hidden">
-                  <div className="bg-[var(--accent-primary)] h-2 rounded-full w-[78%] transition-all" />
+                  <div
+                    className="bg-[var(--accent-primary)] h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.max(5, cpuPercent))}%` }}
+                  />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1.5 text-[var(--text-secondary)]">
-                  <span>API Quota (Today)</span>
-                  <span className="font-mono font-semibold text-[var(--text-primary)]">42%</span>
+                  <span>Unified Memory (RAM)</span>
+                  <span className="font-mono font-semibold text-[var(--text-primary)]">{ramPercent}%</span>
                 </div>
                 <div className="w-full bg-[var(--surface-secondary)] rounded-full h-2 overflow-hidden">
-                  <div className="bg-emerald-500 h-2 rounded-full w-[42%] transition-all" />
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.max(5, ramPercent))}%` }}
+                  />
                 </div>
               </div>
             </CardContent>

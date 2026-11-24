@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    actor User as Institutional User
+    participant Frontend as Next.js 15 Client (/login)
+    participant NextAuth as NextAuth.js v5 (Auth.js)
+    participant Backend as FastAPI Auth Router (/api/v1/auth)
+    participant DB as Database (User Table)
+    participant ProtectedAPI as Protected Endpoint (/api/v1/platform/*)
+
+    alt Password Credentials Login
+        User->>Frontend: Submit Email & Password
+        Frontend->>NextAuth: signIn("credentials", { email, password })
+        NextAuth->>DB: Query User Record & Verify BCrypt Hash (cost factor 12)
+        Note over NextAuth: Gated Prisma adapter ensures fallback in air-gapped dev
+        NextAuth-->>Frontend: Set authjs.session-token Cookie (JWT)
+        Frontend->>Backend: POST /api/v1/auth/login
+        Backend->>DB: Verify BCrypt Hash
+        Backend-->>Frontend: Return FastAPI Access Token (JWT with Role & Permissions)
+    else Google SSO OAuth 2.0 Login
+        User->>Frontend: Click "Sign in with Google"
+        Frontend->>NextAuth: signIn("google")
+        NextAuth->>User: Redirect to Google Accounts OAuth 2.0
+        User->>NextAuth: Authorize & Return Auth Code
+        NextAuth->>DB: Upsert User & Account Record
+        NextAuth-->>Frontend: Set authjs.session-token Cookie
+    end
+
+    User->>Frontend: Navigate to Protected Route (/dashboard, /agent-console)
+    Frontend->>ProtectedAPI: Request with Authorization: Bearer <JWT>
+    ProtectedAPI->>Backend: set_user_context() Dependency
+    Backend->>Backend: Verify JWT Signature (HMAC SHA-256)
+    Backend->>Backend: Inspect Roles & Permissions via require_permission()
+    Note over Backend: RFC 7662 Token Introspection validates scopes
+    Backend-->>Frontend: Return Protected Institutional Analytics Data
