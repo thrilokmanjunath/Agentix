@@ -76,6 +76,8 @@ test_data/
 audit_screenshots/
 src-tauri/target/
 desktop/src-tauri/target/
+desktop/src-tauri/bin/agentix-backend*
+desktop/src-tauri/bin/*.exe
 packaging/dist/
 packaging/build/
 dist/

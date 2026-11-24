@@ -18,10 +18,14 @@ import {
   BrainCircuit,
   Wand2,
   Check,
-  Compass
+  Compass,
+  Monitor,
+  Apple,
+  HardDrive
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/Badge';
+import DownloadButton from '@/components/DownloadButton';
 
 export default function LandingPage() {
   const [activeConsoleTab, setActiveConsoleTab] = useState<'inference' | 'security' | 'pipeline'>('inference');
@@ -121,13 +125,7 @@ export default function LandingPage() {
               <span>Explore Platform</span>
               <ArrowRight size={16} />
             </Link>
-            <Link
-              href="/login"
-              className="w-full sm:w-auto teal-button-secondary px-7 py-3 rounded-xl text-base flex items-center justify-center gap-2"
-            >
-              <span>Get Started</span>
-              <ChevronRight size={16} />
-            </Link>
+            <DownloadButton />
           </motion.div>
 
           {/* TEAL GLASS INTERACTIVE TELEMETRY HERO WIDGET */}
@@ -285,6 +283,66 @@ export default function LandingPage() {
               )}
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* 2.5 NATIVE DESKTOP ECOSYSTEM */}
+      <section id="desktop" className="py-20 border-b border-[var(--border-subtle)] bg-[var(--surface-secondary)]/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-primary)] p-8 sm:p-12 shadow-sm relative overflow-hidden">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 mb-4 border border-amber-500/20">
+                <Monitor className="w-3.5 h-3.5" />
+                Native Desktop Ecosystem &bull; macOS &amp; Windows
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+                Local Silicon Speed. <span className="text-amber-600 dark:text-amber-400">100% Data Sovereignty.</span>
+              </h2>
+              <p className="text-base text-[var(--text-secondary)] mt-4 leading-relaxed">
+                Agentix Desktop transforms your workstation into an autonomous data intelligence powerhouse. Supervised by a high-performance Tauri shell, it pairs an isolated local Python sidecar with local Ollama inference—executing complex AutoML pipelines completely offline with zero cloud latency and zero data leakage.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8 pt-8 border-t border-[var(--border-subtle)]">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)] mb-1">
+                    <Apple className="w-4 h-4 text-amber-600" />
+                    Apple Silicon &amp; Windows
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Native universal binaries for macOS (M1-M4 &amp; Intel) and Windows x64 with full hardware acceleration.
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)] mb-1">
+                    <HardDrive className="w-4 h-4 text-amber-600" />
+                    Isolated Local Storage
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Datasets, Parquet lakehouses, and SQLite databases remain strictly contained inside your OS AppData.
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)] mb-1">
+                    <Cpu className="w-4 h-4 text-amber-600" />
+                    Zero-Config Ollama Link
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Automatic loopback discovery across ports 11434 and 1234 routes queries to your locally installed LLMs.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <DownloadButton />
+                <Link
+                  href="/settings"
+                  className="px-5 py-3 rounded-xl border border-[var(--border-subtle)] text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition"
+                >
+                  Inspect Desktop Diagnostics
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

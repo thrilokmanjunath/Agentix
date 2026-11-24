@@ -31,9 +31,11 @@ import { backendFetch } from '@/lib/backendClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import DesktopSettingsView from '@/components/DesktopSettingsView';
 
 const SETTINGS_TABS = [
   { id: 'llm', label: 'AI Inference Engine', icon: Cpu },
+  { id: 'desktop', label: 'Desktop Ecosystem', icon: Monitor },
   { id: 'database', label: 'Storage & DB', icon: Database, advanced: true },
   { id: 'theme', label: 'Enterprise Theme', icon: Palette },
   { id: 'security', label: 'Institutional Security', icon: Shield, advanced: true },
@@ -1135,6 +1137,10 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {activeTab === 'desktop' && (
+              <DesktopSettingsView />
             )}
 
             {activeTab === 'theme' && (() => {

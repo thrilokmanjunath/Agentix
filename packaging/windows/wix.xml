@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <!-- Agentix Desktop Windows WiX Installer Customization -->
+  <Product Id="*" 
+           Name="Agentix — Universal AI &amp; Data Science Platform" 
+           Language="1033" 
+           Version="1.0.0" 
+           Manufacturer="Agentix Team" 
+           UpgradeCode="4B89D73A-9A23-45B1-B53E-74B01EFA99C2">
+    
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" />
+    <MediaTemplate EmbedCab="yes" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <Feature Id="ProductFeature" Title="Agentix Desktop" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+  </Product>
+</Wix>

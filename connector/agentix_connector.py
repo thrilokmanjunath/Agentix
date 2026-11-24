@@ -31,7 +31,7 @@ import urllib.request
 import urllib.error
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-VERSION = "1.0.0"
+VERSION = "1.2.0"
 DEFAULT_PORT = 11435
 DEFAULT_CLOUD_WS = "wss://agentix-api-lord.onrender.com/api/v1/platform/connector/ws"
 OLLAMA_DEFAULT_URL = "http://127.0.0.1:11434"
@@ -133,15 +133,23 @@ class LocalLoopbackServer(BaseHTTPRequestHandler):
 
     ollama_url = OLLAMA_DEFAULT_URL
     lm_studio_url = LM_STUDIO_DEFAULT_URL
+    auth_token = None
 
     def _set_cors_headers(self):
         origin = self.headers.get("Origin") or "*"
         self.send_header("Access-Control-Allow-Origin", origin)
         self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Agentix-Token")
         # Chrome Private Network Access preflight compliance
         self.send_header("Access-Control-Allow-Private-Network", "true")
+
+    def _check_auth(self) -> bool:
+        if not self.auth_token:
+            return True
+        auth = self.headers.get("Authorization", "")
+        token_hdr = self.headers.get("X-Agentix-Token", "")
+        return token_hdr == self.auth_token or auth == f"Bearer {self.auth_token}"
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -150,12 +158,30 @@ class LocalLoopbackServer(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path in ("/status", "/health", "/", "/api/status"):
+        if not self._check_auth():
+            self.send_response(403)
+            self._set_cors_headers()
+            self.send_header("Content-Type", "application/json")
+            err = json.dumps({"status": "error", "detail": "Unauthorized: valid token required."}).encode("utf-8")
+            self.send_header("Content-Length", str(len(err)))
+            self.end_headers()
+            self.wfile.write(err)
+            return
+
+        if self.path in ("/status", "/health", "/", "/api/status", "/models", "/api/models"):
             discovery = LocalRuntimeDetector.discover_all(self.ollama_url, self.lm_studio_url)
+            models = []
+            for m in discovery.get("ollama_models", []):
+                models.append({"id": f"ollama/{m}", "name": m, "provider": "ollama"})
+            for m in discovery.get("lm_studio_models", []):
+                models.append({"id": f"lm_studio/{m}", "name": m, "provider": "lm_studio"})
+
             body = json.dumps({
                 "status": "online",
                 "connector_version": VERSION,
                 "pna_enabled": True,
+                "models": models,
+                "total_models": len(models),
                 **discovery
             }).encode("utf-8")
             self.send_response(200)
@@ -170,6 +196,16 @@ class LocalLoopbackServer(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
+        if not self._check_auth():
+            self.send_response(403)
+            self._set_cors_headers()
+            self.send_header("Content-Type", "application/json")
+            err = json.dumps({"status": "error", "detail": "Unauthorized: valid token required."}).encode("utf-8")
+            self.send_header("Content-Length", str(len(err)))
+            self.end_headers()
+            self.wfile.write(err)
+            return
+
         if self.path in ("/generate", "/api/generate", "/chat", "/api/chat"):
             length = int(self.headers.get("Content-Length", 0))
             raw_body = self.rfile.read(length)
@@ -392,14 +428,129 @@ def run_cloud_bridge(cloud_ws_url: str, token: str, ollama_url: str, lm_studio_u
             time.sleep(5)
 
 
+def run_diagnostics(ollama_url: str, lm_studio_url: str, port: int) -> int:
+    print("=" * 64)
+    print(f"   AGENTIX CONNECTOR DIAGNOSTICS SUITE (v{VERSION})")
+    print("=" * 64)
+    
+    # Check loopback port
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        res = s.connect_ex(("127.0.0.1", port))
+        if res == 0:
+            print(f"[-] Loopback port {port}: IN USE (Another process listening)")
+        else:
+            print(f"[+] Loopback port {port}: AVAILABLE")
+
+    # Check Ollama
+    print(f"[*] Checking Ollama on {ollama_url}...")
+    o_res = LocalRuntimeDetector.query_ollama(ollama_url)
+    if o_res["online"]:
+        print(f"[+] Ollama ONLINE: Found {len(o_res['models'])} model(s) -> {', '.join(o_res['models'])}")
+    else:
+        print(f"[-] Ollama OFFLINE or unreachable on {ollama_url}")
+
+    # Check LM Studio
+    print(f"[*] Checking LM Studio on {lm_studio_url}...")
+    lm_res = LocalRuntimeDetector.query_lm_studio(lm_studio_url)
+    if lm_res["online"]:
+        print(f"[+] LM Studio ONLINE: Found {len(lm_res['models'])} model(s) -> {', '.join(lm_res['models'])}")
+    else:
+        print(f"[-] LM Studio OFFLINE or unreachable on {lm_studio_url}")
+
+    success = o_res["online"] or lm_res["online"]
+    print("-" * 64)
+    if success:
+        print("[SUCCESS] Local inference engine detected and ready for Agentix!")
+        return 0
+    else:
+        print("[NOTICE] No local engines detected. Install Ollama (https://ollama.com) to enable local models.")
+        return 1
+
+
+def install_service(script_path: str, port: int, token: str):
+    import platform
+    system = platform.system()
+    print(f"Installing Agentix Connector auto-start service for {system}...")
+    
+    if system == "Darwin":
+        plist_dir = os.path.expanduser("~/Library/LaunchAgents")
+        os.makedirs(plist_dir, exist_ok=True)
+        plist_path = os.path.join(plist_dir, "com.agentix.connector.plist")
+        token_arg = f"<string>--token</string><string>{token}</string>" if token else ""
+        plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.agentix.connector</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{sys.executable}</string>
+        <string>{os.path.abspath(script_path)}</string>
+        <string>--port</string>
+        <string>{port}</string>
+        {token_arg}
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/agentix-connector.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/agentix-connector.err</string>
+</dict>
+</plist>"""
+        with open(plist_path, "w") as f:
+            f.write(plist_content)
+        print(f"[+] macOS LaunchAgent installed at: {plist_path}")
+        print(f"    Load with: launchctl load {plist_path}")
+    elif system == "Windows":
+        startup_dir = os.path.expandvars(r"%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup")
+        bat_path = os.path.join(startup_dir, "agentix-connector.bat")
+        tok = f"--token {token}" if token else ""
+        with open(bat_path, "w") as f:
+            f.write(f'@echo off\nstart /b "" "{sys.executable}" "{os.path.abspath(script_path)}" --port {port} {tok}\n')
+        print(f"[+] Windows Startup script installed at: {bat_path}")
+    else:
+        service_dir = os.path.expanduser("~/.config/systemd/user")
+        os.makedirs(service_dir, exist_ok=True)
+        service_path = os.path.join(service_dir, "agentix-connector.service")
+        service_content = f"""[Unit]
+Description=Agentix Local LLM Connector
+After=network.target
+
+[Service]
+ExecStart={sys.executable} {os.path.abspath(script_path)} --port {port}
+Restart=always
+
+[Install]
+WantedBy=default.target
+"""
+        with open(service_path, "w") as f:
+            f.write(service_content)
+        print(f"[+] Linux systemd service installed at: {service_path}")
+        print("    Enable with: systemctl --user enable --now agentix-connector")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Agentix Local LLM Connector Companion")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help=f"Local HTTP loopback port (default: {DEFAULT_PORT})")
     parser.add_argument("--token", type=str, default="", help="Agentix Cloud pairing token")
+    parser.add_argument("--auth-token", type=str, default="", help="Local loopback authorization token")
     parser.add_argument("--cloud-url", type=str, default=DEFAULT_CLOUD_WS, help="Agentix Cloud WebSocket URL")
     parser.add_argument("--ollama-url", type=str, default=OLLAMA_DEFAULT_URL, help="Ollama base URL")
     parser.add_argument("--lm-studio-url", type=str, default=LM_STUDIO_DEFAULT_URL, help="LM Studio base URL")
+    parser.add_argument("--diagnose", action="store_true", help="Run diagnostic health checks on runtimes and exit")
+    parser.add_argument("--install-service", action="store_true", help="Install background auto-start service for OS")
     args = parser.parse_args()
+
+    if args.diagnose:
+        sys.exit(run_diagnostics(args.ollama_url, args.lm_studio_url, args.port))
+
+    if args.install_service:
+        install_service(__file__, args.port, args.token)
+        sys.exit(0)
 
     print("=" * 64)
     print("   AGENTIX UNIVERSAL LOCAL LLM CONNECTOR (v" + VERSION + ")")
@@ -425,6 +576,7 @@ def main():
     # Step 2: Start Local Loopback Server (Mode A)
     LocalLoopbackServer.ollama_url = args.ollama_url
     LocalLoopbackServer.lm_studio_url = args.lm_studio_url
+    LocalLoopbackServer.auth_token = args.auth_token or None
 
     try:
         httpd = HTTPServer(("127.0.0.1", args.port), LocalLoopbackServer)

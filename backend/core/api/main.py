@@ -98,7 +98,7 @@ app.add_middleware(
     allow_origin_regex=allowed_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-Agentix-Token"],
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

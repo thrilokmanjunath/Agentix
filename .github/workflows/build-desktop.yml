@@ -1,0 +1,130 @@
+name: Build Agentix Desktop Ecosystem
+
+on:
+  push:
+    branches:
+      - main
+      - feature/native-desktop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-desktop:
+    name: Build Desktop (${{ matrix.platform.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: macOS ARM64 (Apple Silicon)
+            os: macos-latest
+            target: aarch64-apple-darwin
+            sidecar_ext: ""
+            bundle_ext: "*.dmg"
+          - name: macOS Intel (x86_64)
+            os: macos-13
+            target: x86_64-apple-darwin
+            sidecar_ext: ""
+            bundle_ext: "*.dmg"
+          - name: Windows x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            sidecar_ext: ".exe"
+            bundle_ext: "*.msi"
+
+    runs-on: ${{ matrix.platform.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install backend dependencies & PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pyinstaller
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.target }}
+
+      - name: Build Python Sidecar (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          chmod +x packaging/pyinstaller/build_backend.sh
+          ./packaging/pyinstaller/build_backend.sh
+
+      - name: Build Python Sidecar (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          packaging\pyinstaller\build_backend.bat
+
+      - name: Build Next.js Web Frontend & Shell
+        run: |
+          npm --prefix frontend install
+          npm --prefix frontend run build
+
+      - name: Install Tauri CLI & Build Native Bundle
+        run: |
+          npm --prefix desktop install
+          npm --prefix desktop run tauri build
+
+      - name: Generate Checksums (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p release-artifacts
+          find desktop/src-tauri/target/release/bundle -type f -name "*.dmg" -exec cp {} release-artifacts/ \;
+          cd release-artifacts
+          shasum -a 256 * > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt || true
+
+      - name: Generate Checksums (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release-artifacts
+          find desktop/src-tauri/target/release/bundle -type f \( -name "*.msi" -o -name "*.exe" \) -exec cp {} release-artifacts/ \;
+          cd release-artifacts
+          certutil -hashfile * SHA256 > SHA256SUMS.txt || true
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentix-${{ matrix.platform.target }}
+          path: release-artifacts/
+
+  release:
+    name: Publish Release Draft
+    needs: build-desktop
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
+
+      - name: Aggregate Checksums & Create GitHub Release Draft
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: all-artifacts/**/*

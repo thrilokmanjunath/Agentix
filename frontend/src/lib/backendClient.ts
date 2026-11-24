@@ -16,9 +16,14 @@ export function getClientBackendBase(): string {
     return configured.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
   }
   if (typeof window !== 'undefined') {
+    // If running in Desktop Native mode with dynamic or stored port
+    const desktopPort = sessionStorage.getItem('agentix_desktop_port');
+    if (desktopPort) {
+      return `http://127.0.0.1:${desktopPort}`;
+    }
     const host = window.location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') {
-      return 'http://127.0.0.1:8000';
+      return 'http://127.0.0.1:8001';
     }
   }
   return '';
@@ -95,6 +100,14 @@ export async function backendFetch(
   const headers = new Headers(init.headers);
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  // Inject desktop sidecar token when operating in desktop native mode
+  if (typeof window !== 'undefined') {
+    const desktopToken = sessionStorage.getItem('agentix_desktop_token');
+    if (desktopToken && !headers.has('X-Agentix-Token')) {
+      headers.set('X-Agentix-Token', desktopToken);
+    }
   }
 
   const res = await fetch(url, { ...init, headers });

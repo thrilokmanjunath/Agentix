@@ -1,0 +1,26 @@
+[package]
+name = "agentix-desktop"
+version = "1.0.0"
+description = "Agentix — Universal AI & Data Science Platform"
+authors = ["Thrilok M", "Piush Kole"]
+edition = "2021"
+
+[lib]
+name = "agentix_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0.0", features = [] }
+tauri-plugin-shell = "2.0.0"
+tauri-plugin-process = "2.0.0"
+tauri-plugin-dialog = "2.0.0"
+tauri-plugin-fs = "2.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rand = "0.8"
+log = "0.4"
