@@ -11,7 +11,15 @@ export default auth((req) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth?.user
 
-  if (PUBLIC_PATHS.has(pathname)) {
+  // Allow public access to landing, login, connector, and all desktop downloads (.dmg, .msi, .py)
+  if (
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith("/download") ||
+    pathname.startsWith("/downloads") ||
+    pathname.endsWith(".dmg") ||
+    pathname.endsWith(".msi") ||
+    pathname.endsWith(".py")
+  ) {
     return NextResponse.next()
   }
 
@@ -45,5 +53,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|connector.py).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|connector.py|download|downloads).*)"],
 }

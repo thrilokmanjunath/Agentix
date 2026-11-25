@@ -20,12 +20,12 @@ import {
   Check,
   Compass,
   Monitor,
-  Apple,
   HardDrive
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/Badge';
 import DownloadButton from '@/components/DownloadButton';
+import AppleLogo from '@/components/AppleLogo';
 
 export default function LandingPage() {
   const [activeConsoleTab, setActiveConsoleTab] = useState<'inference' | 'security' | 'pipeline'>('inference');
@@ -305,7 +305,7 @@ export default function LandingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8 pt-8 border-t border-[var(--border-subtle)]">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)] mb-1">
-                    <Apple className="w-4 h-4 text-amber-600" />
+                    <AppleLogo className="w-4 h-4 text-stone-900 dark:text-stone-100" />
                     Apple Silicon &amp; Windows
                   </div>
                   <p className="text-xs text-[var(--text-secondary)]">

@@ -38,26 +38,6 @@ const nextConfig: NextConfig = {
         destination: '/dashboard',
         permanent: true,
       },
-      {
-        source: '/download/mac',
-        destination: 'https://github.com/agentix-ai/agentix/releases/latest',
-        permanent: false,
-      },
-      {
-        source: '/download/windows',
-        destination: 'https://github.com/agentix-ai/agentix/releases/latest',
-        permanent: false,
-      },
-      {
-        source: '/download/releases',
-        destination: 'https://github.com/agentix-ai/agentix/releases',
-        permanent: false,
-      },
-      {
-        source: '/download/connector',
-        destination: '/connector.py',
-        permanent: false,
-      },
     ];
   },
 };
