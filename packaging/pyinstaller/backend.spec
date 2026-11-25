@@ -69,11 +69,18 @@ for pkg in ["sklearn", "scipy", "pandas", "polars", "pyarrow"]:
         pass
 
 datas = []
+binaries = []
+for pkg in ["xgboost", "lightgbm"]:
+    try:
+        from PyInstaller.utils.hooks import collect_dynamic_libs
+        binaries += collect_dynamic_libs(pkg)
+    except Exception:
+        pass
 
 a = Analysis(
     [os.path.join(backend_dir, "desktop_entry.py")],
     pathex=[backend_dir],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],

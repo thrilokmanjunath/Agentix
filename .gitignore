@@ -82,3 +82,5 @@ packaging/dist/
 packaging/build/
 dist/
 build/
+!desktop/dist/
+!desktop/dist/**

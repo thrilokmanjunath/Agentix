@@ -132,6 +132,7 @@ def main():
     @app.post("/api/v1/system/shutdown")
     async def trigger_shutdown(request: Request):
         shutdown_event.set()
+        asyncio.get_event_loop().call_later(0.1, lambda: setattr(server, "should_exit", True))
         return {"status": "ok", "message": "Agentix desktop backend is shutting down."}
 
     # 8. Machine-Readable Handshake for Tauri Desktop Shell (Emitted when server is live)

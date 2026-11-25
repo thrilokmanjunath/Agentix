@@ -20,25 +20,25 @@ logger = logging.getLogger("agentix_v2")
 try:
     import umap
     UMAP_AVAILABLE = True
-except ImportError:
+except Exception:
     UMAP_AVAILABLE = False
 
 try:
     from lightgbm import LGBMClassifier, LGBMRegressor
     LIGHTGBM_AVAILABLE = True
-except ImportError:
+except Exception:
     LIGHTGBM_AVAILABLE = False
 
 try:
     from xgboost import XGBClassifier, XGBRegressor
     XGBOOST_AVAILABLE = True
-except ImportError:
+except Exception:
     XGBOOST_AVAILABLE = False
 
 try:
     from catboost import CatBoostClassifier, CatBoostRegressor
     CATBOOST_AVAILABLE = True
-except ImportError:
+except Exception:
     CATBOOST_AVAILABLE = False
 
 

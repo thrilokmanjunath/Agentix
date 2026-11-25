@@ -78,17 +78,24 @@ jobs:
           packaging\pyinstaller\build_backend.bat
 
       - name: Build Next.js Web Frontend & Shell
+        shell: bash
         run: |
-          npm --prefix frontend install
-          npm --prefix frontend run build
+          cd frontend
+          npm install
+          NODE_TLS_REJECT_UNAUTHORIZED=0 npm run build
+          cd ..
 
       - name: Install Tauri CLI & Build Native Bundle
+        shell: bash
         run: |
-          npm --prefix desktop install
-          npm --prefix desktop run tauri build
+          cd desktop
+          npm install
+          npx tauri build
+          cd ..
 
       - name: Generate Checksums (macOS)
         if: runner.os == 'macOS'
+        shell: bash
         run: |
           mkdir -p release-artifacts
           find desktop/src-tauri/target/release/bundle -type f -name "*.dmg" -exec cp {} release-artifacts/ \;
@@ -103,7 +110,8 @@ jobs:
           mkdir -p release-artifacts
           find desktop/src-tauri/target/release/bundle -type f \( -name "*.msi" -o -name "*.exe" \) -exec cp {} release-artifacts/ \;
           cd release-artifacts
-          certutil -hashfile * SHA256 > SHA256SUMS.txt || true
+          sha256sum * > SHA256SUMS.txt || shasum -a 256 * > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt || true
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
