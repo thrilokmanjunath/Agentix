@@ -28,7 +28,7 @@ Ensure the following runtimes and compilers are installed on your workstation:
 
 Clone and checkout the development branch:
 ```bash
-git clone https://github.com/agentix-ai/agentix.git
+git clone https://github.com/thrilokmanjunath/Agentix.git
 cd agentix
 git checkout feature/native-desktop
 ```

@@ -17,7 +17,7 @@ This guide provides instructions for installing and running **Agentix Native Des
 ## 2. Installation Options
 
 ### Option A: MSI Windows Installer (Recommended)
-1. Download `Agentix_1.0.0_x64_en-US.msi` from [GitHub Releases](https://github.com/agentix-ai/agentix/releases).
+1. Download `Agentix_1.0.0_x64_en-US.msi` from [GitHub Releases](https://github.com/thrilokmanjunath/Agentix/releases).
 2. Double-click the `.msi` file to launch the standard Windows Setup Wizard.
 3. Follow the on-screen prompts to install Agentix. The installer automatically creates Start Menu shortcuts and registers file associations.
 

@@ -17,7 +17,7 @@ This guide provides instructions for installing and running **Agentix Native Des
 
 ## 2. Standard Installation
 
-1. Download the appropriate `.dmg` disk image for your Mac architecture from [GitHub Releases](https://github.com/agentix-ai/agentix/releases).
+1. Download the appropriate `.dmg` disk image for your Mac architecture from [GitHub Releases](https://github.com/thrilokmanjunath/Agentix/releases).
 2. Double-click the downloaded `.dmg` file to mount it.
 3. Drag the **Agentix** application icon into your **Applications** folder.
 4. Eject the disk image and launch Agentix from Launchpad, Spotlight, or the Applications folder.
