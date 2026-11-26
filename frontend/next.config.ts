@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [],
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion'],
+    optimizePackageImports: ['recharts', 'framer-motion'],
     serverActions: {
       bodySizeLimit: '50mb',
     },

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { logoutAction } from '@/app/actions/auth';
 import { backendFetch, clearBackendAuthToken } from '@/lib/backendClient';
+import { AgentixLogo } from '@/components/AgentixLogo';
 import {
   LayoutDashboard,
   Database,
@@ -16,7 +17,6 @@ import {
   Menu,
   Search,
   Bell,
-  Compass,
   Network,
   History,
   Shield,
@@ -176,8 +176,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
           
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-[var(--accent-foreground)] shadow-sm transition-transform group-hover:scale-105">
-              <Compass size={18} />
+            <div className="w-8 h-8 rounded-lg bg-[var(--surface-elevated)] border border-amber-500/30 flex items-center justify-center shadow-sm transition-transform group-hover:scale-105">
+              <AgentixLogo size={20} variant="solar-gold" />
             </div>
             <div className="flex flex-col">
               <span className="font-bold tracking-tight text-lg text-[var(--text-primary)] flex items-center gap-2">

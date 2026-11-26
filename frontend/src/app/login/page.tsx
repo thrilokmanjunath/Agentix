@@ -4,7 +4,6 @@ import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loginWithCredentials } from '@/app/actions/auth';
 import {
-  Compass,
   ArrowRight,
   AlertCircle,
   Shield,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AgentixLogo } from '@/components/AgentixLogo';
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
@@ -111,8 +111,8 @@ function LoginFormContent() {
       <div className="hidden md:flex flex-col w-1/2 bg-[var(--surface-secondary)]/50 border-r border-[var(--border-subtle)] p-12 lg:p-20 relative overflow-hidden">
         <div className="relative z-10 flex flex-col h-full justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)] flex items-center justify-center text-[var(--accent-foreground)] shadow-md transition-transform group-hover:scale-105">
-              <Compass size={20} />
+            <div className="w-9 h-9 rounded-xl bg-[var(--surface-elevated)] border border-amber-500/30 flex items-center justify-center shadow-md transition-transform group-hover:scale-105">
+              <AgentixLogo size={22} variant="solar-gold" />
             </div>
             <span className="text-2xl font-black tracking-tight text-[var(--text-primary)]">AGENTIX</span>
           </Link>
@@ -154,8 +154,8 @@ function LoginFormContent() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 relative z-10">
         <div className="w-full max-w-[420px] flex flex-col p-8 rounded-2xl teal-glass-card shadow-xl border border-[var(--border-subtle)]">
           <div className="flex md:hidden items-center gap-2 mb-8 justify-center">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-[var(--accent-foreground)]">
-              <Compass size={18} />
+            <div className="w-8 h-8 rounded-lg bg-[var(--surface-elevated)] border border-amber-500/30 flex items-center justify-center">
+              <AgentixLogo size={18} variant="solar-gold" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Agentix</span>
           </div>

@@ -18,7 +18,6 @@ import {
   BrainCircuit,
   Wand2,
   Check,
-  Compass,
   Monitor,
   HardDrive
 } from 'lucide-react';
@@ -26,6 +25,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge } from '@/components/ui/Badge';
 import DownloadButton from '@/components/DownloadButton';
 import AppleLogo from '@/components/AppleLogo';
+import { AgentixLogo } from '@/components/AgentixLogo';
 
 export default function LandingPage() {
   const [activeConsoleTab, setActiveConsoleTab] = useState<'inference' | 'security' | 'pipeline'>('inference');
@@ -38,8 +38,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-[var(--accent-foreground)] shadow-sm transition-transform group-hover:scale-105">
-                <Compass size={18} />
+              <div className="w-8 h-8 rounded-lg bg-[var(--surface-elevated)] border border-amber-500/30 flex items-center justify-center shadow-sm transition-transform group-hover:scale-105">
+                <AgentixLogo size={20} variant="solar-gold" />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold tracking-tight text-lg text-[var(--text-primary)] flex items-center gap-2">
@@ -655,8 +655,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[var(--border-subtle)]">
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-[var(--accent-foreground)]">
-                <Compass size={16} />
+              <div className="w-7 h-7 rounded-lg bg-[var(--surface-elevated)] border border-amber-500/30 flex items-center justify-center">
+                <AgentixLogo size={16} variant="solar-gold" />
               </div>
               <span className="font-bold text-base text-[var(--text-primary)]">AGENTIX</span>
               <span className="text-xs text-[var(--text-secondary)]">&bull; Institutional AI Intelligence Platform</span>
