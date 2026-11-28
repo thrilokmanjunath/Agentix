@@ -32,6 +32,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import DesktopSettingsView from '@/components/DesktopSettingsView';
+import { TwoFactorSettingsCard } from '@/components/settings/TwoFactorSettingsCard';
+import { ActiveSessionsCard } from '@/components/settings/ActiveSessionsCard';
 
 const SETTINGS_TABS = [
   { id: 'llm', label: 'AI Inference Engine', icon: Cpu },
@@ -1122,21 +1124,27 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'security' && (
-              <Card variant="elevated">
-                <CardHeader>
-                  <CardTitle>Institutional Security Attestation</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-xs">
-                  <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-2 text-emerald-600 dark:text-emerald-300">
-                    <p className="font-bold flex items-center gap-1.5">
-                      <CheckCircle2 size={15} /> All 16 OWASP Vulnerabilities Remediated & 8 Layers Certified
-                    </p>
-                    <p className="text-[var(--text-secondary)] text-xs leading-relaxed">
-                      Role mass assignment blocked, IDOR eliminated from workflow jobs, sliding-window rate limiting active, native bcrypt password hashing verified.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card variant="elevated">
+                  <CardHeader>
+                    <CardTitle>Institutional Security Attestation</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-xs">
+                    <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-2 text-emerald-600 dark:text-emerald-300">
+                      <p className="font-bold flex items-center gap-1.5">
+                        <CheckCircle2 size={15} /> All 16 OWASP Vulnerabilities Remediated & 8 Layers Certified
+                      </p>
+                      <p className="text-[var(--text-secondary)] text-xs leading-relaxed">
+                        Role mass assignment blocked, IDOR eliminated from workflow jobs, sliding-window rate limiting active, native bcrypt password hashing verified, RFC 6238 TOTP two-factor authentication enforced with AES-256-GCM encrypted secrets at rest.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <TwoFactorSettingsCard />
+
+                <ActiveSessionsCard />
+              </div>
             )}
 
             {activeTab === 'desktop' && (
