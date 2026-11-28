@@ -70,12 +70,48 @@ export const authConfig = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        verifiedToken: { label: "Verified Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email) return null;
         const email = String(credentials.email).trim().toLowerCase();
-        const password = String(credentials.password);
+        const password = credentials?.password ? String(credentials.password) : "";
+        const verifiedToken = credentials?.verifiedToken ? String(credentials.verifiedToken) : null;
+
+        // 1. Direct login via pre-verified backend token (e.g. from Google OAuth or 2FA challenge resolution)
+        if (verifiedToken) {
+          try {
+            let user = await prisma.user.findUnique({ where: { email } });
+            if (!user) {
+              const displayName = email.split('@')[0];
+              user = await prisma.user.create({
+                data: {
+                  email,
+                  name: displayName,
+                  role: "USER",
+                },
+              });
+            }
+            return {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              image: user.image || undefined,
+              backendAccessToken: verifiedToken,
+            };
+          } catch (e) {
+            console.warn("[Auth] Database unavailable during verified token authorize:", e);
+            return {
+              id: `user-${email}`,
+              name: email.split('@')[0],
+              email: email,
+              role: "USER",
+              backendAccessToken: verifiedToken,
+            };
+          }
+        }
 
         // Controlled demo authentication gated to dev, explicit DEMO flag, or institutional admin demo password
         const isDev = process.env.NODE_ENV !== "production" || process.env.ENABLE_DEMO_LOGIN === "true";
