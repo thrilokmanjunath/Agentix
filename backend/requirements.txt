@@ -33,3 +33,4 @@ lightgbm
 catboost
 fastparquet
 dask[dataframe]
+qrcode>=8.0
