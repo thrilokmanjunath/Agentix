@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldCheck, ShieldAlert, KeyRound, Lock, Loader2, Check, AlertCircle } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Loader2, AlertCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { TwoFactorSetupModal } from "./TwoFactorSetupModal";
 import { disable2faAction } from "@/app/actions/auth";

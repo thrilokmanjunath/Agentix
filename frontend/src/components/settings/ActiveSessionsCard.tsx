@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  Monitor,
   Smartphone,
   Globe,
   RefreshCw,

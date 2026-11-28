@@ -3,15 +3,12 @@
 import React, { useState, useEffect } from "react";
 import {
   ShieldCheck,
-  QrCode,
   Copy,
   Check,
   Download,
   AlertCircle,
   Loader2,
   X,
-  KeyRound,
-  Lock,
 } from "lucide-react";
 import { setup2faAction, confirm2faAction } from "@/app/actions/auth";
 
@@ -174,7 +171,6 @@ export function TwoFactorSetupModal({
                 </div>
               ) : qrCode ? (
                 <div className="p-2 bg-white rounded-xl shadow-sm shrink-0 border border-zinc-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={qrCode} alt="2FA QR Code" className="w-40 h-40" />
                 </div>
               ) : (
@@ -200,6 +196,14 @@ export function TwoFactorSetupModal({
                     {copiedSecret ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                   </button>
                 </div>
+                {otpauthUri && (
+                  <a
+                    href={otpauthUri}
+                    className="inline-block text-[11px] text-teal-600 dark:text-teal-400 hover:underline font-semibold mt-1"
+                  >
+                    Open in Authenticator App &rarr;
+                  </a>
+                )}
                 <p className="text-[11px] text-[var(--text-muted)] leading-normal">
                   Type or paste this 32-character key into your authenticator app if unable to scan the QR code.
                 </p>
