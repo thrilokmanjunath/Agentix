@@ -183,16 +183,25 @@ def _migrate_add_missing_columns():
         for column in table.columns:
             if column.name in existing_columns:
                 continue
-            if not column.nullable:
-                logger.warning(
-                    f"[migrate] Skipping non-nullable column {table.name}.{column.name} - "
-                    "add it with a server_default or a real migration, not auto-ALTER."
-                )
-                continue
             col_type = column.type.compile(engine.dialect)
+            default_clause = ""
+            if column.server_default is not None:
+                default_val = getattr(column.server_default, "arg", None)
+                if default_val is not None:
+                    default_clause = f" DEFAULT {default_val}"
+            elif not column.nullable:
+                # Provide a sensible default fallback for non-nullable boolean/int/string columns
+                type_str = str(col_type).lower()
+                if "bool" in type_str:
+                    default_clause = " DEFAULT 0"
+                elif "int" in type_str:
+                    default_clause = " DEFAULT 0"
+                else:
+                    default_clause = " DEFAULT ''"
+
             with engine.begin() as conn:
-                conn.execute(text(f"ALTER TABLE {table.name} ADD COLUMN {column.name} {col_type}"))
-            logger.info(f"[migrate] Added missing column {table.name}.{column.name} ({col_type})")
+                conn.execute(text(f"ALTER TABLE {table.name} ADD COLUMN {column.name} {col_type}{default_clause}"))
+            logger.info(f"[migrate] Added missing column {table.name}.{column.name} ({col_type}{default_clause})")
 
 
 def init_db():

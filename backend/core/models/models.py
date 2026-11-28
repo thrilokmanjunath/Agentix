@@ -13,10 +13,43 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Enterprise Two-Factor Authentication (TOTP)
+    two_factor_enabled = Column(Boolean, default=False, nullable=False)
+    two_factor_secret_encrypted = Column(String, nullable=True)
+    two_factor_confirmed_at = Column(DateTime, nullable=True)
+
     datasets = relationship("Dataset", back_populates="owner", cascade="all, delete-orphan")
     settings = relationship("UserSettings", back_populates="owner", uselist=False, cascade="all, delete-orphan")
     workflow_runs = relationship("WorkflowRun", back_populates="owner", cascade="all, delete-orphan")
     conversations = relationship("Conversation", back_populates="owner", cascade="all, delete-orphan")
+    recovery_codes = relationship("TwoFactorRecoveryCode", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
+
+class TwoFactorRecoveryCode(Base):
+    __tablename__ = "two_factor_recovery_codes"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    code_hash = Column(String, nullable=False)
+    used = Column(Boolean, default=False, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="recovery_codes")
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    session_token_hash = Column(String, unique=True, index=True, nullable=False)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    device_type = Column(String, nullable=True)
+    last_active = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    revoked = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="sessions")
 
 class UserSettings(Base):
     __tablename__ = "user_settings"

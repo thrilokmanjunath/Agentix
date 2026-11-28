@@ -26,6 +26,12 @@ model User {
   updatedAt     DateTime  @updatedAt
   preferences   Json?
 
+  // Enterprise Two-Factor Authentication (TOTP)
+  twoFactorEnabled         Boolean                  @default(false)
+  twoFactorSecretEncrypted String?
+  twoFactorConfirmedAt     DateTime?
+  recoveryCodes            TwoFactorRecoveryCode[]
+
   accounts      Account[]
   sessions      Session[]
 
@@ -69,7 +75,21 @@ model Session {
   deviceType   String?
   lastActive   DateTime? @default(now())
   createdAt    DateTime  @default(now())
+  revoked      Boolean   @default(false)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TwoFactorRecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, used])
 }
 
 model VerificationToken {
