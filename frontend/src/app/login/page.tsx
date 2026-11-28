@@ -17,6 +17,8 @@ import {
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AgentixLogo } from '@/components/AgentixLogo';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { TwoFactorChallenge } from '@/components/auth/TwoFactorChallenge';
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
@@ -31,6 +33,7 @@ function LoginFormContent() {
   const [password, setPassword] = useState(DEMO_MODE ? 'admin123' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [pending2fa, setPending2fa] = useState<{ ticket: string; email: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(
     initialError === 'InvalidCredentials' || initialError === 'CredentialsSignin'
       ? 'Invalid credentials. Please verify your email and password.'
@@ -44,6 +47,7 @@ function LoginFormContent() {
   const handleModeSwitch = (nextMode: 'login' | 'register') => {
     setMode(nextMode);
     setErrorMessage(null);
+    setPending2fa(null);
     if (nextMode === 'register' && DEMO_MODE && email === 'admin@agentix.com') {
       setEmail('');
       setPassword('');
@@ -88,6 +92,11 @@ function LoginFormContent() {
       const res = await loginWithCredentials(email.trim(), password, redirectTo);
 
       if (!res.success) {
+        if (res.requires2fa && res.ticket && res.email) {
+          setPending2fa({ ticket: res.ticket, email: res.email });
+          setIsLoading(false);
+          return;
+        }
         setErrorMessage(res.error || 'Invalid credentials. Check your email and password.');
         setIsLoading(false);
       } else {
@@ -160,159 +169,203 @@ function LoginFormContent() {
             <span className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Agentix</span>
           </div>
 
-          <div className="flex flex-col text-left gap-1 mb-5">
-            <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-              {mode === 'login' ? 'Institutional Access' : 'Create Workspace Account'}
-            </h2>
-            <p className="text-xs text-[var(--text-secondary)] font-medium">
-              {mode === 'login'
-                ? 'Authenticate to access your isolated workspace'
-                : 'Register a dedicated institutional account to get started'}
-            </p>
-          </div>
-
-          {/* Mode Toggle */}
-          <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] mb-5">
-            <button
-              type="button"
-              onClick={() => handleModeSwitch('login')}
-              className={`py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                mode === 'login'
-                  ? 'bg-[var(--background)] text-[var(--text-primary)] shadow-sm border border-[var(--border-subtle)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => handleModeSwitch('register')}
-              className={`py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                mode === 'register'
-                  ? 'bg-[var(--background)] text-[var(--text-primary)] shadow-sm border border-[var(--border-subtle)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Create Account
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {errorMessage && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
-                <AlertCircle size={15} className="shrink-0" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {mode === 'register' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="name">
-                    Full Name
-                  </label>
-                  <input
-                    name="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={isLoading}
-                    className="w-full px-3.5 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all disabled:opacity-60"
-                    id="name"
-                    placeholder="Alex Morgan"
-                    required
-                    type="text"
-                    autoComplete="name"
-                  />
-                </div>
-              )}
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="email">
-                  Institutional Email
-                </label>
-                <input
-                  name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  className="w-full px-3.5 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all font-mono disabled:opacity-60"
-                  id="email"
-                  placeholder="name@organization.com"
-                  required
-                  type="email"
-                  autoComplete="email"
-                />
+          {pending2fa ? (
+            <TwoFactorChallenge
+              ticket={pending2fa.ticket}
+              email={pending2fa.email}
+              redirectTo={searchParams.get('redirect') || '/dashboard'}
+              onSuccess={(targetUrl) => {
+                router.push(targetUrl || searchParams.get('redirect') || '/dashboard');
+                router.refresh();
+              }}
+              onCancel={() => {
+                setPending2fa(null);
+                setErrorMessage(null);
+              }}
+            />
+          ) : (
+            <>
+              <div className="flex flex-col text-left gap-1 mb-5">
+                <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+                  {mode === 'login' ? 'Institutional Access' : 'Create Workspace Account'}
+                </h2>
+                <p className="text-xs text-[var(--text-secondary)] font-medium">
+                  {mode === 'login'
+                    ? 'Authenticate to access your isolated workspace'
+                    : 'Register a dedicated institutional account to get started'}
+                </p>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="password">
-                    Password
-                  </label>
-                  {mode === 'register' && (
-                    <span className="text-[10px] text-[var(--text-muted)] font-mono">Min. 8 characters</span>
-                  )}
-                </div>
-                <div className="relative flex items-center">
-                  <input
-                    name="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    className="w-full pl-3.5 pr-10 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all font-mono disabled:opacity-60"
-                    id="password"
-                    placeholder="••••••••"
-                    required
-                    minLength={mode === 'register' ? 8 : undefined}
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1"
-                    title={showPassword ? 'Hide password' : 'Show password'}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
+              {/* Mode Toggle */}
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] mb-5">
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch('login')}
+                  className={`py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    mode === 'login'
+                      ? 'bg-[var(--background)] text-[var(--text-primary)] shadow-sm border border-[var(--border-subtle)]'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeSwitch('register')}
+                  className={`py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    mode === 'register'
+                      ? 'bg-[var(--background)] text-[var(--text-primary)] shadow-sm border border-[var(--border-subtle)]'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  Create Account
+                </button>
               </div>
 
-              {DEMO_MODE && mode === 'login' && (
-                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl p-3 flex items-center gap-2">
-                  <Lock size={13} className="text-[var(--accent-primary)] shrink-0" />
-                  <span>
-                    Default development account: <strong className="text-[var(--text-primary)]">admin@agentix.com</strong> /{' '}
-                    <strong className="text-[var(--text-primary)]">admin123</strong>
-                  </span>
-                </div>
-              )}
-
-              <button
-                className="w-full mt-1 py-3 px-4 teal-button-primary rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                type="submit"
-                disabled={isLoading || !email.trim() || !password.trim() || (mode === 'register' && !name.trim())}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    {mode === 'login' ? 'Authenticating Session...' : 'Creating Workspace...'}
-                  </>
-                ) : mode === 'login' ? (
-                  <>
-                    Sign In to Console
-                    <ArrowRight size={14} />
-                  </>
-                ) : (
-                  <>
-                    <UserPlus size={14} />
-                    Create Account &amp; Enter Console
-                  </>
+              <div className="flex flex-col gap-4">
+                {errorMessage && (
+                  <div className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
+                    <AlertCircle size={15} className="shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
                 )}
-              </button>
-            </form>
-          </div>
+
+                {/* Google Sign-In Button */}
+                <GoogleSignInButton
+                  text={mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}
+                  redirectTo={searchParams.get('redirect') || '/dashboard'}
+                  onRequires2fa={(ticket, userEmail) => {
+                    setPending2fa({ ticket, email: userEmail });
+                  }}
+                  onSuccess={(targetUrl) => {
+                    router.push(targetUrl || searchParams.get('redirect') || '/dashboard');
+                    router.refresh();
+                  }}
+                  onError={(err) => setErrorMessage(err)}
+                  disabled={isLoading}
+                />
+
+                <div className="relative my-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[var(--border-subtle)]" />
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-mono">
+                    <span className="bg-[var(--surface-elevated)] px-2.5 py-0.5 rounded text-[var(--text-muted)] border border-[var(--border-subtle)]/40">
+                      Or continue with credentials
+                    </span>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  {mode === 'register' && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="name">
+                        Full Name
+                      </label>
+                      <input
+                        name="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full px-3.5 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all disabled:opacity-60"
+                        id="name"
+                        placeholder="Alex Morgan"
+                        required
+                        type="text"
+                        autoComplete="name"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="email">
+                      Institutional Email
+                    </label>
+                    <input
+                      name="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                      className="w-full px-3.5 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all font-mono disabled:opacity-60"
+                      id="email"
+                      placeholder="name@organization.com"
+                      required
+                      type="email"
+                      autoComplete="email"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[var(--text-primary)]" htmlFor="password">
+                        Password
+                      </label>
+                      {mode === 'register' && (
+                        <span className="text-[10px] text-[var(--text-muted)] font-mono">Min. 8 characters</span>
+                      )}
+                    </div>
+                    <div className="relative flex items-center">
+                      <input
+                        name="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full pl-3.5 pr-10 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 transition-all font-mono disabled:opacity-60"
+                        id="password"
+                        placeholder="••••••••"
+                        required
+                        minLength={mode === 'register' ? 8 : undefined}
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 cursor-pointer"
+                        title={showPassword ? 'Hide password' : 'Show password'}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {DEMO_MODE && mode === 'login' && (
+                    <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl p-3 flex items-center gap-2">
+                      <Lock size={13} className="text-[var(--accent-primary)] shrink-0" />
+                      <span>
+                        Default development account: <strong className="text-[var(--text-primary)]">admin@agentix.com</strong> /{' '}
+                        <strong className="text-[var(--text-primary)]">admin123</strong>
+                      </span>
+                    </div>
+                  )}
+
+                  <button
+                    className="w-full mt-1 py-3 px-4 teal-button-primary rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    type="submit"
+                    disabled={isLoading || !email.trim() || !password.trim() || (mode === 'register' && !name.trim())}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        {mode === 'login' ? 'Authenticating Session...' : 'Creating Workspace...'}
+                      </>
+                    ) : mode === 'login' ? (
+                      <>
+                        Sign In to Console
+                        <ArrowRight size={14} />
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus size={14} />
+                        Create Account &amp; Enter Console
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
